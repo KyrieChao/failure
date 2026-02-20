@@ -35,12 +35,11 @@ public class ValidationAdapter {
      * 遇到第一个验证错误立即抛出异常，提高响应速度
      *
      * @param object 待验证的对象
-     * @param groups 验证分组
      * @param <T>    对象类型
      * @throws Business 验证失败时抛出的业务异常
      */
-    public <T> void validate(T object, Class<?>... groups) {
-        Set<ConstraintViolation<T>> violations = validator.validate(object, groups);
+    public <T> void validate(T object) {
+        Set<ConstraintViolation<T>> violations = validator.validate(object);
 
         // 快速失败：只处理第一个错误
         if (!violations.isEmpty()) {
@@ -54,13 +53,12 @@ public class ValidationAdapter {
      * 适用于需要一次性获取所有验证错误的场景
      *
      * @param object 待验证的对象
-     * @param groups 验证分组
      * @param <T>    对象类型
      * @throws Business      单个错误时抛出Business异常
      * @throws MultiBusiness 多个错误时抛出批量异常
      */
-    public <T> void validateAll(T object, Class<?>... groups) {
-        Set<ConstraintViolation<T>> violations = validator.validate(object, groups);
+    public <T> void validateAll(T object) {
+        Set<ConstraintViolation<T>> violations = validator.validate(object);
         if (!violations.isEmpty()) {
             // 收集所有验证错误
             List<Business> errors = violations.stream()
@@ -78,12 +76,11 @@ public class ValidationAdapter {
      * 适用于需要程序化处理验证结果的场景
      *
      * @param object 待验证的对象
-     * @param groups 验证分组
      * @param <T>    对象类型
      * @return 验证错误列表，验证通过时返回空列表
      */
-    public <T> List<Business> validateToList(T object, Class<?>... groups) {
-        return validator.validate(object, groups).stream()
+    public <T> List<Business> validateToList(T object) {
+        return validator.validate(object).stream()
                 .map(this::convertToBusiness)
                 .collect(Collectors.toList());
     }
@@ -92,12 +89,11 @@ public class ValidationAdapter {
      * 检查对象是否验证通过
      *
      * @param object 待验证的对象
-     * @param groups 验证分组
      * @param <T>    对象类型
      * @return true表示验证通过，false表示存在验证错误
      */
-    public <T> boolean isValid(T object, Class<?>... groups) {
-        return validator.validate(object, groups).isEmpty();
+    public <T> boolean isValid(T object) {
+        return validator.validate(object).isEmpty();
     }
 
     /**
@@ -170,11 +166,9 @@ public class ValidationAdapter {
      * @return 格式化后的错误消息
      */
     private <T> String formatViolationMessage(ConstraintViolation<T> violation) {
-        String field = getFieldName(violation);
-        String message = violation.getMessage();
         Object invalidValue = violation.getInvalidValue();
-
-        return String.format("%s: %s (当前值: %s)", field, message, invalidValue != null ? invalidValue.toString() : "null");
+        String fieldName = getFieldName(violation);
+        return String.format("当前:%s->%s", fieldName, invalidValue != null ? invalidValue.toString() : "null");
     }
 
     /**

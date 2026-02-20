@@ -43,6 +43,6 @@ public class FailFastProperties {
          * 错误码分组
          * 用于将相关错误码组织成逻辑组，便于批量处理
          */
-        private Map<String, List<Integer>> groups = new HashMap<>();
+        private Map<String, List<Object>> groups = new HashMap<>();
     }
 }

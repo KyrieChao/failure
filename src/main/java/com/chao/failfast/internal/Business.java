@@ -61,6 +61,18 @@ public class Business extends RuntimeException implements Serializable {
         this.httpStatus = httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
+    public static Business of(int code, String message) {
+        return of(simpleCode(code, message));
+    }
+
+    public static Business of(int code, String message, String detail) {
+        return of(simpleCode(code, message), detail);
+    }
+
+    public static Business of(int code, String message, String detail, Object... args) {
+        return of(simpleCode(code, message), String.format(detail, args));
+    }
+
     /**
      * 创建业务异常的静态工厂方法
      *
@@ -105,6 +117,10 @@ public class Business extends RuntimeException implements Serializable {
      */
     public static Business of(ResponseCode code, String detail, String method, String location) {
         return compose().code(code).detail(detail).method(method).location(location).materialize();
+    }
+
+    private static ResponseCode simpleCode(int code, String message) {
+        return ResponseCode.of(code, message, message);
     }
 
     /**

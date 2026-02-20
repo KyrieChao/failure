@@ -17,17 +17,21 @@ public final class Ex {
      * 在捕获调用位置时会过滤掉这些无关的调用帧
      */
     private static final Set<String> SKIP_PREFIXES = Set.of(
-            "com.chao.failfast.internal",  // 内部工具包
-            "com.chao.failfast.annotation",// 内部工具包
-            "com.chao.failfast.advice",    // 异常处理切面包
-            "com.chao.failfast.aspect",    // 切面包
-            "com.chao.failfast.Failure",   // 失败处理类
-            "org.springframework",         // Spring框架
-            "org.apache",                  // Apache相关组件
-            "jakarta",                     // Jakarta EE规范
-            "java.",                       // Java标准库
-            "jdk.",                        // JDK内部类
-            "sun."                         // Sun Microsystems遗留类
+            "com.chao.failfast.advice",     // 异常处理切面包
+            "com.chao.failfast.annotation", // 内部工具包
+            "com.chao.failfast.aspect",     // 切面包
+            "com.chao.failfast.config",     // 配置类
+            "com.chao.failfast.integration",// 集成包
+            "com.chao.failfast.internal",   // 内部工具包
+            "com.chao.failfast.result",     // 响应结果类
+            "com.chao.failfast.validator",  // 验证器类
+            "com.chao.failfast.Failure",    // 失败处理类
+            "org.springframework",          // Spring框架
+            "org.apache",                   // Apache相关组件
+            "jakarta",                      // Jakarta EE规范
+            "java.",                        // Java标准库
+            "jdk.",                         // JDK内部类
+            "sun."                          // Sun Microsystems遗留类
     );
 
     /**
@@ -88,7 +92,7 @@ public final class Ex {
      * 如果未启用方法打印或无法获取，则返回null
      */
     static String location() {
-        return isPrintMethod() ? captureLocation() : null;
+        return isShadowTrace() ? captureLocation() : null;
     }
 
     /**
@@ -99,7 +103,7 @@ public final class Ex {
      * 如果未启用方法打印或无法获取，则返回null
      */
     static String method() {
-        return isPrintMethod() ? captureMethodName() : null;
+        return isShadowTrace() ? captureMethodName() : null;
     }
 
     /**
@@ -108,7 +112,7 @@ public final class Ex {
      *
      * @return 当上下文存在且启用了方法打印时返回true，否则返回false
      */
-    private static boolean isPrintMethod() {
+    private static boolean isShadowTrace() {
         return context != null && context.isShadowTrace();
     }
 
@@ -122,7 +126,7 @@ public final class Ex {
      */
     static String captureLocation() {
         // 首先检查是否启用方法打印功能
-        if (!isPrintMethod()) return null;
+        if (!isShadowTrace()) return null;
 
         // 使用StackWalker遍历调用栈
         return WALKER.walk(stream -> stream
@@ -142,7 +146,7 @@ public final class Ex {
      * @return 返回方法名称字符串，如果条件不满足则返回null
      */
     static String captureMethodName() {
-        if (!isPrintMethod()) return null;
+        if (!isShadowTrace()) return null;
 
         return WALKER.walk(stream -> stream
                 .filter(Ex::isNotSkipped)

@@ -4,72 +4,228 @@ import com.chao.failfast.internal.FailFastProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 错误码映射配置 - 支持配置化HTTP状态映射
- * 负责将业务错误码映射到相应的HTTP状态码
- * 支持精确匹配、范围匹配和动态注册功能
  */
 @Component
 public class CodeMappingConfig {
 
-    /**
-     * FailFast配置属性
-     */
     private final FailFastProperties properties;
-    /**
-     * 默认错误码到HTTP状态码的映射表
-     */
     private final Map<Integer, HttpStatus> DEFAULT_MAPPINGS;
+    private final Map<String, List<CodeRange>> groupRanges = new HashMap<>();
+    private static final Pattern RANGE_PATTERN = Pattern.compile("^\\s*(\\d+)\\s*\\.\\.\\s*(\\d+)\\s*$|^\\s*(\\d+)\\s*-\\s*(\\d+)\\s*$");
 
     /**
-     * 构造函数
+     * 构造函数，用于初始化CodeMappingConfig实例
      *
-     * @param properties FailFast配置属性
+     * @param properties 包含失败快速属性的配置对象
      */
     public CodeMappingConfig(FailFastProperties properties) {
+        // 将传入的properties赋值给实例变量
         this.properties = properties;
+        // 创建一个临时的HashMap用于存储状态码映射
         Map<Integer, HttpStatus> temp = new HashMap<>();
+        // 初始化默认的状态码映射
         initializeDefaultMappings(temp);
-        // 加载自定义配置（允许覆盖默认值）
+        // 加载自定义的状态码映射
         loadCustomMappings(temp);
+        // 将不可修改的映射赋值给DEFAULT_MAPPINGS实例变量
         this.DEFAULT_MAPPINGS = Collections.unmodifiableMap(temp);
+        // 解析组范围配置
+        parseGroupRanges();
     }
 
-    // 初始化默认映射关系
+    /**
+     * 初始化默认的HTTP状态码映射
+     * 该方法将自定义的错误码映射到标准的HTTP状态码
+     *
+     * @param map 用于存储错误码与HTTP状态码映射关系的Map集合
+     */
     private void initializeDefaultMappings(Map<Integer, HttpStatus> map) {
-        // 4xx 客户端错误映射
-        map.put(40000, HttpStatus.BAD_REQUEST);
-        map.put(40100, HttpStatus.UNAUTHORIZED);
-        map.put(40300, HttpStatus.FORBIDDEN);
-        map.put(40400, HttpStatus.NOT_FOUND);
-        map.put(40500, HttpStatus.METHOD_NOT_ALLOWED);
-        map.put(40800, HttpStatus.REQUEST_TIMEOUT);
-        map.put(40900, HttpStatus.CONFLICT);
-        map.put(41000, HttpStatus.GONE);
-        map.put(41300, HttpStatus.PAYLOAD_TOO_LARGE);
-        map.put(41500, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
-        map.put(42200, HttpStatus.UNPROCESSABLE_ENTITY);
-        map.put(42900, HttpStatus.TOO_MANY_REQUESTS);
-        // 5xx 服务端错误映射
-        map.put(50000, HttpStatus.INTERNAL_SERVER_ERROR);
-        map.put(50100, HttpStatus.NOT_IMPLEMENTED);
-        map.put(50200, HttpStatus.BAD_GATEWAY);
-        map.put(50300, HttpStatus.SERVICE_UNAVAILABLE);
-        map.put(50400, HttpStatus.GATEWAY_TIMEOUT);
+        // 4xx 客户端错误状态码
+        map.put(40000, HttpStatus.BAD_REQUEST);        // 40000: 请求错误
+        map.put(40100, HttpStatus.UNAUTHORIZED);       // 40100: 未授权
+        map.put(40300, HttpStatus.FORBIDDEN);         // 40300: 禁止访问
+        map.put(40400, HttpStatus.NOT_FOUND);         // 40400: 资源不存在
+        map.put(40500, HttpStatus.METHOD_NOT_ALLOWED); // 40500: 方法不允许
+        map.put(40800, HttpStatus.REQUEST_TIMEOUT);   // 40800: 请求超时
+        map.put(40900, HttpStatus.CONFLICT);          // 40900: 冲突
+        map.put(41000, HttpStatus.GONE);              // 41000: 资源已消失
+        map.put(41300, HttpStatus.PAYLOAD_TOO_LARGE); // 41300: 负载过大
+        map.put(41500, HttpStatus.UNSUPPORTED_MEDIA_TYPE); // 41500: 不支持的媒体类型
+        map.put(42200, HttpStatus.UNPROCESSABLE_ENTITY); // 42200: 无法处理的实体
+        map.put(42900, HttpStatus.TOO_MANY_REQUESTS); // 42900: 请求过多
+        // 5xx 服务器错误状态码
+        map.put(50000, HttpStatus.INTERNAL_SERVER_ERROR); // 50000: 内部服务器错误
+        map.put(50100, HttpStatus.NOT_IMPLEMENTED);      // 50100: 未实现
+        map.put(50200, HttpStatus.BAD_GATEWAY);          // 50200: 网关错误
+        map.put(50300, HttpStatus.SERVICE_UNAVAILABLE);  // 50300: 服务不可用
+        map.put(50400, HttpStatus.GATEWAY_TIMEOUT);      // 50400: 网关超时
     }
 
+    /**
+     * 加载自定义的状态码映射关系
+     *
+     * @param map 用于存储状态码映射的Map集合
+     */
     private void loadCustomMappings(Map<Integer, HttpStatus> map) {
+        // 从配置属性中获取自定义的状态码映射
         Map<Integer, Integer> custom = properties.getCodeMapping().getHttpStatus();
+        // 遍历自定义的状态码映射
         for (Map.Entry<Integer, Integer> entry : custom.entrySet()) {
             try {
+                // 将自定义的状态码映射添加到目标Map中
+                // entry.getKey() 是自定义的状态码
+                // HttpStatus.valueOf(entry.getValue()) 是将状态码值转换为对应的HttpStatus枚举
                 map.put(entry.getKey(), HttpStatus.valueOf(entry.getValue()));
             } catch (Exception ignored) {
+                // 如果转换失败，则忽略该异常，继续处理下一个映射
             }
+        }
+    }
+
+    /**
+     * 解析代码组范围的方法
+     * 该方法从属性中获取代码映射的组信息，并将其转换为代码范围列表
+     */
+    private void parseGroupRanges() {
+        // 从属性中获取代码映射的组信息
+        var groups = properties.getCodeMapping().getGroups();
+        // 如果组信息为空，则直接返回
+        if (groups == null) return;
+        // 遍历每个组条目
+        for (var entry : groups.entrySet()) {
+            String groupName = entry.getKey(); // 获取组名称
+            List<Object> rawList = entry.getValue(); // 获取原始范围列表
+            // 创建代码范围列表
+            List<CodeRange> ranges = new ArrayList<>();
+            // 遍历原始范围列表中的每个元素
+            for (Object raw : rawList) {
+                // 如果元素是数字类型，则创建单值代码范围
+                if (raw instanceof Number num) {
+                    int code = num.intValue();
+                    ranges.add(new CodeRange(code, code));
+                } else if (raw instanceof String str) {
+                    CodeRange range = parseRange(str);
+                    if (range != null) {
+                        ranges.add(range);
+                    } else {
+                        try {
+                            int code = Integer.parseInt(str.trim());
+                            ranges.add(new CodeRange(code, code));
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+            }
+            groupRanges.put(groupName, ranges);
+        }
+    }
+
+    /**
+     * 解析代码范围字符串，将其转换为CodeRange对象
+     *
+     * @param input 输入的代码范围字符串，格式如"1-5"或"5-1"
+     * @return 返回解析后的CodeRange对象，如果输入格式不正确则返回null
+     */
+    private CodeRange parseRange(String input) {
+        // 使用正则表达式模式匹配输入字符串
+        Matcher matcher = RANGE_PATTERN.matcher(input.trim());
+        if (matcher.matches()) {
+            // 解析起始行号，如果第一个捕获组不为null则使用它，否则使用第三个捕获组
+            int start = matcher.group(1) != null
+                    ? Integer.parseInt(matcher.group(1))
+                    : Integer.parseInt(matcher.group(3));
+            // 解析结束行号，如果第二个捕获组不为null则使用它，否则使用第四个捕获组
+            int end = matcher.group(2) != null
+                    ? Integer.parseInt(matcher.group(2))
+                    : Integer.parseInt(matcher.group(4));
+
+            // 创建CodeRange对象，确保较小的值作为起始行号，较大的值作为结束行号
+            return new CodeRange(Math.min(start, end), Math.max(start, end));
+        }
+        // 如果输入格式不匹配，返回null
+        return null;
+    }
+
+    /**
+     * 判断错误码是否属于指定分组（支持范围 + 精确值）
+     */
+    public boolean isInGroup(int code, String groupName) {
+        List<CodeRange> ranges = groupRanges.get(groupName);
+        if (ranges == null || ranges.isEmpty()) return false;
+
+        for (CodeRange r : ranges) {
+            if (code >= r.start && code <= r.end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 获取指定分组的所有错误码（仅返回精确值列表，范围展开不返回）
+     * （保持原有方法兼容性）
+     */
+    public List<Integer> getGroupCodes(String groupName) {
+        return properties.getCodeMapping().getGroups()
+                .getOrDefault(groupName, Collections.emptyList())
+                .stream()
+                .filter(Objects::nonNull)
+                .map(v -> v instanceof Integer i ? i : null)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * 获取分组的所有错误码（展开范围后的完整列表）
+     * - 如果总数 ≤ 5，返回完整列表
+     * - 如果总数 > 5，返回省略格式，如 [40000, 40050, ..., 40099]
+     */
+    public String getGroupCodesExpanded(String groupName) {
+        return getGroupCodesExpanded(groupName, 5);
+    }
+
+    /**
+     * 获取展开后的组代码列表，根据指定数量决定是否返回完整列表或省略格式
+     *
+     * @param groupName 组名称
+     * @param n         展示的最大数量阈值
+     * @return 返回格式化的字符串表示的代码列表
+     */
+    public String getGroupCodesExpanded(String groupName, int n) {
+        List<CodeRange> ranges = groupRanges.get(groupName);
+        if (ranges == null || ranges.isEmpty()) {
+            return "[]";
+        }
+        Set<Integer> expanded = new TreeSet<>();  // 用 TreeSet 自动排序
+        for (CodeRange r : ranges) {
+            for (int i = r.start(); i <= r.end(); i++) {
+                expanded.add(i);
+            }
+        }
+        int total = expanded.size();
+        if (total == 0) {
+            return "[]";
+        }
+        if (total <= n) {
+            // 小列表，直接返回完整
+            return expanded.toString();
+        } else {
+            // 大列表，返回省略格式
+            List<Integer> list = new ArrayList<>(expanded);
+            String start = list.get(0).toString();
+            String end = list.get(total - 1).toString();
+            String middle = list.subList(1, total - 1).stream()
+                    .limit(3)  // 显示前几个中间值作为示例
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
+            return String.format("[%s, %s, ..., %s]", start, middle, end);
         }
     }
 
@@ -103,34 +259,7 @@ public class CodeMappingConfig {
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
-    /**
-     * 获取指定分组的所有错误码
-     *
-     * @param groupName 分组名称
-     * @return 错误码列表，如果分组不存在则返回null
-     */
-    public List<Integer> getGroupCodes(String groupName) {
-        return properties.getCodeMapping().getGroups().get(groupName);
-    }
 
-    /**
-     * 判断错误码是否属于指定分组
-     * 支持精确匹配和范围匹配两种方式
-     *
-     * @param code      要检查的错误码
-     * @param groupName 分组名称
-     * @return 如果属于该分组返回true，否则返回false
-     */
-    public boolean isInGroup(int code, String groupName) {
-        List<Integer> groupCodes = getGroupCodes(groupName);
-        if (groupCodes == null || groupCodes.isEmpty()) return false;
-        // 支持范围匹配：检查是否在分组定义的范围内
-        for (Integer groupCode : groupCodes) {
-            int rangeStart = (groupCode / 100) * 100;
-            int rangeEnd = rangeStart + 99;
-            if (code >= rangeStart && code <= rangeEnd) return true;
-        }
-        // 精确匹配：检查是否完全相等
-        return groupCodes.contains(code);
+    private record CodeRange(int start, int end) {
     }
 }
