@@ -1,5 +1,6 @@
 package com.chao.failfast.advice;
 
+import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.internal.ResponseCode;
@@ -14,6 +15,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +62,7 @@ public abstract class FailFastExceptionHandler {
         Map<String, Object> body = buildMap(e);
         return ResponseEntity.status(e.getHttpStatus()).body(body);
     }
+
     /**
      * 构建批量异常的HTTP响应体
      * 子类可以重写此方法来自定义批量错误的响应格式
@@ -67,8 +72,23 @@ public abstract class FailFastExceptionHandler {
      */
     protected ResponseEntity<?> buildMultiErrorResponse(MultiBusiness e) {
         Map<String, Object> body = buildMap(e);
+        // 响应数据不需要有 errors 字段，保持结构统一
+        // body.put("errors", e.getErrors());
+
+        // 将所有错误简要拼接到 description 中，以便前端展示
+        StringBuilder sb = new StringBuilder();
+        sb.append("共 ").append(e.getErrors().size()).append(" 项错误: ");
+        for (int i = 0; i < e.getErrors().size(); i++) {
+            Business err = e.getErrors().get(i);
+            sb.append(i + 1).append(".").append(err.getDetail());
+            if (i < e.getErrors().size() - 1) {
+                sb.append("; ");
+            }
+        }
+        body.put("description", sb.toString());
         return ResponseEntity.status(e.getHttpStatus()).body(body);
     }
+
     /**
      * 处理单个Business异常的入口方法
      * 记录日志并构建响应
@@ -113,6 +133,23 @@ public abstract class FailFastExceptionHandler {
             String location = formatValidationLocation(targetClass, fieldError.getField());
             errors.add(parseError(fieldError.getDefaultMessage(), location));
         }
+
+        // 检查方法上是否有 @Validate 注解来控制是否快速失败
+        boolean failFast = true;
+        if (e.getParameter().getMethod() != null) {
+            Validate validate = e.getParameter().getMethod().getAnnotation(Validate.class);
+            if (validate != null) {
+                failFast = validate.fast();
+            }
+        }
+
+        // 如果是快速失败模式且有多个错误，只保留第一个
+        if (failFast && errors.size() > 1) {
+            Business first = errors.get(0);
+            errors.clear();
+            errors.add(first);
+        }
+
         return handleMultiErrors(errors);
     }
 
@@ -220,14 +257,14 @@ public abstract class FailFastExceptionHandler {
                 String msg = parts[1].trim();
                 business = Business.of(ResponseCode.of(code, msg), msg);
             } else {
-                // 默认使用500错误码
-                business = Business.of(ResponseCode.of(500, "Validation Error"), message);
+                // 默认使用400错误码 (参数校验错误通常是客户端问题)
+                business = Business.of(ResponseCode.of(400, "Validation Error"), message);
             }
         }
 
         // 注入位置信息以提供更详细的错误上下文
         if (location != null) {
-            return Business.of(business.getCode(), business.getDetail(), "Validation", location);
+            return Business.of(business.getResponseCode(), business.getDetail(), "Validation", location);
         }
         return business;
     }
@@ -250,10 +287,11 @@ public abstract class FailFastExceptionHandler {
 
     private Map<String, Object> buildMap(Business e) {
         Map<String, Object> body = new HashMap<>();
-        body.put("code", e.getCode().getCode());
-        body.put("message", e.getCode().getMessage());
+        body.put("code", e.getResponseCode().getCode());
+        body.put("message", e.getResponseCode().getMessage());
         body.put("description", e.getDetail());
-        body.put("timestamp", System.currentTimeMillis());
+        String format = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        body.put("timestamp", format);
         return body;
     }
 }

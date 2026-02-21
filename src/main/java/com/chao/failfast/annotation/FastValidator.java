@@ -42,32 +42,18 @@ public interface FastValidator<T> {
         @Getter
         private boolean stopped;
 
-        public void addError(ResponseCode code) {
-            addError(Business.of(code));
+        public void reportError(ResponseCode code) {
+            reportError(Business.of(code));
         }
 
-        public void addErrorAndHalt(ResponseCode code) {
-            addErrorAndHalt(Business.of(code));
+        public void reportError(ResponseCode code, String detail) {
+            reportError(Business.of(code, detail));
         }
 
-        public void addError(ResponseCode code, String detail) {
-            addError(Business.of(code, detail));
-        }
-
-        public void addErrorAndHalt(ResponseCode code, String detail) {
-            addErrorAndHalt(Business.of(code, detail));
-        }
-
-        public void addError(Business error) {
+        public void reportError(Business error) {
             if (stopped) return;
             errors.add(error);
             if (fast) stopped = true;
-        }
-
-        public void addErrorAndHalt(Business error) {
-            if (stopped) return;
-            errors.add(error);
-            stopped = true;
         }
 
         public void stop() {

@@ -24,7 +24,6 @@ public final class Ex {
             "com.chao.failfast.integration",// 集成包
             "com.chao.failfast.internal",   // 内部工具包
             "com.chao.failfast.result",     // 响应结果类
-            "com.chao.failfast.validator",  // 验证器类
             "com.chao.failfast.Failure",    // 失败处理类
             "org.springframework",          // Spring框架
             "org.apache",                   // Apache相关组件
@@ -65,23 +64,6 @@ public final class Ex {
      * 这是一个纯工具类，所有方法都是静态的
      */
     private Ex() {
-    }
-
-    /**
-     * 构建业务异常对象的核心方法
-     * 根据响应码和描述信息创建Business对象，并自动捕获调用位置和方法信息
-     *
-     * @param code        响应码枚举，定义了具体的错误类型
-     * @param description 错误详细描述信息
-     * @return 构建完成的Business业务异常对象
-     */
-    public static Business build(ResponseCode code, String description) {
-        return Business.compose()
-                .code(code)
-                .detail(description)
-                .location(location())
-                .method(method())
-                .materialize();
     }
 
     /**
@@ -150,6 +132,12 @@ public final class Ex {
 
         return WALKER.walk(stream -> stream
                 .filter(Ex::isNotSkipped)
+                // 额外过滤验证器类，以便定位到调用验证器的业务方法 (e.g. Controller/Service)
+                // 1. 过滤 com.chao.failfast.validator 包下的类
+                // 2. 过滤类名以 Validator 或 Validators 结尾的类
+                .filter(f -> !f.getClassName().startsWith("com.chao.failfast.validator")
+                        && !f.getClassName().endsWith("Validator")
+                        && !f.getClassName().endsWith("Validators"))
                 .findFirst()
                 .map(Ex::formatMethodName)
                 .orElse("unknown"));
@@ -176,7 +164,11 @@ public final class Ex {
     private static String formatLocation(StackWalker.StackFrame f) {
         String full = f.getClassName();
         String simple = full.substring(full.lastIndexOf('.') + 1);
-        return simple + "." + f.getMethodName() + "(" + simple + ".java:" + f.getLineNumber() + ")";
+        int line = f.getLineNumber();
+        // 如果行号有效(>0)，显示文件名:行号；否则仅显示文件名（避免出现 -1 导致无法跳转）
+        // CGLIB 代理类或 Native 方法通常没有行号信息
+        String fileInfo = (line > 0) ? simple + ".java:" + line : simple + ".java";
+        return simple + "." + f.getMethodName() + "(" + fileInfo + ")";
     }
 
     /**
@@ -188,6 +180,16 @@ public final class Ex {
     private static String formatMethodName(StackWalker.StackFrame f) {
         String cls = f.getClassName();
         String simple = cls.substring(cls.lastIndexOf('.') + 1);
-        return simple + "#" + f.getMethodName();
+        String methodName = f.getMethodName();
+
+        // 处理 Lambda 表达式生成的方法名: lambda$resultsUtils$9 -> resultsUtils
+        if (methodName.startsWith("lambda$")) {
+            int firstDollar = methodName.indexOf('$');
+            int lastDollar = methodName.lastIndexOf('$');
+            if (firstDollar != -1 && lastDollar > firstDollar) {
+                methodName = methodName.substring(firstDollar + 1, lastDollar);
+            }
+        }
+        return simple + "#" + methodName;
     }
 }

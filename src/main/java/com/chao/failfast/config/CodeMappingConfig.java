@@ -253,6 +253,7 @@ public class CodeMappingConfig {
             try {
                 return HttpStatus.valueOf(code);
             } catch (IllegalArgumentException ignored) {
+                return HttpStatus.INTERNAL_SERVER_ERROR;
             }
         }
         // 5. 默认返回500内部服务器错误

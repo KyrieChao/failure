@@ -52,7 +52,7 @@ public abstract class TypedValidator implements FastValidator<Object> {
     @Override
     public final void validate(Object object, ValidationContext context) {
         if (object == null) {
-            context.addErrorAndHalt(ResponseCode.of(50000, "校验对象不能为空"));
+            context.reportError(ResponseCode.of(50000, "校验对象不能为空"));
             return;
         }
         // 查找并执行对应类型的校验处理器
@@ -61,7 +61,7 @@ public abstract class TypedValidator implements FastValidator<Object> {
             handler.accept(object, context);
         } else {
             // 处理未注册的类型情况
-            context.addError(ResponseCode.of(40099, "不支持的校验类型: " + object.getClass().getSimpleName()));
+            context.reportError(ResponseCode.of(40099, "不支持的校验类型: " + object.getClass().getSimpleName()));
         }
     }
 }

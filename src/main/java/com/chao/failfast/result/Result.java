@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -25,7 +28,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
     protected int code;
     protected String message;
     protected String description;
-    protected long timestamp;
+    protected String timestamp;
 
     /**
      * 私有构造函数，防止外部实例化
@@ -34,7 +37,8 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
         this.code = code;
         this.message = message;
         this.description = description;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = ZonedDateTime.now(ZoneId.of("Asia/Shanghai"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     /**
@@ -234,6 +238,15 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
         return this;
     }
 
+    public Result<T> filter(Function<T, Boolean> predicate, ResponseCode code, String detail) {
+        if (this instanceof Success<T> s) {
+            if (!predicate.apply(s.data)) {
+                return Result.fail(code, detail);
+            }
+        }
+        return this;
+    }
+
     // ============ 恢复操作 ============
 
     /**
@@ -377,7 +390,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
          * @param error 错误信息
          */
         public Failure(Business error) {
-            super(error.getCode().getCode(), error.getCode().getMessage(), error.getDetail());
+            super(error.getResponseCode().getCode(), error.getResponseCode().getMessage(), error.getDetail());
             this.error = error;
         }
     }

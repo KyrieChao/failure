@@ -13,6 +13,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,7 +98,8 @@ public class DefaultExceptionHandler extends FailFastExceptionHandler {
         // 提取第一个错误的详细描述
         body.put("description", e.getAllErrors().isEmpty() ? "Unknown error" : e.getAllErrors().get(0).getDefaultMessage());
         // 添加时间戳
-        body.put("timestamp", System.currentTimeMillis());
+        String format = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        body.put("timestamp", format);
         return ResponseEntity.badRequest().body(body);
     }
 }

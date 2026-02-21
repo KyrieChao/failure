@@ -1,7 +1,5 @@
 package com.chao.failfast.internal;
 
-import org.springframework.http.HttpStatus;
-
 /**
  * 响应码接口 - 支持配置化HTTP状态映射
  * 定义业务错误码的标准结构，支持动态消息格式化和HTTP状态映射

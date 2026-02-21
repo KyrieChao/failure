@@ -17,7 +17,7 @@ public class Business extends RuntimeException implements Serializable {
     /**
      * 响应码枚举、定义错误类型和HTTP状态码
      */
-    private final ResponseCode code;
+    private final ResponseCode responseCode;
 
     /**
      * 错误详细描述信息
@@ -47,14 +47,14 @@ public class Business extends RuntimeException implements Serializable {
     /**
      * 构造函数
      *
-     * @param code     响应码枚举
+     * @param responseCode     响应码枚举
      * @param detail   详细错误描述
      * @param method   发生异常的方法名
      * @param location 发生异常的位置信息
      */
-    Business(ResponseCode code, String detail, String method, String location, HttpStatus httpStatus) {
-        super(code != null ? code.getMessage() : "Unknown error");
-        this.code = code;
+    Business(ResponseCode responseCode, String detail, String method, String location, HttpStatus httpStatus) {
+        super(responseCode != null ? responseCode.getMessage() : "Unknown error");
+        this.responseCode = responseCode;
         this.detail = detail;
         this.method = method;
         this.location = location;
@@ -217,7 +217,12 @@ public class Business extends RuntimeException implements Serializable {
             // 校验必要参数
             if (code == null) throw new IllegalArgumentException("code 不能为空");
             // 设置默认详细描述
-            if (detail == null) detail = code.getDescription();
+            if (detail == null) {
+                detail = code.getDescription();
+                if (detail == null) {
+                    detail = code.getMessage();
+                }
+            }
             // 根据上下文自动填充方法和位置信息
             FailureContext ctx = Ex.getContext();
             if (ctx != null && ctx.isShadowTrace()) {
@@ -240,13 +245,13 @@ public class Business extends RuntimeException implements Serializable {
     @Override
     public synchronized Throwable fillInStackTrace() {
         // code为空时使用默认行为
-        if (code == null) return super.fillInStackTrace();
+        if (responseCode == null) return super.fillInStackTrace();
         // 获取上下文配置
         FailureContext ctx = Ex.getContext();
         CodeMappingConfig cfg = ctx != null ? ctx.getCodeMappingConfig() : null;
         boolean printMethod = ctx != null && ctx.isShadowTrace();
         // 当启用方法打印或为5xx服务器错误时，生成堆栈跟踪
-        if (printMethod || (cfg != null && cfg.resolveHttpStatus(code.getCode()).is5xxServerError())) {
+        if (printMethod || (cfg != null && cfg.resolveHttpStatus(responseCode.getCode()).is5xxServerError())) {
             return super.fillInStackTrace();
         }
         // 否则返回this，避免生成堆栈跟踪
@@ -262,9 +267,9 @@ public class Business extends RuntimeException implements Serializable {
     @Override
     public String toString() {
         // 格式化代码为xxx_xx格式
-        String codeStr = String.valueOf(code.getCode()).replaceFirst("(\\d{3})(\\d{2})", "$1_$2");
+        String codeStr = String.valueOf(responseCode.getCode()).replaceFirst("(\\d{3})(\\d{2})", "$1_$2");
         // 构建基础信息字符串
-        String base = "{code=%s, mes=%s, des=%s}".formatted(codeStr, code.getMessage(), detail);
+        String base = "{code=%s, mes=%s, des=%s}".formatted(codeStr, responseCode.getMessage(), detail);
         // 根据是否有方法信息决定输出格式
         if (method == null) return base + (location != null ? " (" + extractFileLine(location) + ")" : "");
 
