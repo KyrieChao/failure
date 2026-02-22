@@ -1,8 +1,7 @@
 # Fail-Fast Spring Boot Starter
 
+[![Release](https://jitpack.io/v/KyrieChao/Failure.svg)](https://jitpack.io/#KyrieChao/Failure)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/com.chao/fail-fast-spring-boot-starter.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.chao%22%20AND%20a:%22fail-fast-spring-boot-starter%22)
-[![Build Status](https://travis-ci.org/chao/fail-fast.svg?branch=master)](https://travis-ci.org/chao/fail-fast)
 
 **Fail-Fast** 是一个专为 Spring Boot 设计的轻量级、高性能参数校验与业务异常处理框架。它秉承 "Fail Fast, Fail Safe" 的设计哲学，提供流式 API（Fluent API）与注解驱动两种使用模式，旨在解决传统 `if-else` 参数校验代码冗余、错误码管理混乱以及异常处理不统一的痛点。
 
