@@ -22,7 +22,7 @@
 1.  **Fork** 本仓库到您的 GitHub 账户。
 2.  **Clone** 代码到本地：
     ```bash
-    git clone https://github.com/your-username/fail-fast-improved.git
+    git clone https://github.com/KyrieChao/Failure.git
     ```
 3.  **创建分支**：
     ```bash
