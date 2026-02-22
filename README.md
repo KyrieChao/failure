@@ -18,20 +18,42 @@
 
 ### 1. 引入依赖
 
-在您的 Maven `pom.xml` 中添加以下依赖：
+#### 方式一：使用 JitPack (推荐)
+
+无需等待 Maven Central 同步，直接使用 GitHub 最新版本。
+
+第一步：在项目的 `pom.xml` 中添加 JitPack 仓库：
 
 ```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
+第二步：添加依赖：
+
+```xml
+<dependency>
+    <groupId>com.github.KyrieChao</groupId>
+    <artifactId>Failure</artifactId>
+    <version>Tag</version> <!-- 将 Tag 替换为具体的版本号，如 v1.0.0 -->
+</dependency>
+```
+
+#### 方式二：Maven Central (规划中)
+
+目前暂未发布到 Maven Central，请使用 JitPack 或本地安装。
+
+```xml
+<!-- 暂不可用 -->
 <dependency>
     <groupId>com.chao</groupId>
     <artifactId>fail-fast-spring-boot-starter</artifactId>
     <version>1.0.0</version>
 </dependency>
-```
-
-或者 Gradle：
-
-```groovy
-implementation 'com.chao:fail-fast-spring-boot-starter:1.0.0'
 ```
 
 ### 2. 最小可运行示例
