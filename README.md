@@ -38,7 +38,7 @@
 <dependency>
     <groupId>com.github.KyrieChao</groupId>
     <artifactId>Failure</artifactId>
-    <version>Tag</version> <!-- 将 Tag 替换为具体的版本号，如 v1.0.0 -->
+    <version>Tag</version> <!-- 将 Tag 替换为具体的版本号，如 1.0.0 -->
 </dependency>
 ```
 
@@ -147,7 +147,11 @@ public Result<Void> createUser(@RequestBody UserDTO user) {
 
 ### 3. 内置丰富断言库
 
-框架内置了针对常见类型的校验工具，无需重复造轮子：
+Fail-Fast 提供了极其丰富的校验方法，涵盖对象、字符串、数值、集合、日期等常见场景。
+
+**[点击查看完整 API 列表 (API Reference)](API_REFERENCE.md)**
+
+部分常用方法示例：
 
 | 分类 | 方法示例 | 说明 |
 | :--- | :--- | :--- |

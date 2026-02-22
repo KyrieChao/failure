@@ -3,8 +3,15 @@ package com.chao.failfast.internal;
 import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.internal.check.*;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -12,7 +19,6 @@ import java.util.function.Supplier;
  * 提供流畅的链式验证API，支持快速失败和全量收集两种验证策略
  * <p>
  * 重构说明：
- * 原有的 11 层继承结构已重构为扁平化设计，采用组合静态工具类的方式实现。
  * 所有的校验逻辑委托给 com.chao.failfast.internal.check 包下的工具类。
  */
 public final class Chain {
@@ -34,6 +40,190 @@ public final class Chain {
 
     private Chain(boolean failFast) {
         this.failFast = failFast;
+    }
+
+    // ==================== Map 校验 (New) ====================
+
+    public Chain notEmpty(Map<?, ?> map) {
+        return check(MapChecks.notEmpty(map));
+    }
+
+    public Chain notEmpty(Map<?, ?> map, ResponseCode code, String detail) {
+        return check(MapChecks.notEmpty(map), code, detail);
+    }
+
+    public Chain notEmpty(Map<?, ?> map, ResponseCode code) {
+        return check(MapChecks.notEmpty(map), code);
+    }
+
+    public Chain notEmpty(Map<?, ?> map, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.notEmpty(map), consumer);
+    }
+
+    public Chain isEmpty(Map<?, ?> map) {
+        return check(MapChecks.isEmpty(map));
+    }
+
+    public Chain isEmpty(Map<?, ?> map, ResponseCode code, String detail) {
+        return check(MapChecks.isEmpty(map), code, detail);
+    }
+
+    public Chain isEmpty(Map<?, ?> map, ResponseCode code) {
+        return check(MapChecks.isEmpty(map), code);
+    }
+
+    public Chain isEmpty(Map<?, ?> map, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.isEmpty(map), consumer);
+    }
+
+    public Chain containsKey(Map<?, ?> map, Object key) {
+        return check(MapChecks.containsKey(map, key));
+    }
+
+    public Chain containsKey(Map<?, ?> map, Object key, ResponseCode code, String detail) {
+        return check(MapChecks.containsKey(map, key), code, detail);
+    }
+
+    public Chain containsKey(Map<?, ?> map, Object key, ResponseCode code) {
+        return check(MapChecks.containsKey(map, key), code);
+    }
+
+    public Chain containsKey(Map<?, ?> map, Object key, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.containsKey(map, key), consumer);
+    }
+
+    public Chain notContainsKey(Map<?, ?> map, Object key) {
+        return check(MapChecks.notContainsKey(map, key));
+    }
+
+    public Chain notContainsKey(Map<?, ?> map, Object key, ResponseCode code, String detail) {
+        return check(MapChecks.notContainsKey(map, key), code, detail);
+    }
+
+    public Chain notContainsKey(Map<?, ?> map, Object key, ResponseCode code) {
+        return check(MapChecks.notContainsKey(map, key), code);
+    }
+
+    public Chain notContainsKey(Map<?, ?> map, Object key, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.notContainsKey(map, key), consumer);
+    }
+
+    public Chain containsValue(Map<?, ?> map, Object value) {
+        return check(MapChecks.containsValue(map, value));
+    }
+
+    public Chain containsValue(Map<?, ?> map, Object value, ResponseCode code, String detail) {
+        return check(MapChecks.containsValue(map, value), code, detail);
+    }
+
+    public Chain containsValue(Map<?, ?> map, Object value, ResponseCode code) {
+        return check(MapChecks.containsValue(map, value), code);
+    }
+
+    public Chain containsValue(Map<?, ?> map, Object value, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.containsValue(map, value), consumer);
+    }
+
+    public Chain sizeBetween(Map<?, ?> map, int min, int max) {
+        return check(MapChecks.sizeBetween(map, min, max));
+    }
+
+    public Chain sizeBetween(Map<?, ?> map, int min, int max, ResponseCode code, String detail) {
+        return check(MapChecks.sizeBetween(map, min, max), code, detail);
+    }
+
+    public Chain sizeBetween(Map<?, ?> map, int min, int max, ResponseCode code) {
+        return check(MapChecks.sizeBetween(map, min, max), code);
+    }
+
+    public Chain sizeBetween(Map<?, ?> map, int min, int max, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.sizeBetween(map, min, max), consumer);
+    }
+
+    public Chain sizeEquals(Map<?, ?> map, int size) {
+        return check(MapChecks.sizeEquals(map, size));
+    }
+
+    public Chain sizeEquals(Map<?, ?> map, int size, ResponseCode code, String detail) {
+        return check(MapChecks.sizeEquals(map, size), code, detail);
+    }
+
+    public Chain sizeEquals(Map<?, ?> map, int size, ResponseCode code) {
+        return check(MapChecks.sizeEquals(map, size), code);
+    }
+
+    public Chain sizeEquals(Map<?, ?> map, int size, Consumer<Business.Fabricator> consumer) {
+        return check(MapChecks.sizeEquals(map, size), consumer);
+    }
+
+    // ==================== Optional 校验 (New) ====================
+
+    public Chain isPresent(Optional<?> opt) {
+        return check(OptionalChecks.isPresent(opt));
+    }
+
+    public Chain isPresent(Optional<?> opt, ResponseCode code, String detail) {
+        return check(OptionalChecks.isPresent(opt), code, detail);
+    }
+
+    public Chain isPresent(Optional<?> opt, ResponseCode code) {
+        return check(OptionalChecks.isPresent(opt), code);
+    }
+
+    public Chain isPresent(Optional<?> opt, Consumer<Business.Fabricator> consumer) {
+        return check(OptionalChecks.isPresent(opt), consumer);
+    }
+
+    public Chain isEmpty(Optional<?> opt) {
+        return check(OptionalChecks.isEmpty(opt));
+    }
+
+    public Chain isEmpty(Optional<?> opt, ResponseCode code, String detail) {
+        return check(OptionalChecks.isEmpty(opt), code, detail);
+    }
+
+    public Chain isEmpty(Optional<?> opt, ResponseCode code) {
+        return check(OptionalChecks.isEmpty(opt), code);
+    }
+
+    public Chain isEmpty(Optional<?> opt, Consumer<Business.Fabricator> consumer) {
+        return check(OptionalChecks.isEmpty(opt), consumer);
+    }
+
+    // ==================== 自定义条件 (New) ====================
+
+    public <T> Chain satisfies(T value, Predicate<T> condition) {
+        return check(value != null && condition.test(value));
+    }
+
+    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code, String detail) {
+        return check(value != null && condition.test(value), code, detail);
+    }
+
+    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code) {
+        return check(value != null && condition.test(value), code);
+    }
+
+    public <T> Chain satisfies(T value, Predicate<T> condition, Consumer<Business.Fabricator> consumer) {
+        return check(value != null && condition.test(value), consumer);
+    }
+
+    // ==================== 跨字段/状态校验 (New) ====================
+
+    public <T> Chain compare(T field1, T field2, Comparator<T> c) {
+        return check(c.compare(field1, field2) == 0);
+    }
+
+    public <T> Chain compare(T field1, T field2, Comparator<T> c, ResponseCode code, String detail) {
+        return check(c.compare(field1, field2) == 0, code, detail);
+    }
+
+    public <T> Chain compare(T field1, T field2, Comparator<T> c, ResponseCode code) {
+        return check(c.compare(field1, field2) == 0, code);
+    }
+
+    public <T> Chain compare(T field1, T field2, Comparator<T> c, Consumer<Business.Fabricator> consumer) {
+        return check(c.compare(field1, field2) == 0, consumer);
     }
 
     public static Chain begin(boolean failFast) {
@@ -128,6 +318,7 @@ public final class Chain {
             throw new MultiBusiness(errors);
         }
     }
+
     /**
      * 待优化 不知道该不该留
      */
@@ -145,6 +336,7 @@ public final class Chain {
         if (!alive) throw Business.of(code, msg);
         return this;
     }
+
     /**
      * 待优化 不知道该不该留
      */
@@ -153,6 +345,7 @@ public final class Chain {
         if (!alive) throw Business.of(code, String.format(msgFormat, args));
         return this;
     }
+
     /**
      * 待优化 不知道该不该留
      */
@@ -228,6 +421,54 @@ public final class Chain {
 
     public Chain isNull(Object obj, Consumer<Business.Fabricator> consumer) {
         return check(ObjectChecks.isNull(obj), consumer);
+    }
+
+    public Chain instanceOf(Object obj, Class<?> type) {
+        return check(ObjectChecks.instanceOf(obj, type));
+    }
+
+    public Chain instanceOf(Object obj, Class<?> type, ResponseCode code, String detail) {
+        return check(ObjectChecks.instanceOf(obj, type), code, detail);
+    }
+
+    public Chain instanceOf(Object obj, Class<?> type, ResponseCode code) {
+        return check(ObjectChecks.instanceOf(obj, type), code);
+    }
+
+    public Chain instanceOf(Object obj, Class<?> type, Consumer<Business.Fabricator> consumer) {
+        return check(ObjectChecks.instanceOf(obj, type), consumer);
+    }
+
+    public Chain notInstanceOf(Object obj, Class<?> type) {
+        return check(ObjectChecks.notInstanceOf(obj, type));
+    }
+
+    public Chain notInstanceOf(Object obj, Class<?> type, ResponseCode code, String detail) {
+        return check(ObjectChecks.notInstanceOf(obj, type), code, detail);
+    }
+
+    public Chain notInstanceOf(Object obj, Class<?> type, ResponseCode code) {
+        return check(ObjectChecks.notInstanceOf(obj, type), code);
+    }
+
+    public Chain notInstanceOf(Object obj, Class<?> type, Consumer<Business.Fabricator> consumer) {
+        return check(ObjectChecks.notInstanceOf(obj, type), consumer);
+    }
+
+    public Chain allNotNull(Object... objs) {
+        return check(ObjectChecks.allNotNull(objs));
+    }
+
+    public Chain allNotNull(ResponseCode code, Object... objs) {
+        return check(ObjectChecks.allNotNull(objs), code);
+    }
+
+    public Chain allNotNull(ResponseCode code, String detail, Object... objs) {
+        return check(ObjectChecks.allNotNull(objs), code, detail);
+    }
+
+    public Chain allNotNull(Consumer<Business.Fabricator> consumer, Object... objs) {
+        return check(ObjectChecks.allNotNull(objs), consumer);
     }
 
     // ==================== 布尔校验 (From BooleanChain) ====================
@@ -434,6 +675,214 @@ public final class Chain {
         return check(StringChecks.endsWith(str, suffix), consumer);
     }
 
+    public Chain contains(String str, String substring) {
+        return check(StringChecks.contains(str, substring));
+    }
+
+    public Chain contains(String str, String substring, ResponseCode code, String detail) {
+        return check(StringChecks.contains(str, substring), code, detail);
+    }
+
+    public Chain contains(String str, String substring, ResponseCode code) {
+        return check(StringChecks.contains(str, substring), code);
+    }
+
+    public Chain contains(String str, String substring, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.contains(str, substring), consumer);
+    }
+
+    public Chain notContains(String str, String substring) {
+        return check(StringChecks.notContains(str, substring));
+    }
+
+    public Chain notContains(String str, String substring, ResponseCode code, String detail) {
+        return check(StringChecks.notContains(str, substring), code, detail);
+    }
+
+    public Chain notContains(String str, String substring, ResponseCode code) {
+        return check(StringChecks.notContains(str, substring), code);
+    }
+
+    public Chain notContains(String str, String substring, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.notContains(str, substring), consumer);
+    }
+
+    public Chain lengthMin(String str, int min) {
+        return check(StringChecks.lengthMin(str, min));
+    }
+
+    public Chain lengthMin(String str, int min, ResponseCode code, String detail) {
+        return check(StringChecks.lengthMin(str, min), code, detail);
+    }
+
+    public Chain lengthMin(String str, int min, ResponseCode code) {
+        return check(StringChecks.lengthMin(str, min), code);
+    }
+
+    public Chain lengthMin(String str, int min, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.lengthMin(str, min), consumer);
+    }
+
+    public Chain lengthMax(String str, int max) {
+        return check(StringChecks.lengthMax(str, max));
+    }
+
+    public Chain lengthMax(String str, int max, ResponseCode code, String detail) {
+        return check(StringChecks.lengthMax(str, max), code, detail);
+    }
+
+    public Chain lengthMax(String str, int max, ResponseCode code) {
+        return check(StringChecks.lengthMax(str, max), code);
+    }
+
+    public Chain lengthMax(String str, int max, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.lengthMax(str, max), consumer);
+    }
+
+    public Chain isNumeric(String str) {
+        return check(StringChecks.isNumeric(str));
+    }
+
+    public Chain isNumeric(String str, ResponseCode code, String detail) {
+        return check(StringChecks.isNumeric(str), code, detail);
+    }
+
+    public Chain isNumeric(String str, ResponseCode code) {
+        return check(StringChecks.isNumeric(str), code);
+    }
+
+    public Chain isNumeric(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.isNumeric(str), consumer);
+    }
+
+    public Chain isAlpha(String str) {
+        return check(StringChecks.isAlpha(str));
+    }
+
+    public Chain isAlpha(String str, ResponseCode code, String detail) {
+        return check(StringChecks.isAlpha(str), code, detail);
+    }
+
+    public Chain isAlpha(String str, ResponseCode code) {
+        return check(StringChecks.isAlpha(str), code);
+    }
+
+    public Chain isAlpha(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.isAlpha(str), consumer);
+    }
+
+    public Chain isAlphanumeric(String str) {
+        return check(StringChecks.isAlphanumeric(str));
+    }
+
+    public Chain isAlphanumeric(String str, ResponseCode code, String detail) {
+        return check(StringChecks.isAlphanumeric(str), code, detail);
+    }
+
+    public Chain isAlphanumeric(String str, ResponseCode code) {
+        return check(StringChecks.isAlphanumeric(str), code);
+    }
+
+    public Chain isAlphanumeric(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.isAlphanumeric(str), consumer);
+    }
+
+    public Chain isLowerCase(String str) {
+        return check(StringChecks.isLowerCase(str));
+    }
+
+    public Chain isLowerCase(String str, ResponseCode code, String detail) {
+        return check(StringChecks.isLowerCase(str), code, detail);
+    }
+
+    public Chain isLowerCase(String str, ResponseCode code) {
+        return check(StringChecks.isLowerCase(str), code);
+    }
+
+    public Chain isLowerCase(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.isLowerCase(str), consumer);
+    }
+
+    public Chain isUpperCase(String str) {
+        return check(StringChecks.isUpperCase(str));
+    }
+
+    public Chain isUpperCase(String str, ResponseCode code, String detail) {
+        return check(StringChecks.isUpperCase(str), code, detail);
+    }
+
+    public Chain isUpperCase(String str, ResponseCode code) {
+        return check(StringChecks.isUpperCase(str), code);
+    }
+
+    public Chain isUpperCase(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.isUpperCase(str), consumer);
+    }
+
+    public Chain mobile(String str) {
+        return check(StringChecks.mobile(str));
+    }
+
+    public Chain mobile(String str, ResponseCode code, String detail) {
+        return check(StringChecks.mobile(str), code, detail);
+    }
+
+    public Chain mobile(String str, ResponseCode code) {
+        return check(StringChecks.mobile(str), code);
+    }
+
+    public Chain mobile(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.mobile(str), consumer);
+    }
+
+    public Chain url(String str) {
+        return check(StringChecks.url(str));
+    }
+
+    public Chain url(String str, ResponseCode code, String detail) {
+        return check(StringChecks.url(str), code, detail);
+    }
+
+    public Chain url(String str, ResponseCode code) {
+        return check(StringChecks.url(str), code);
+    }
+
+    public Chain url(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.url(str), consumer);
+    }
+
+    public Chain ipAddress(String str) {
+        return check(StringChecks.ipAddress(str));
+    }
+
+    public Chain ipAddress(String str, ResponseCode code, String detail) {
+        return check(StringChecks.ipAddress(str), code, detail);
+    }
+
+    public Chain ipAddress(String str, ResponseCode code) {
+        return check(StringChecks.ipAddress(str), code);
+    }
+
+    public Chain ipAddress(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.ipAddress(str), consumer);
+    }
+
+    public Chain uuid(String str) {
+        return check(StringChecks.uuid(str));
+    }
+
+    public Chain uuid(String str, ResponseCode code, String detail) {
+        return check(StringChecks.uuid(str), code, detail);
+    }
+
+    public Chain uuid(String str, ResponseCode code) {
+        return check(StringChecks.uuid(str), code);
+    }
+
+    public Chain uuid(String str, Consumer<Business.Fabricator> consumer) {
+        return check(StringChecks.uuid(str), consumer);
+    }
+
     // ==================== 集合校验 (From CollectionChain) ====================
 
     public Chain notEmpty(Collection<?> col) {
@@ -520,6 +969,70 @@ public final class Chain {
     public Chain notContains(Collection<?> col, Object o, Consumer<Business.Fabricator> consumer) {
         if (shouldSkip()) return this;
         return check(CollectionChecks.notContains(col, o), consumer);
+    }
+
+    public Chain isEmpty(Collection<?> col) {
+        return check(CollectionChecks.isEmpty(col));
+    }
+
+    public Chain isEmpty(Collection<?> col, ResponseCode code, String detail) {
+        return check(CollectionChecks.isEmpty(col), code, detail);
+    }
+
+    public Chain isEmpty(Collection<?> col, ResponseCode code) {
+        return check(CollectionChecks.isEmpty(col), code);
+    }
+
+    public Chain isEmpty(Collection<?> col, Consumer<Business.Fabricator> consumer) {
+        return check(CollectionChecks.isEmpty(col), consumer);
+    }
+
+    public Chain hasNoNullElements(Collection<?> col) {
+        return check(CollectionChecks.hasNoNullElements(col));
+    }
+
+    public Chain hasNoNullElements(Collection<?> col, ResponseCode code, String detail) {
+        return check(CollectionChecks.hasNoNullElements(col), code, detail);
+    }
+
+    public Chain hasNoNullElements(Collection<?> col, ResponseCode code) {
+        return check(CollectionChecks.hasNoNullElements(col), code);
+    }
+
+    public Chain hasNoNullElements(Collection<?> col, Consumer<Business.Fabricator> consumer) {
+        return check(CollectionChecks.hasNoNullElements(col), consumer);
+    }
+
+    public <T> Chain allMatch(Collection<T> col, Predicate<T> predicate) {
+        return check(CollectionChecks.allMatch(col, predicate));
+    }
+
+    public <T> Chain allMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code, String detail) {
+        return check(CollectionChecks.allMatch(col, predicate), code, detail);
+    }
+
+    public <T> Chain allMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code) {
+        return check(CollectionChecks.allMatch(col, predicate), code);
+    }
+
+    public <T> Chain allMatch(Collection<T> col, Predicate<T> predicate, Consumer<Business.Fabricator> consumer) {
+        return check(CollectionChecks.allMatch(col, predicate), consumer);
+    }
+
+    public <T> Chain anyMatch(Collection<T> col, Predicate<T> predicate) {
+        return check(CollectionChecks.anyMatch(col, predicate));
+    }
+
+    public <T> Chain anyMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code, String detail) {
+        return check(CollectionChecks.anyMatch(col, predicate), code, detail);
+    }
+
+    public <T> Chain anyMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code) {
+        return check(CollectionChecks.anyMatch(col, predicate), code);
+    }
+
+    public <T> Chain anyMatch(Collection<T> col, Predicate<T> predicate, Consumer<Business.Fabricator> consumer) {
+        return check(CollectionChecks.anyMatch(col, predicate), consumer);
     }
 
     // ==================== 数组校验 (From ArrayChain) ====================
@@ -616,6 +1129,70 @@ public final class Chain {
         return check(ArrayChecks.notContains(array, o), consumer);
     }
 
+    public <T> Chain isEmpty(T[] array) {
+        return check(ArrayChecks.isEmpty(array));
+    }
+
+    public <T> Chain isEmpty(T[] array, ResponseCode code, String detail) {
+        return check(ArrayChecks.isEmpty(array), code, detail);
+    }
+
+    public <T> Chain isEmpty(T[] array, ResponseCode code) {
+        return check(ArrayChecks.isEmpty(array), code);
+    }
+
+    public <T> Chain isEmpty(T[] array, Consumer<Business.Fabricator> consumer) {
+        return check(ArrayChecks.isEmpty(array), consumer);
+    }
+
+    public <T> Chain hasNoNullElements(T[] array) {
+        return check(ArrayChecks.hasNoNullElements(array));
+    }
+
+    public <T> Chain hasNoNullElements(T[] array, ResponseCode code, String detail) {
+        return check(ArrayChecks.hasNoNullElements(array), code, detail);
+    }
+
+    public <T> Chain hasNoNullElements(T[] array, ResponseCode code) {
+        return check(ArrayChecks.hasNoNullElements(array), code);
+    }
+
+    public <T> Chain hasNoNullElements(T[] array, Consumer<Business.Fabricator> consumer) {
+        return check(ArrayChecks.hasNoNullElements(array), consumer);
+    }
+
+    public <T> Chain allMatch(T[] array, Predicate<T> predicate) {
+        return check(ArrayChecks.allMatch(array, predicate));
+    }
+
+    public <T> Chain allMatch(T[] array, Predicate<T> predicate, ResponseCode code, String detail) {
+        return check(ArrayChecks.allMatch(array, predicate), code, detail);
+    }
+
+    public <T> Chain allMatch(T[] array, Predicate<T> predicate, ResponseCode code) {
+        return check(ArrayChecks.allMatch(array, predicate), code);
+    }
+
+    public <T> Chain allMatch(T[] array, Predicate<T> predicate, Consumer<Business.Fabricator> consumer) {
+        return check(ArrayChecks.allMatch(array, predicate), consumer);
+    }
+
+    public <T> Chain anyMatch(T[] array, Predicate<T> predicate) {
+        return check(ArrayChecks.anyMatch(array, predicate));
+    }
+
+    public <T> Chain anyMatch(T[] array, Predicate<T> predicate, ResponseCode code, String detail) {
+        return check(ArrayChecks.anyMatch(array, predicate), code, detail);
+    }
+
+    public <T> Chain anyMatch(T[] array, Predicate<T> predicate, ResponseCode code) {
+        return check(ArrayChecks.anyMatch(array, predicate), code);
+    }
+
+    public <T> Chain anyMatch(T[] array, Predicate<T> predicate, Consumer<Business.Fabricator> consumer) {
+        return check(ArrayChecks.anyMatch(array, predicate), consumer);
+    }
+
     // ==================== 数值校验 (From NumberChain) ====================
 
     public Chain positive(Number value) {
@@ -706,6 +1283,150 @@ public final class Chain {
         return check(NumberChecks.nonNegative(value), consumer);
     }
 
+    public <T extends Number & Comparable<T>> Chain greaterThan(T value, T threshold) {
+        return check(NumberChecks.greaterThan(value, threshold));
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterThan(T value, T threshold, ResponseCode code, String detail) {
+        return check(NumberChecks.greaterThan(value, threshold), code, detail);
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterThan(T value, T threshold, ResponseCode code) {
+        return check(NumberChecks.greaterThan(value, threshold), code);
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterThan(T value, T threshold, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.greaterThan(value, threshold), consumer);
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterOrEqual(T value, T threshold) {
+        return check(NumberChecks.greaterOrEqual(value, threshold));
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterOrEqual(T value, T threshold, ResponseCode code, String detail) {
+        return check(NumberChecks.greaterOrEqual(value, threshold), code, detail);
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterOrEqual(T value, T threshold, ResponseCode code) {
+        return check(NumberChecks.greaterOrEqual(value, threshold), code);
+    }
+
+    public <T extends Number & Comparable<T>> Chain greaterOrEqual(T value, T threshold, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.greaterOrEqual(value, threshold), consumer);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessThan(T value, T threshold) {
+        return check(NumberChecks.lessThan(value, threshold));
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessThan(T value, T threshold, ResponseCode code, String detail) {
+        return check(NumberChecks.lessThan(value, threshold), code, detail);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessThan(T value, T threshold, ResponseCode code) {
+        return check(NumberChecks.lessThan(value, threshold), code);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessThan(T value, T threshold, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.lessThan(value, threshold), consumer);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessOrEqual(T value, T threshold) {
+        return check(NumberChecks.lessOrEqual(value, threshold));
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessOrEqual(T value, T threshold, ResponseCode code, String detail) {
+        return check(NumberChecks.lessOrEqual(value, threshold), code, detail);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessOrEqual(T value, T threshold, ResponseCode code) {
+        return check(NumberChecks.lessOrEqual(value, threshold), code);
+    }
+
+    public <T extends Number & Comparable<T>> Chain lessOrEqual(T value, T threshold, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.lessOrEqual(value, threshold), consumer);
+    }
+
+    public Chain notZero(Number value) {
+        return check(NumberChecks.notZero(value));
+    }
+
+    public Chain notZero(Number value, ResponseCode code, String detail) {
+        return check(NumberChecks.notZero(value), code, detail);
+    }
+
+    public Chain notZero(Number value, ResponseCode code) {
+        return check(NumberChecks.notZero(value), code);
+    }
+
+    public Chain notZero(Number value, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.notZero(value), consumer);
+    }
+
+    public Chain isZero(Number value) {
+        return check(NumberChecks.isZero(value));
+    }
+
+    public Chain isZero(Number value, ResponseCode code, String detail) {
+        return check(NumberChecks.isZero(value), code, detail);
+    }
+
+    public Chain isZero(Number value, ResponseCode code) {
+        return check(NumberChecks.isZero(value), code);
+    }
+
+    public Chain isZero(Number value, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.isZero(value), consumer);
+    }
+
+    public Chain negative(Number value) {
+        return check(NumberChecks.negative(value));
+    }
+
+    public Chain negative(Number value, ResponseCode code, String detail) {
+        return check(NumberChecks.negative(value), code, detail);
+    }
+
+    public Chain negative(Number value, ResponseCode code) {
+        return check(NumberChecks.negative(value), code);
+    }
+
+    public Chain negative(Number value, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.negative(value), consumer);
+    }
+
+    public Chain multipleOf(Number value, Number divisor) {
+        return check(NumberChecks.multipleOf(value, divisor));
+    }
+
+    public Chain multipleOf(Number value, Number divisor, ResponseCode code, String detail) {
+        return check(NumberChecks.multipleOf(value, divisor), code, detail);
+    }
+
+    public Chain multipleOf(Number value, Number divisor, ResponseCode code) {
+        return check(NumberChecks.multipleOf(value, divisor), code);
+    }
+
+    public Chain multipleOf(Number value, Number divisor, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.multipleOf(value, divisor), consumer);
+    }
+
+    public Chain decimalScale(BigDecimal value, int scale) {
+        return check(NumberChecks.decimalScale(value, scale));
+    }
+
+    public Chain decimalScale(BigDecimal value, int scale, ResponseCode code, String detail) {
+        return check(NumberChecks.decimalScale(value, scale), code, detail);
+    }
+
+    public Chain decimalScale(BigDecimal value, int scale, ResponseCode code) {
+        return check(NumberChecks.decimalScale(value, scale), code);
+    }
+
+    public Chain decimalScale(BigDecimal value, int scale, Consumer<Business.Fabricator> consumer) {
+        return check(NumberChecks.decimalScale(value, scale), consumer);
+    }
+
     // ==================== 日期校验 (From DateChain) ====================
 
     public Chain after(Date date1, Date date2) {
@@ -740,26 +1461,302 @@ public final class Chain {
         return check(DateChecks.before(date1, date2), consumer);
     }
 
+    // Generic Comparable Time API methods
+
+    public <T extends Comparable<T>> Chain after(T t1, T t2) {
+        return check(DateChecks.after(t1, t2));
+    }
+
+    public <T extends Comparable<T>> Chain after(T t1, T t2, ResponseCode code, String detail) {
+        return check(DateChecks.after(t1, t2), code, detail);
+    }
+
+    public <T extends Comparable<T>> Chain after(T t1, T t2, ResponseCode code) {
+        return check(DateChecks.after(t1, t2), code);
+    }
+
+    public <T extends Comparable<T>> Chain after(T t1, T t2, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.after(t1, t2), consumer);
+    }
+
+    public <T extends Comparable<T>> Chain afterOrEqual(T t1, T t2) {
+        return check(DateChecks.afterOrEqual(t1, t2));
+    }
+
+    public <T extends Comparable<T>> Chain afterOrEqual(T t1, T t2, ResponseCode code, String detail) {
+        return check(DateChecks.afterOrEqual(t1, t2), code, detail);
+    }
+
+    public <T extends Comparable<T>> Chain afterOrEqual(T t1, T t2, ResponseCode code) {
+        return check(DateChecks.afterOrEqual(t1, t2), code);
+    }
+
+    public <T extends Comparable<T>> Chain afterOrEqual(T t1, T t2, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.afterOrEqual(t1, t2), consumer);
+    }
+
+    public <T extends Comparable<T>> Chain before(T t1, T t2) {
+        return check(DateChecks.before(t1, t2));
+    }
+
+    public <T extends Comparable<T>> Chain before(T t1, T t2, ResponseCode code, String detail) {
+        return check(DateChecks.before(t1, t2), code, detail);
+    }
+
+    public <T extends Comparable<T>> Chain before(T t1, T t2, ResponseCode code) {
+        return check(DateChecks.before(t1, t2), code);
+    }
+
+    public <T extends Comparable<T>> Chain before(T t1, T t2, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.before(t1, t2), consumer);
+    }
+
+    public <T extends Comparable<T>> Chain beforeOrEqual(T t1, T t2) {
+        return check(DateChecks.beforeOrEqual(t1, t2));
+    }
+
+    public <T extends Comparable<T>> Chain beforeOrEqual(T t1, T t2, ResponseCode code, String detail) {
+        return check(DateChecks.beforeOrEqual(t1, t2), code, detail);
+    }
+
+    public <T extends Comparable<T>> Chain beforeOrEqual(T t1, T t2, ResponseCode code) {
+        return check(DateChecks.beforeOrEqual(t1, t2), code);
+    }
+
+    public <T extends Comparable<T>> Chain beforeOrEqual(T t1, T t2, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.beforeOrEqual(t1, t2), consumer);
+    }
+
+    public <T extends Comparable<T>> Chain between(T value, T start, T end) {
+        return check(DateChecks.between(value, start, end));
+    }
+
+    public <T extends Comparable<T>> Chain between(T value, T start, T end, ResponseCode code, String detail) {
+        return check(DateChecks.between(value, start, end), code, detail);
+    }
+
+    public <T extends Comparable<T>> Chain between(T value, T start, T end, ResponseCode code) {
+        return check(DateChecks.between(value, start, end), code);
+    }
+
+    public <T extends Comparable<T>> Chain between(T value, T start, T end, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.between(value, start, end), consumer);
+    }
+
+    // isPast / isFuture
+
+    public Chain isPast(Date date) {
+        return check(DateChecks.isPast(date));
+    }
+
+    public Chain isPast(Date date, ResponseCode code) {
+        return check(DateChecks.isPast(date), code);
+    }
+
+    public Chain isPast(Date date, ResponseCode code, String detail) {
+        return check(DateChecks.isPast(date), code, detail);
+    }
+
+    public Chain isPast(Date date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isPast(date), consumer);
+    }
+
+    public Chain isFuture(Date date) {
+        return check(DateChecks.isFuture(date));
+    }
+
+    public Chain isFuture(Date date, ResponseCode code) {
+        return check(DateChecks.isFuture(date), code);
+    }
+
+    public Chain isFuture(Date date, ResponseCode code, String detail) {
+        return check(DateChecks.isFuture(date), code, detail);
+    }
+
+    public Chain isFuture(Date date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isFuture(date), consumer);
+    }
+
+    public Chain isPast(ChronoLocalDate date) {
+        return check(DateChecks.isPast(date));
+    }
+
+    public Chain isPast(ChronoLocalDate date, ResponseCode code) {
+        return check(DateChecks.isPast(date), code);
+    }
+
+    public Chain isPast(ChronoLocalDate date, ResponseCode code, String detail) {
+        return check(DateChecks.isPast(date), code, detail);
+    }
+
+    public Chain isPast(ChronoLocalDate date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isPast(date), consumer);
+    }
+
+    public Chain isFuture(ChronoLocalDate date) {
+        return check(DateChecks.isFuture(date));
+    }
+
+    public Chain isFuture(ChronoLocalDate date, ResponseCode code) {
+        return check(DateChecks.isFuture(date), code);
+    }
+
+    public Chain isFuture(ChronoLocalDate date, ResponseCode code, String detail) {
+        return check(DateChecks.isFuture(date), code, detail);
+    }
+
+    public Chain isFuture(ChronoLocalDate date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isFuture(date), consumer);
+    }
+
+    public Chain isPast(ChronoLocalDateTime<?> date) {
+        return check(DateChecks.isPast(date));
+    }
+
+    public Chain isPast(ChronoLocalDateTime<?> date, ResponseCode code) {
+        return check(DateChecks.isPast(date), code);
+    }
+
+    public Chain isPast(ChronoLocalDateTime<?> date, ResponseCode code, String detail) {
+        return check(DateChecks.isPast(date), code, detail);
+    }
+
+    public Chain isPast(ChronoLocalDateTime<?> date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isPast(date), consumer);
+    }
+
+    public Chain isFuture(ChronoLocalDateTime<?> date) {
+        return check(DateChecks.isFuture(date));
+    }
+
+    public Chain isFuture(ChronoLocalDateTime<?> date, ResponseCode code) {
+        return check(DateChecks.isFuture(date), code);
+    }
+
+    public Chain isFuture(ChronoLocalDateTime<?> date, ResponseCode code, String detail) {
+        return check(DateChecks.isFuture(date), code, detail);
+    }
+
+    public Chain isFuture(ChronoLocalDateTime<?> date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isFuture(date), consumer);
+    }
+
+    public Chain isPast(Instant date) {
+        return check(DateChecks.isPast(date));
+    }
+
+    public Chain isPast(Instant date, ResponseCode code) {
+        return check(DateChecks.isPast(date), code);
+    }
+
+    public Chain isPast(Instant date, ResponseCode code, String detail) {
+        return check(DateChecks.isPast(date), code, detail);
+    }
+
+    public Chain isPast(Instant date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isPast(date), consumer);
+    }
+
+    public Chain isFuture(Instant date) {
+        return check(DateChecks.isFuture(date));
+    }
+
+    public Chain isFuture(Instant date, ResponseCode code) {
+        return check(DateChecks.isFuture(date), code);
+    }
+
+    public Chain isFuture(Instant date, ResponseCode code, String detail) {
+        return check(DateChecks.isFuture(date), code, detail);
+    }
+
+    public Chain isFuture(Instant date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isFuture(date), consumer);
+    }
+
+    public Chain isPast(ChronoZonedDateTime<?> date) {
+        return check(DateChecks.isPast(date));
+    }
+
+    public Chain isPast(ChronoZonedDateTime<?> date, ResponseCode code) {
+        return check(DateChecks.isPast(date), code);
+    }
+
+    public Chain isPast(ChronoZonedDateTime<?> date, ResponseCode code, String detail) {
+        return check(DateChecks.isPast(date), code, detail);
+    }
+
+    public Chain isPast(ChronoZonedDateTime<?> date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isPast(date), consumer);
+    }
+
+    public Chain isFuture(ChronoZonedDateTime<?> date) {
+        return check(DateChecks.isFuture(date));
+    }
+
+    public Chain isFuture(ChronoZonedDateTime<?> date, ResponseCode code) {
+        return check(DateChecks.isFuture(date), code);
+    }
+
+    public Chain isFuture(ChronoZonedDateTime<?> date, ResponseCode code, String detail) {
+        return check(DateChecks.isFuture(date), code, detail);
+    }
+
+    public Chain isFuture(ChronoZonedDateTime<?> date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isFuture(date), consumer);
+    }
+
+    public Chain isToday(LocalDate date) {
+        return check(DateChecks.isToday(date));
+    }
+
+    public Chain isToday(LocalDate date, ResponseCode code) {
+        return check(DateChecks.isToday(date), code);
+    }
+
+    public Chain isToday(LocalDate date, ResponseCode code, String detail) {
+        return check(DateChecks.isToday(date), code, detail);
+    }
+
+    public Chain isToday(LocalDate date, Consumer<Business.Fabricator> consumer) {
+        return check(DateChecks.isToday(date), consumer);
+    }
+
     // ==================== 枚举校验 (From EnumChain) ====================
 
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value) {
         if (!alive) return this;
-        return check(EnumChecks.isValidEnum(enumType, value));
+        return check(EnumChecks.enumValue(enumType, value));
     }
 
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value, ResponseCode code, String detail) {
         if (!alive) return this;
-        return check(EnumChecks.isValidEnum(enumType, value), code, detail);
+        return check(EnumChecks.enumValue(enumType, value), code, detail);
     }
 
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value, ResponseCode code) {
         if (shouldSkip()) return this;
-        return check(EnumChecks.isValidEnum(enumType, value), code);
+        return check(EnumChecks.enumValue(enumType, value), code);
     }
 
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value, Consumer<Business.Fabricator> consumer) {
         if (shouldSkip()) return this;
-        return check(EnumChecks.isValidEnum(enumType, value), consumer);
+        return check(EnumChecks.enumValue(enumType, value), consumer);
+    }
+
+    public <E extends Enum<E>> Chain enumConstant(E value, Class<E> type) {
+        return check(EnumChecks.enumConstant(value, type));
+    }
+
+    public <E extends Enum<E>> Chain enumConstant(E value, Class<E> type, ResponseCode code, String detail) {
+        return check(EnumChecks.enumConstant(value, type), code, detail);
+    }
+
+    public <E extends Enum<E>> Chain enumConstant(E value, Class<E> type, ResponseCode code) {
+        return check(EnumChecks.enumConstant(value, type), code);
+    }
+
+    public <E extends Enum<E>> Chain enumConstant(E value, Class<E> type, Consumer<Business.Fabricator> consumer) {
+        return check(EnumChecks.enumConstant(value, type), consumer);
     }
 
     // ==================== 对象同一性校验 (From IdentityChain) ====================

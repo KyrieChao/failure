@@ -41,4 +41,82 @@ public final class StringChecks {
     public static boolean endsWith(String str, String suffix) {
         return str != null && str.endsWith(suffix);
     }
+
+    public static boolean contains(String str, String substring) {
+        return str != null && substring != null && str.contains(substring);
+    }
+
+    public static boolean notContains(String str, String substring) {
+        return str == null || substring == null || !str.contains(substring);
+    }
+
+    public static boolean lengthMin(String str, int min) {
+        return str != null && str.length() >= min;
+    }
+
+    public static boolean lengthMax(String str, int max) {
+        return str != null && str.length() <= max;
+    }
+
+    public static boolean isNumeric(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (!Character.isDigit(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isAlpha(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (!Character.isLetter(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isAlphanumeric(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (!Character.isLetterOrDigit(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isLowerCase(String str) {
+        return str != null && str.equals(str.toLowerCase());
+    }
+
+    public static boolean isUpperCase(String str) {
+        return str != null && str.equals(str.toUpperCase());
+    }
+
+    public static boolean mobile(String str) {
+        return str != null && str.matches("^1[3-9]\\d{9}$");
+    }
+
+    public static boolean url(String str) {
+        // Simple regex for URL validation
+        return str != null && str.matches("^(http|https)://.*$");
+    }
+
+    public static boolean ipAddress(String str) {
+        // Simple regex for IPv4
+        return str != null && str.matches("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+    }
+
+    public static boolean uuid(String str) {
+        return str != null && str.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+    }
 }
