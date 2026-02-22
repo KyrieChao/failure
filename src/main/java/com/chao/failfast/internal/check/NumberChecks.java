@@ -5,7 +5,8 @@ package com.chao.failfast.internal.check;
  */
 public final class NumberChecks {
 
-    private NumberChecks() {}
+    private NumberChecks() {
+    }
 
     public static boolean positive(Number value) {
         return value != null && value.doubleValue() > 0;

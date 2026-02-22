@@ -20,6 +20,6 @@ public final class EnumChecks {
     }
 
     public static <E extends Enum<E>> boolean enumConstant(E value, Class<E> type) {
-        return value != null && type != null && type.isInstance(value);
+        return type != null && type.isInstance(value);
     }
 }
