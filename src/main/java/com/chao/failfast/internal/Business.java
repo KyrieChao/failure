@@ -20,7 +20,7 @@ public class Business extends RuntimeException implements Serializable {
     private final ResponseCode responseCode;
 
     /**
-     * 错误详细描述信息
+     * 错误详细描述信息 覆盖父类description
      */
     private final String detail;
 
@@ -47,10 +47,10 @@ public class Business extends RuntimeException implements Serializable {
     /**
      * 构造函数
      *
-     * @param responseCode     响应码枚举
-     * @param detail   详细错误描述
-     * @param method   发生异常的方法名
-     * @param location 发生异常的位置信息
+     * @param responseCode 响应码枚举
+     * @param detail       详细错误描述
+     * @param method       发生异常的方法名
+     * @param location     发生异常的位置信息
      */
     Business(ResponseCode responseCode, String detail, String method, String location, HttpStatus httpStatus) {
         super(responseCode != null ? responseCode.getMessage() : "Unknown error");
@@ -219,9 +219,7 @@ public class Business extends RuntimeException implements Serializable {
             // 设置默认详细描述
             if (detail == null) {
                 detail = code.getDescription();
-                if (detail == null) {
-                    detail = code.getMessage();
-                }
+                if (detail == null) detail = code.getMessage();
             }
             // 根据上下文自动填充方法和位置信息
             FailureContext ctx = Ex.getContext();

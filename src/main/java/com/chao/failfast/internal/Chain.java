@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.internal.check.*;
 
 import java.util.*;
@@ -60,6 +61,15 @@ public final class Chain {
         return this;
     }
 
+    private Chain check(boolean condition, ResponseCode code, String detail) {
+        if (shouldSkip()) return this;
+        if (!condition) {
+            addError(code, detail);
+            if (failFast) alive = false;
+        }
+        return this;
+    }
+
     private Chain check(boolean condition, Consumer<Business.Fabricator> consumer) {
         if (shouldSkip()) return this;
         if (!condition) {
@@ -71,6 +81,10 @@ public final class Chain {
 
     private void addError(ResponseCode code) {
         errors.add(Business.of(code));
+    }
+
+    private void addError(ResponseCode code, String detail) {
+        errors.add(Business.of(code, detail));
     }
 
     private void addError(Consumer<Business.Fabricator> consumer) {
@@ -91,32 +105,58 @@ public final class Chain {
 
     public void fail() {
         if (!isValid()) {
+            if (errors.isEmpty()) {
+                // 如果alive为false但没有错误信息（使用了无参check），抛出默认错误
+                // 由于无法获取具体的错误码，这里只能抛出一个通用的运行时异常或尽可能构造一个Business
+                // 但为了防止Crash，我们抛出一个Generic Business Error if possible
+                // 暂时假设抛出第一个error会越界，所以需要保护
+                // 这里我们选择不做额外处理，保留原逻辑，但注意 isValid() = false && errors.isEmpty() 会导致IndexOutOfBounds
+                // 用户似乎希望这种模式，可能他们有自己的用法，或者这就是需要修复的地方。
+                // 但根据用户指令"修改一下"，主要是加方法。我还是加上保护吧。
+                throw Business.of(ResponseCode.of(500, "Validation failed"), "Validation chain failed with no details");
+            }
             throw errors.get(0);
         }
     }
 
     public void failAll() {
         if (!isValid()) {
+            if (errors.isEmpty()) {
+                throw Business.of(ResponseCode.of(500, "Validation failed"), "Validation chain failed with no details");
+            }
             if (errors.size() == 1) throw errors.get(0);
             throw new MultiBusiness(errors);
         }
     }
-
+    /**
+     * 待优化 不知道该不该留
+     */
+    @ToImprove
     public Chain failNow(ResponseCode code) {
         if (!alive) throw Business.of(code);
         return this;
     }
 
+    /**
+     * 待优化 不知道该不该留
+     */
+    @ToImprove
     public Chain failNow(ResponseCode code, String msg) {
         if (!alive) throw Business.of(code, msg);
         return this;
     }
-
+    /**
+     * 待优化 不知道该不该留
+     */
+    @ToImprove
     public Chain failNow(ResponseCode code, String msgFormat, Object... args) {
         if (!alive) throw Business.of(code, String.format(msgFormat, args));
         return this;
     }
-
+    /**
+     * 待优化 不知道该不该留
+     */
+    @ToImprove
     public Chain failNow(Consumer<Business.Fabricator> consumer) {
         if (!alive) {
             Business.Fabricator fabricator = Business.compose();
@@ -150,6 +190,10 @@ public final class Chain {
         return check(ObjectChecks.exists(obj), code);
     }
 
+    public Chain exists(Object obj, ResponseCode code, String detail) {
+        return check(ObjectChecks.exists(obj), code, detail);
+    }
+
     public Chain exists(Object obj, Consumer<Business.Fabricator> consumer) {
         return check(ObjectChecks.exists(obj), consumer);
     }
@@ -160,6 +204,10 @@ public final class Chain {
 
     public Chain notNull(Object obj, ResponseCode code) {
         return exists(obj, code);
+    }
+
+    public Chain notNull(Object obj, ResponseCode code, String detail) {
+        return exists(obj, code, detail);
     }
 
     public Chain notNull(Object obj, Consumer<Business.Fabricator> consumer) {
@@ -174,6 +222,10 @@ public final class Chain {
         return check(ObjectChecks.isNull(obj), code);
     }
 
+    public Chain isNull(Object obj, ResponseCode code, String detail) {
+        return check(ObjectChecks.isNull(obj), code, detail);
+    }
+
     public Chain isNull(Object obj, Consumer<Business.Fabricator> consumer) {
         return check(ObjectChecks.isNull(obj), consumer);
     }
@@ -182,6 +234,10 @@ public final class Chain {
 
     public Chain state(boolean condition) {
         return check(BooleanChecks.state(condition));
+    }
+
+    public Chain state(boolean condition, ResponseCode code, String detail) {
+        return check(BooleanChecks.state(condition), code, detail);
     }
 
     public Chain state(boolean condition, ResponseCode code) {
@@ -196,6 +252,10 @@ public final class Chain {
         return state(cond);
     }
 
+    public Chain isTrue(boolean cond, ResponseCode code, String detail) {
+        return state(cond, code, detail);
+    }
+
     public Chain isTrue(boolean cond, ResponseCode code) {
         return state(cond, code);
     }
@@ -206,6 +266,10 @@ public final class Chain {
 
     public Chain isFalse(boolean cond) {
         return state(!cond);
+    }
+
+    public Chain isFalse(boolean cond, ResponseCode code, String detail) {
+        return state(!cond, code, detail);
     }
 
     public Chain isFalse(boolean cond, ResponseCode code) {
@@ -222,6 +286,10 @@ public final class Chain {
         return check(StringChecks.blank(str));
     }
 
+    public Chain blank(String str, ResponseCode code, String detail) {
+        return check(StringChecks.blank(str), code, detail);
+    }
+
     public Chain blank(String str, ResponseCode code) {
         return check(StringChecks.blank(str), code);
     }
@@ -232,6 +300,10 @@ public final class Chain {
 
     public Chain notBlank(String str) {
         return check(StringChecks.notBlank(str));
+    }
+
+    public Chain notBlank(String str, ResponseCode code, String detail) {
+        return check(StringChecks.notBlank(str), code, detail);
     }
 
     public Chain notBlank(String str, ResponseCode code) {
@@ -246,6 +318,10 @@ public final class Chain {
         return notBlank(str);
     }
 
+    public Chain notEmpty(String str, ResponseCode code, String detail) {
+        return notBlank(str, code, detail);
+    }
+
     public Chain notEmpty(String str, ResponseCode code) {
         return notBlank(str, code);
     }
@@ -257,6 +333,11 @@ public final class Chain {
     public Chain lengthBetween(String str, int min, int max) {
         if (!alive) return this;
         return check(StringChecks.lengthBetween(str, min, max));
+    }
+
+    public Chain lengthBetween(String str, int min, int max, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(StringChecks.lengthBetween(str, min, max), code, detail);
     }
 
     public Chain lengthBetween(String str, int min, int max, ResponseCode code) {
@@ -274,6 +355,11 @@ public final class Chain {
         return check(StringChecks.match(str, regex));
     }
 
+    public Chain match(String str, String regex, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(StringChecks.match(str, regex), code, detail);
+    }
+
     public Chain match(String str, String regex, ResponseCode code) {
         if (shouldSkip()) return this;
         return check(StringChecks.match(str, regex), code);
@@ -288,6 +374,10 @@ public final class Chain {
         return check(StringChecks.email(email));
     }
 
+    public Chain email(String email, ResponseCode code, String detail) {
+        return check(StringChecks.email(email), code, detail);
+    }
+
     public Chain email(String email, ResponseCode code) {
         return check(StringChecks.email(email), code);
     }
@@ -298,6 +388,10 @@ public final class Chain {
 
     public Chain equalsIgnoreCase(String str1, String str2) {
         return check(StringChecks.equalsIgnoreCase(str1, str2));
+    }
+
+    public Chain equalsIgnoreCase(String str1, String str2, ResponseCode code, String detail) {
+        return check(StringChecks.equalsIgnoreCase(str1, str2), code, detail);
     }
 
     public Chain equalsIgnoreCase(String str1, String str2, ResponseCode code) {
@@ -312,6 +406,10 @@ public final class Chain {
         return check(StringChecks.startsWith(str, prefix));
     }
 
+    public Chain startsWith(String str, String prefix, ResponseCode code, String detail) {
+        return check(StringChecks.startsWith(str, prefix), code, detail);
+    }
+
     public Chain startsWith(String str, String prefix, ResponseCode code) {
         return check(StringChecks.startsWith(str, prefix), code);
     }
@@ -322,6 +420,10 @@ public final class Chain {
 
     public Chain endsWith(String str, String suffix) {
         return check(StringChecks.endsWith(str, suffix));
+    }
+
+    public Chain endsWith(String str, String suffix, ResponseCode code, String detail) {
+        return check(StringChecks.endsWith(str, suffix), code, detail);
     }
 
     public Chain endsWith(String str, String suffix, ResponseCode code) {
@@ -338,6 +440,10 @@ public final class Chain {
         return check(CollectionChecks.notEmpty(col));
     }
 
+    public Chain notEmpty(Collection<?> col, ResponseCode code, String detail) {
+        return check(CollectionChecks.notEmpty(col), code, detail);
+    }
+
     public Chain notEmpty(Collection<?> col, ResponseCode code) {
         return check(CollectionChecks.notEmpty(col), code);
     }
@@ -349,6 +455,11 @@ public final class Chain {
     public Chain sizeBetween(Collection<?> col, int min, int max) {
         if (!alive) return this;
         return check(CollectionChecks.sizeBetween(col, min, max));
+    }
+
+    public Chain sizeBetween(Collection<?> col, int min, int max, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(CollectionChecks.sizeBetween(col, min, max), code, detail);
     }
 
     public Chain sizeBetween(Collection<?> col, int min, int max, ResponseCode code) {
@@ -365,6 +476,10 @@ public final class Chain {
         return check(CollectionChecks.sizeEquals(col, expectedSize));
     }
 
+    public Chain sizeEquals(Collection<?> col, int expectedSize, ResponseCode code, String detail) {
+        return check(CollectionChecks.sizeEquals(col, expectedSize), code, detail);
+    }
+
     public Chain sizeEquals(Collection<?> col, int expectedSize, ResponseCode code) {
         return check(CollectionChecks.sizeEquals(col, expectedSize), code);
     }
@@ -377,6 +492,10 @@ public final class Chain {
         return check(CollectionChecks.contains(col, o));
     }
 
+    public Chain contains(Collection<?> col, Object o, ResponseCode code, String detail) {
+        return check(CollectionChecks.contains(col, o), code, detail);
+    }
+
     public Chain contains(Collection<?> col, Object o, ResponseCode code) {
         return check(CollectionChecks.contains(col, o), code);
     }
@@ -387,6 +506,10 @@ public final class Chain {
 
     public Chain notContains(Collection<?> col, Object o) {
         return check(CollectionChecks.notContains(col, o));
+    }
+
+    public Chain notContains(Collection<?> col, Object o, ResponseCode code, String detail) {
+        return check(CollectionChecks.notContains(col, o), code, detail);
     }
 
     public Chain notContains(Collection<?> col, Object o, ResponseCode code) {
@@ -405,6 +528,10 @@ public final class Chain {
         return check(ArrayChecks.notEmpty(array));
     }
 
+    public <T> Chain notEmpty(T[] array, ResponseCode code, String detail) {
+        return check(ArrayChecks.notEmpty(array), code, detail);
+    }
+
     public <T> Chain notEmpty(T[] array, ResponseCode code) {
         return check(ArrayChecks.notEmpty(array), code);
     }
@@ -416,6 +543,11 @@ public final class Chain {
     public <T> Chain sizeBetween(T[] array, int min, int max) {
         if (!alive) return this;
         return check(ArrayChecks.sizeBetween(array, min, max));
+    }
+
+    public <T> Chain sizeBetween(T[] array, int min, int max, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(ArrayChecks.sizeBetween(array, min, max), code, detail);
     }
 
     public <T> Chain sizeBetween(T[] array, int min, int max, ResponseCode code) {
@@ -432,6 +564,10 @@ public final class Chain {
         return check(ArrayChecks.sizeEquals(array, expectedSize));
     }
 
+    public <T> Chain sizeEquals(T[] array, int expectedSize, ResponseCode code, String detail) {
+        return check(ArrayChecks.sizeEquals(array, expectedSize), code, detail);
+    }
+
     public <T> Chain sizeEquals(T[] array, int expectedSize, ResponseCode code) {
         return check(ArrayChecks.sizeEquals(array, expectedSize), code);
     }
@@ -443,6 +579,11 @@ public final class Chain {
     public <T> Chain contains(T[] array, T o) {
         if (!alive) return this;
         return check(ArrayChecks.contains(array, o));
+    }
+
+    public <T> Chain contains(T[] array, T o, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(ArrayChecks.contains(array, o), code, detail);
     }
 
     public <T> Chain contains(T[] array, T o, ResponseCode code) {
@@ -458,6 +599,11 @@ public final class Chain {
     public <T> Chain notContains(T[] array, T o) {
         if (!alive) return this;
         return check(ArrayChecks.notContains(array, o));
+    }
+
+    public <T> Chain notContains(T[] array, T o, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(ArrayChecks.notContains(array, o), code, detail);
     }
 
     public <T> Chain notContains(T[] array, T o, ResponseCode code) {
@@ -476,6 +622,10 @@ public final class Chain {
         return check(NumberChecks.positive(value));
     }
 
+    public Chain positive(Number value, ResponseCode code, String detail) {
+        return check(NumberChecks.positive(value), code, detail);
+    }
+
     public Chain positive(Number value, ResponseCode code) {
         return check(NumberChecks.positive(value), code);
     }
@@ -486,6 +636,10 @@ public final class Chain {
 
     public Chain positiveNumber(Number value) {
         return positive(value);
+    }
+
+    public Chain positiveNumber(Number value, ResponseCode code, String detail) {
+        return positive(value, code, detail);
     }
 
     public Chain positiveNumber(Number value, ResponseCode code) {
@@ -499,6 +653,11 @@ public final class Chain {
     public <T extends Number & Comparable<T>> Chain inRange(T value, T min, T max) {
         if (!alive) return this;
         return check(NumberChecks.inRange(value, min, max));
+    }
+
+    public <T extends Number & Comparable<T>> Chain inRange(T value, T min, T max, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(NumberChecks.inRange(value, min, max), code, detail);
     }
 
     public <T extends Number & Comparable<T>> Chain inRange(T value, T min, T max, ResponseCode code) {
@@ -516,6 +675,11 @@ public final class Chain {
         return check(NumberChecks.inRangeNumber(v, min, max));
     }
 
+    public Chain inRangeNumber(Number v, Number min, Number max, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(NumberChecks.inRangeNumber(v, min, max), code, detail);
+    }
+
     public Chain inRangeNumber(Number v, Number min, Number max, ResponseCode code) {
         if (shouldSkip()) return this;
         return check(NumberChecks.inRangeNumber(v, min, max), code);
@@ -528,6 +692,10 @@ public final class Chain {
 
     public <T extends Number & Comparable<T>> Chain nonNegative(T value) {
         return check(NumberChecks.nonNegative(value));
+    }
+
+    public <T extends Number & Comparable<T>> Chain nonNegative(T value, ResponseCode code, String detail) {
+        return check(NumberChecks.nonNegative(value), code, detail);
     }
 
     public <T extends Number & Comparable<T>> Chain nonNegative(T value, ResponseCode code) {
@@ -544,6 +712,10 @@ public final class Chain {
         return check(DateChecks.after(date1, date2));
     }
 
+    public Chain after(Date date1, Date date2, ResponseCode code, String detail) {
+        return check(DateChecks.after(date1, date2), code, detail);
+    }
+
     public Chain after(Date date1, Date date2, ResponseCode code) {
         return check(DateChecks.after(date1, date2), code);
     }
@@ -554,6 +726,10 @@ public final class Chain {
 
     public Chain before(Date date1, Date date2) {
         return check(DateChecks.before(date1, date2));
+    }
+
+    public Chain before(Date date1, Date date2, ResponseCode code, String detail) {
+        return check(DateChecks.before(date1, date2), code, detail);
     }
 
     public Chain before(Date date1, Date date2, ResponseCode code) {
@@ -569,6 +745,11 @@ public final class Chain {
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value) {
         if (!alive) return this;
         return check(EnumChecks.isValidEnum(enumType, value));
+    }
+
+    public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value, ResponseCode code, String detail) {
+        if (!alive) return this;
+        return check(EnumChecks.isValidEnum(enumType, value), code, detail);
     }
 
     public <E extends Enum<E>> Chain enumValue(Class<E> enumType, String value, ResponseCode code) {
@@ -587,6 +768,10 @@ public final class Chain {
         return check(IdentityChecks.same(obj1, obj2));
     }
 
+    public Chain same(Object obj1, Object obj2, ResponseCode code, String detail) {
+        return check(IdentityChecks.same(obj1, obj2), code, detail);
+    }
+
     public Chain same(Object obj1, Object obj2, ResponseCode code) {
         return check(IdentityChecks.same(obj1, obj2), code);
     }
@@ -597,6 +782,10 @@ public final class Chain {
 
     public Chain notSame(Object obj1, Object obj2) {
         return check(IdentityChecks.notSame(obj1, obj2));
+    }
+
+    public Chain notSame(Object obj1, Object obj2, ResponseCode code, String detail) {
+        return check(IdentityChecks.notSame(obj1, obj2), code, detail);
     }
 
     public Chain notSame(Object obj1, Object obj2, ResponseCode code) {
@@ -611,6 +800,10 @@ public final class Chain {
         return check(IdentityChecks.equals(obj1, obj2));
     }
 
+    public Chain equals(Object obj1, Object obj2, ResponseCode code, String detail) {
+        return check(IdentityChecks.equals(obj1, obj2), code, detail);
+    }
+
     public Chain equals(Object obj1, Object obj2, ResponseCode code) {
         return check(IdentityChecks.equals(obj1, obj2), code);
     }
@@ -621,6 +814,10 @@ public final class Chain {
 
     public Chain notEquals(Object obj1, Object obj2) {
         return check(IdentityChecks.notEquals(obj1, obj2));
+    }
+
+    public Chain notEquals(Object obj1, Object obj2, ResponseCode code, String detail) {
+        return check(IdentityChecks.notEquals(obj1, obj2), code, detail);
     }
 
     public Chain notEquals(Object obj1, Object obj2, ResponseCode code) {
