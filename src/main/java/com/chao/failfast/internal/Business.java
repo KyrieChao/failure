@@ -53,7 +53,6 @@ public class Business extends RuntimeException implements Serializable {
      * @param location     发生异常的位置信息
      */
     Business(ResponseCode responseCode, String detail, String method, String location, HttpStatus httpStatus) {
-        super(responseCode != null ? responseCode.getMessage() : "Unknown error");
         this.responseCode = responseCode;
         this.detail = detail;
         this.method = method;
@@ -231,29 +230,6 @@ public class Business extends RuntimeException implements Serializable {
             HttpStatus status = (cfg != null) ? cfg.resolveHttpStatus(code.getCode()) : HttpStatus.INTERNAL_SERVER_ERROR;
             return new Business(code, detail, method, location, status);
         }
-    }
-
-    /**
-     * 重写堆栈跟踪填充方法
-     * 根据配置和错误级别决定是否生成堆栈跟踪信息
-     * 对于非5xx错误且未启用方法打印时，避免生成堆栈跟踪以提升性能
-     *
-     * @return Throwable对象本身或带有堆栈跟踪的super对象
-     */
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-        // code为空时使用默认行为
-        if (responseCode == null) return super.fillInStackTrace();
-        // 获取上下文配置
-        FailureContext ctx = Ex.getContext();
-        CodeMappingConfig cfg = ctx != null ? ctx.getCodeMappingConfig() : null;
-        boolean printMethod = ctx != null && ctx.isShadowTrace();
-        // 当启用方法打印或为5xx服务器错误时，生成堆栈跟踪
-        if (printMethod || (cfg != null && cfg.resolveHttpStatus(responseCode.getCode()).is5xxServerError())) {
-            return super.fillInStackTrace();
-        }
-        // 否则返回this，避免生成堆栈跟踪
-        return this;
     }
 
     /**

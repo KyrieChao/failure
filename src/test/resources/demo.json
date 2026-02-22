@@ -1,0 +1,90 @@
+{
+  "code": 200,
+  "message": "Success",
+  "description": "操作成功",
+  "timestamp": 1771645634982,
+  "data": {
+    "ok": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "Success"
+    },
+    "fail_code": {
+      "code": 40001,
+      "message": "参数错误",
+      "description": "参数错误",
+      "timestamp": 1771645634982
+    },
+    "ofNullable": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "ooo"
+    },
+    "map_length": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": 3
+    },
+    "flatMap_upper": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "OOO"
+    },
+    "peek_demo": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "ooo"
+    },
+    "peek_Error": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "ooo"
+    },
+    "filter": {
+      "code": 40001,
+      "message": "参数错误",
+      "description": "参数错误",
+      "timestamp": 1771645634982
+    },
+    "recover_value": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "默认值"
+    },
+    "recoverWith": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "从失败回复"
+    },
+    "combine": {
+      "code": 200,
+      "message": "Success",
+      "description": "操作成功",
+      "timestamp": 1771645634982,
+      "data": "Hello World"
+    },
+    "terminal_demo": {
+      "failNow_success": "正常值",
+      "failNow_success2": "正常值1",
+      "failNow_success3": "正常值2",
+      "failNow_success4": "正常值3",
+      "failNow_fail": "捕获到异常: 参数错误"
+    }
+  }
+}
