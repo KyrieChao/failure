@@ -5,8 +5,10 @@ import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.model.enums.TestResponseCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.chao.failfast.internal.Ex;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,12 @@ import static org.mockito.Mockito.when;
 class DefaultExceptionHandlerTest {
 
     private final DefaultExceptionHandler handler = new DefaultExceptionHandler();
+
+    @BeforeEach
+    void setUp() {
+        // 清除上下文，避免其他测试的副作用影响当前测试
+        Ex.setContext(null);
+    }
 
     @Test
     @DisplayName("处理 Business 异常应返回对应状态码和响应体")
