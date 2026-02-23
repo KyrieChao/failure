@@ -79,7 +79,7 @@ public class Business extends RuntimeException implements Serializable {
      * @return 构建好的Business异常对象
      */
     public static Business of(ResponseCode code) {
-        return compose().code(code).materialize();
+        return compose().responseCode(code).materialize();
     }
 
     /**
@@ -90,7 +90,7 @@ public class Business extends RuntimeException implements Serializable {
      * @return 构建好的Business异常对象
      */
     public static Business of(ResponseCode code, String detail) {
-        return compose().code(code).detail(detail).materialize();
+        return compose().responseCode(code).detail(detail).materialize();
     }
 
     /**
@@ -102,7 +102,7 @@ public class Business extends RuntimeException implements Serializable {
      * @return 构建好的Business异常对象
      */
     public static Business of(ResponseCode code, String detail, Object... args) {
-        return compose().code(code).detail(String.format(detail, args)).materialize();
+        return compose().responseCode(code).detail(String.format(detail, args)).materialize();
     }
 
     /**
@@ -115,7 +115,7 @@ public class Business extends RuntimeException implements Serializable {
      * @return 构建好的Business异常对象
      */
     public static Business of(ResponseCode code, String detail, String method, String location) {
-        return compose().code(code).detail(detail).method(method).location(location).materialize();
+        return compose().responseCode(code).detail(detail).method(method).location(location).materialize();
     }
 
     private static ResponseCode simpleCode(int code, String message) {
@@ -139,7 +139,7 @@ public class Business extends RuntimeException implements Serializable {
         /**
          * 响应码
          */
-        private ResponseCode code;
+        private ResponseCode responseCode;
 
         /**
          * 详细描述
@@ -167,8 +167,8 @@ public class Business extends RuntimeException implements Serializable {
          * @param code 响应码枚举
          * @return 当前构建器实例，支持链式调用
          */
-        public Fabricator code(ResponseCode code) {
-            this.code = code;
+        public Fabricator responseCode(ResponseCode code) {
+            this.responseCode = code;
             return this;
         }
 
@@ -214,11 +214,11 @@ public class Business extends RuntimeException implements Serializable {
          */
         public Business materialize() {
             // 校验必要参数
-            if (code == null) throw new IllegalArgumentException("code 不能为空");
+            if (responseCode == null) throw new IllegalArgumentException("code 不能为空");
             // 设置默认详细描述
             if (detail == null) {
-                detail = code.getDescription();
-                if (detail == null) detail = code.getMessage();
+                detail = responseCode.getDescription();
+                if (detail == null) detail = responseCode.getMessage();
             }
             // 根据上下文自动填充方法和位置信息
             FailureContext ctx = Ex.getContext();
@@ -227,8 +227,8 @@ public class Business extends RuntimeException implements Serializable {
                 if (location == null) location = Ex.location();
             }
             CodeMappingConfig cfg = Ex.getContext() != null ? Ex.getContext().getCodeMappingConfig() : null;
-            HttpStatus status = (cfg != null) ? cfg.resolveHttpStatus(code.getCode()) : HttpStatus.INTERNAL_SERVER_ERROR;
-            return new Business(code, detail, method, location, status);
+            HttpStatus status = (cfg != null) ? cfg.resolveHttpStatus(responseCode.getCode()) : HttpStatus.INTERNAL_SERVER_ERROR;
+            return new Business(responseCode, detail, method, location, status);
         }
     }
 

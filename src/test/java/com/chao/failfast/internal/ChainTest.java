@@ -41,7 +41,7 @@ public class ChainTest {
         assertBusiness(() -> Failure.begin().isTrue(false).failNow(TestResponseCode.PARAM_ERROR, "msg %s", "arg"), TestResponseCode.PARAM_ERROR);
 
         // failNow(Consumer)
-        assertBusiness(() -> Failure.begin().isTrue(false).failNow(f -> f.code(TestResponseCode.PARAM_ERROR)), TestResponseCode.PARAM_ERROR);
+        assertBusiness(() -> Failure.begin().isTrue(false).failNow(f -> f.responseCode(TestResponseCode.PARAM_ERROR)), TestResponseCode.PARAM_ERROR);
 
         // failNow(Supplier)
         assertBusiness(() -> Failure.begin().isTrue(false).failNow(() -> Business.of(TestResponseCode.PARAM_ERROR)), TestResponseCode.PARAM_ERROR);
@@ -68,7 +68,7 @@ public class ChainTest {
         assertSuccess(() -> Failure.begin().exists(obj).failNow(TestResponseCode.PARAM_ERROR));
         assertSuccess(() -> Failure.begin().exists(obj, TestResponseCode.PARAM_ERROR));
         assertSuccess(() -> Failure.begin().exists(obj, TestResponseCode.PARAM_ERROR, "detail"));
-        assertSuccess(() -> Failure.begin().exists(obj, f -> f.code(TestResponseCode.PARAM_ERROR)));
+        assertSuccess(() -> Failure.begin().exists(obj, f -> f.responseCode(TestResponseCode.PARAM_ERROR)));
 
         assertBusiness(() -> Failure.begin().exists(null).fail(), ResponseCode.of(500, "Validation failed")); // Default fail
         assertBusiness(() -> Failure.begin().exists(null, TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
@@ -95,7 +95,7 @@ public class ChainTest {
     @Test
     public void testStringVariants() {
         // blank
-        assertSuccess(() -> Failure.begin().blank(""));
+        assertSuccess(() -> Failure.begin().blank("").failNow(TestResponseCode.PARAM_ERROR));
         assertBusiness(() -> Failure.begin().blank("a", TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
 
         // notBlank / notEmpty

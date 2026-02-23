@@ -137,5 +137,45 @@ class ValidationAspectTest {
             assertThat(thrown).isInstanceOf(MultiBusiness.class);
             assertThat(((MultiBusiness) thrown).getErrors()).hasSize(2);
         }
+
+        @Test
+        @DisplayName("当参数类型不匹配时应跳过校验")
+        void shouldSkipValidationWhenArgumentTypeMismatch() throws Throwable {
+            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{123}); // TestValidator expects String
+
+            TestValidator mockValidator = mock(TestValidator.class);
+            when(mockValidator.getSupportedType()).thenCallRealMethod();
+            
+            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
+            when(applicationContext.getBean(TestValidator.class)).thenReturn(mockValidator);
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+            verify(mockValidator, never()).validate(any(), any());
+        }
+
+        @Test
+        @DisplayName("当参数为null时应跳过校验")
+        void shouldSkipValidationWhenArgumentIsNull() throws Throwable {
+            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{null});
+
+            TestValidator mockValidator = mock(TestValidator.class);
+            when(mockValidator.getSupportedType()).thenCallRealMethod();
+
+            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
+            when(applicationContext.getBean(TestValidator.class)).thenReturn(mockValidator);
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+            verify(mockValidator, never()).validate(any(), any());
+        }
     }
 }

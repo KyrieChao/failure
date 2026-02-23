@@ -95,6 +95,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+                    <excludes>
+                        <!-- 排除配置类 -->
+                        <exclude>**/config/*Properties.class</exclude>
+                        <!-- 排除异常类（如果全是样板代码） -->
+                        <exclude>**/exception/*Exception.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>

@@ -21,6 +21,7 @@ import java.util.function.Supplier;
  * 重构说明：
  * 所有的校验逻辑委托给 com.chao.failfast.internal.check 包下的工具类。
  */
+@SuppressWarnings({"unused"})
 public final class Chain {
 
     /**
@@ -42,7 +43,70 @@ public final class Chain {
         this.failFast = failFast;
     }
 
-    // ==================== Map 校验 (New) ====================
+    public static Chain begin(boolean failFast) {
+        return new Chain(failFast);
+    }
+
+    // ==================== 基础状态管理 (From AbstractChain) ====================
+
+    private boolean shouldSkip() {
+        return (!alive && failFast);
+    }
+
+    private Chain check(boolean condition) {
+        if (!alive) return this;
+        this.alive = condition;
+        return this;
+    }
+
+    private Chain check(boolean condition, ResponseCode code) {
+        if (shouldSkip()) return this;
+        if (!condition) {
+            addError(code);
+            if (failFast) alive = false;
+        }
+        return this;
+    }
+
+    private Chain check(boolean condition, ResponseCode code, String detail) {
+        if (shouldSkip()) return this;
+        if (!condition) {
+            addError(code, detail);
+            if (failFast) alive = false;
+        }
+        return this;
+    }
+
+    private Chain check(boolean condition, Consumer<Business.Fabricator> consumer) {
+        if (shouldSkip()) return this;
+        if (!condition) {
+            addError(consumer);
+            if (failFast) alive = false;
+        }
+        return this;
+    }
+
+    private void addError(ResponseCode code) {
+        errors.add(Business.of(code));
+    }
+
+    private void addError(ResponseCode code, String detail) {
+        errors.add(Business.of(code, detail));
+    }
+
+    private void addError(Consumer<Business.Fabricator> consumer) {
+        Business.Fabricator fabricator = Business.compose();
+        consumer.accept(fabricator);
+        errors.add(fabricator.materialize());
+    }
+
+    public List<Business> getErrors() {
+        return new ArrayList<>(errors);
+    }
+
+    public boolean isValid() {
+        return errors.isEmpty() && alive;
+    }
 
     public Chain notEmpty(Map<?, ?> map) {
         return check(MapChecks.notEmpty(map));
@@ -226,71 +290,6 @@ public final class Chain {
         return check(c.compare(field1, field2) == 0, consumer);
     }
 
-    public static Chain begin(boolean failFast) {
-        return new Chain(failFast);
-    }
-
-    // ==================== 基础状态管理 (From AbstractChain) ====================
-
-    private boolean shouldSkip() {
-        return (!alive && failFast);
-    }
-
-    private Chain check(boolean condition) {
-        if (!alive) return this;
-        this.alive = condition;
-        return this;
-    }
-
-    private Chain check(boolean condition, ResponseCode code) {
-        if (shouldSkip()) return this;
-        if (!condition) {
-            addError(code);
-            if (failFast) alive = false;
-        }
-        return this;
-    }
-
-    private Chain check(boolean condition, ResponseCode code, String detail) {
-        if (shouldSkip()) return this;
-        if (!condition) {
-            addError(code, detail);
-            if (failFast) alive = false;
-        }
-        return this;
-    }
-
-    private Chain check(boolean condition, Consumer<Business.Fabricator> consumer) {
-        if (shouldSkip()) return this;
-        if (!condition) {
-            addError(consumer);
-            if (failFast) alive = false;
-        }
-        return this;
-    }
-
-    private void addError(ResponseCode code) {
-        errors.add(Business.of(code));
-    }
-
-    private void addError(ResponseCode code, String detail) {
-        errors.add(Business.of(code, detail));
-    }
-
-    private void addError(Consumer<Business.Fabricator> consumer) {
-        Business.Fabricator fabricator = Business.compose();
-        consumer.accept(fabricator);
-        errors.add(fabricator.materialize());
-    }
-
-    public List<Business> getErrors() {
-        return new ArrayList<>(errors);
-    }
-
-    public boolean isValid() {
-        return errors.isEmpty() && alive;
-    }
-
     // ==================== 终结操作 (From TerminatingChain) ====================
 
     public void fail() {
@@ -320,7 +319,7 @@ public final class Chain {
     }
 
     /**
-     * 待优化 不知道该不该留
+     * 待优化
      */
     @ToImprove
     public Chain failNow(ResponseCode code) {
@@ -329,7 +328,7 @@ public final class Chain {
     }
 
     /**
-     * 待优化 不知道该不该留
+     * 待优化
      */
     @ToImprove
     public Chain failNow(ResponseCode code, String msg) {
@@ -338,7 +337,7 @@ public final class Chain {
     }
 
     /**
-     * 待优化 不知道该不该留
+     * 待优化
      */
     @ToImprove
     public Chain failNow(ResponseCode code, String msgFormat, Object... args) {
@@ -347,7 +346,7 @@ public final class Chain {
     }
 
     /**
-     * 待优化 不知道该不该留
+     * 待优化
      */
     @ToImprove
     public Chain failNow(Consumer<Business.Fabricator> consumer) {

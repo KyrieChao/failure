@@ -80,7 +80,7 @@ class AdvancedChainTest {
 
         Business ex = assertThrows(Business.class, () ->
                 Failure.begin().notNull(input, error -> error
-                                .code(ResponseCode.of(9001, "动态错误"))
+                                .responseCode(ResponseCode.of(9001, "动态错误"))
                                 .detail("这里可以放详细的上下文信息，比如输入值为null")
                         )
                         .failAll()
