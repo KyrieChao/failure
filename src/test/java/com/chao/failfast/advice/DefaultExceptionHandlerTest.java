@@ -118,7 +118,7 @@ class DefaultExceptionHandlerTest {
         // Let's verify the body content mostly.
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 400);
+        assertThat(body).containsEntry("code", 500);
         assertThat(body).containsEntry("description", "message");
     }
 
@@ -141,7 +141,7 @@ class DefaultExceptionHandlerTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 400);
+        assertThat(body).containsEntry("code", 500);
         assertThat(body).containsEntry("description", "message");
     }
     @Test

@@ -29,7 +29,7 @@ public class MultiBusiness extends Business {
      */
     public MultiBusiness(List<Business> errors) {
         super(ResponseCode.of(
-                400, "Multiple validation errors",
+                500, "Multiple validation errors",
                 errors.size() > MAX_ERRORS ? "校验失败，错误过多" : errors.size() + " 项校验失败"
         ), "校验失败,共" + errors.size() + " 项问题", null, null, HttpStatus.BAD_REQUEST);
 

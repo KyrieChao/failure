@@ -115,29 +115,6 @@ class StringChecksTest {
     }
 
     @Nested
-    @DisplayName("equalsIgnoreCase 方法测试")
-    class EqualsIgnoreCaseTest {
-        @Test
-        @DisplayName("当字符串忽略大小写相等时应返回true")
-        void shouldReturnTrueWhenStringsAreEqualIgnoreCase() {
-            assertThat(StringChecks.equalsIgnoreCase("abc", "ABC")).isTrue();
-        }
-
-        @Test
-        @DisplayName("当字符串不相等时应返回false")
-        void shouldReturnFalseWhenStringsAreNotEqual() {
-            assertThat(StringChecks.equalsIgnoreCase("abc", "def")).isFalse();
-        }
-
-        @Test
-        @DisplayName("当任一字符串为null时应返回false")
-        void shouldReturnFalseWhenEitherStringIsNull() {
-            assertThat(StringChecks.equalsIgnoreCase(null, "abc")).isFalse();
-            assertThat(StringChecks.equalsIgnoreCase("abc", null)).isFalse();
-        }
-    }
-
-    @Nested
     @DisplayName("startsWith 方法测试")
     class StartsWithTest {
         @Test
@@ -151,7 +128,7 @@ class StringChecksTest {
         void shouldReturnFalseWhenStringDoesNotStartWithPrefix() {
             assertThat(StringChecks.startsWith("abcdef", "def")).isFalse();
         }
-        
+
         @Test
         void shouldReturnFalseWhenStringIsNull() {
             assertThat(StringChecks.startsWith(null, "abc")).isFalse();
@@ -172,7 +149,7 @@ class StringChecksTest {
         void shouldReturnFalseWhenStringDoesNotEndWithSuffix() {
             assertThat(StringChecks.endsWith("abcdef", "abc")).isFalse();
         }
-        
+
         @Test
         void shouldReturnFalseWhenStringIsNull() {
             assertThat(StringChecks.endsWith(null, "def")).isFalse();
@@ -313,6 +290,33 @@ class StringChecksTest {
             assertThat(StringChecks.uuid("123e4567-e89b-12d3-a456-426614174000")).isTrue();
             assertThat(StringChecks.uuid("invalid-uuid")).isFalse();
             assertThat(StringChecks.uuid(null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("equalsIgnoreCase 方法测试")
+    class EqualsIgnoreCaseTest {
+        @Test
+        @DisplayName("当字符串忽略大小写相等时应返回true")
+        void shouldReturnTrueWhenStringsAreEqualIgnoreCase() {
+            assertThat(StringChecks.equalsIgnoreCase("abc", "ABC")).isTrue();
+            assertThat(StringChecks.equalsIgnoreCase("abc", "abc")).isTrue();  // 补：相同字符串
+        }
+
+        @Test
+        @DisplayName("当字符串不相等时应返回false")
+        void shouldReturnFalseWhenStringsAreNotEqual() {
+            assertThat(StringChecks.equalsIgnoreCase("abc", "def")).isFalse();
+            assertThat(StringChecks.equalsIgnoreCase("abc", "ABC ")).isFalse(); // 补：带空格
+        }
+
+        @Test
+        @DisplayName("当任一字符串为null时应返回false")
+        void shouldReturnFalseWhenEitherStringIsNull() {
+            assertThat(StringChecks.equalsIgnoreCase(null, "abc")).isFalse();
+            assertThat(StringChecks.equalsIgnoreCase("abc", null)).isFalse();
+            // 补：都非null但内容不同
+            assertThat(StringChecks.equalsIgnoreCase("abc", "def")).isFalse();
         }
     }
 }

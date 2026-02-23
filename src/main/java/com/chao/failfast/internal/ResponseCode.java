@@ -35,6 +35,9 @@ public interface ResponseCode {
      * @return 格式化后的消息
      */
     default String formatMessage(Object... args) {
+        if (getMessage() == null) {
+            return null; // 或返回默认值
+        }
         return String.format(getMessage(), args);
     }
 

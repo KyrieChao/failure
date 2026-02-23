@@ -127,4 +127,117 @@ class CollectionChecksTest {
             assertThat(CollectionChecks.notContains(null, "a")).isTrue();
         }
     }
+    @Nested
+    @DisplayName("isEmpty 方法测试")
+    class IsEmptyTest {
+        @Test
+        @DisplayName("当集合为空或null时应返回true")
+        void shouldReturnTrueWhenCollectionIsEmptyOrNull() {
+            assertThat(CollectionChecks.isEmpty(Collections.emptyList())).isTrue();
+            assertThat(CollectionChecks.isEmpty(null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("当集合非空时应返回false")
+        void shouldReturnFalseWhenCollectionIsNotEmpty() {
+            assertThat(CollectionChecks.isEmpty(Collections.singletonList("a"))).isFalse();
+            assertThat(CollectionChecks.isEmpty(Arrays.asList("a", "b"))).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("hasNoNullElements 方法测试")
+    class HasNoNullElementsTest {
+        @Test
+        @DisplayName("当集合没有null元素时应返回true")
+        void shouldReturnTrueWhenCollectionHasNoNullElements() {
+            assertThat(CollectionChecks.hasNoNullElements(Arrays.asList("a", "b"))).isTrue();
+            assertThat(CollectionChecks.hasNoNullElements(Collections.emptyList())).isTrue();
+        }
+
+        @Test
+        @DisplayName("当集合包含null元素时应返回false")
+        void shouldReturnFalseWhenCollectionHasNullElements() {
+            assertThat(CollectionChecks.hasNoNullElements(Arrays.asList("a", null, "b"))).isFalse();
+            assertThat(CollectionChecks.hasNoNullElements(Collections.singletonList(null))).isFalse();
+        }
+
+        @Test
+        @DisplayName("当集合为null时应返回true")
+        void shouldReturnTrueWhenCollectionIsNull() {
+            assertThat(CollectionChecks.hasNoNullElements(null)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("allMatch 方法测试")
+    class AllMatchTest {
+        @Test
+        @DisplayName("当所有元素都满足条件时应返回true")
+        void shouldReturnTrueWhenAllElementsMatch() {
+            List<Integer> list = Arrays.asList(2, 4, 6);
+            assertThat(CollectionChecks.allMatch(list, n -> n % 2 == 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("当任一元素不满足条件时应返回false")
+        void shouldReturnFalseWhenAnyElementDoesNotMatch() {
+            List<Integer> list = Arrays.asList(2, 3, 6);
+            assertThat(CollectionChecks.allMatch(list, n -> n % 2 == 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("当集合为空时应返回true")
+        void shouldReturnTrueWhenCollectionIsEmpty() {
+            assertThat(CollectionChecks.allMatch(Collections.emptyList(), n -> true)).isTrue();
+        }
+
+        @Test
+        @DisplayName("当集合为null时应返回false")
+        void shouldReturnFalseWhenCollectionIsNull() {
+            assertThat(CollectionChecks.allMatch(null, n -> true)).isFalse();
+        }
+
+        @Test
+        @DisplayName("当predicate为null时应返回false")
+        void shouldReturnFalseWhenPredicateIsNull() {
+            assertThat(CollectionChecks.allMatch(Arrays.asList(1, 2), null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("anyMatch 方法测试")
+    class AnyMatchTest {
+        @Test
+        @DisplayName("当至少一个元素满足条件时应返回true")
+        void shouldReturnTrueWhenAnyElementMatches() {
+            List<Integer> list = Arrays.asList(1, 2, 3);
+            assertThat(CollectionChecks.anyMatch(list, n -> n % 2 == 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("当没有元素满足条件时应返回false")
+        void shouldReturnFalseWhenNoElementMatches() {
+            List<Integer> list = Arrays.asList(1, 3, 5);
+            assertThat(CollectionChecks.anyMatch(list, n -> n % 2 == 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("当集合为空时应返回false")
+        void shouldReturnFalseWhenCollectionIsEmpty() {
+            assertThat(CollectionChecks.anyMatch(Collections.emptyList(), n -> true)).isFalse();
+        }
+
+        @Test
+        @DisplayName("当集合为null时应返回false")
+        void shouldReturnFalseWhenCollectionIsNull() {
+            assertThat(CollectionChecks.anyMatch(null, n -> true)).isFalse();
+        }
+
+        @Test
+        @DisplayName("当predicate为null时应返回false")
+        void shouldReturnFalseWhenPredicateIsNull() {
+            assertThat(CollectionChecks.anyMatch(Arrays.asList(1, 2), null)).isFalse();
+        }
+    }
 }

@@ -39,6 +39,9 @@ public class ValidationAdapter {
      * @throws Business 验证失败时抛出的业务异常
      */
     public <T> void validate(T object) {
+        if (object == null) {
+            throw Business.of(ResponseCode.of(500, "参数校验失败", "待验证对象不能为 null"));
+        }
         Set<ConstraintViolation<T>> violations = validator.validate(object);
 
         // 快速失败：只处理第一个错误

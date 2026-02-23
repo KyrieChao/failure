@@ -257,8 +257,8 @@ public abstract class FailFastExceptionHandler {
                 String msg = parts[1].trim();
                 business = Business.of(ResponseCode.of(code, msg), msg);
             } else {
-                // 默认使用400错误码 (参数校验错误通常是客户端问题)
-                business = Business.of(ResponseCode.of(400, "Validation Error"), message);
+                // 默认使用500错误码 (参数校验错误通常是客户端问题)
+                business = Business.of(ResponseCode.of(500, "Validation Error"), message);
             }
         }
 

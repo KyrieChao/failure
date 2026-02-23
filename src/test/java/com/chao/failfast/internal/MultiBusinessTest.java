@@ -4,6 +4,7 @@ import com.chao.failfast.model.enums.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,113 @@ class MultiBusinessTest {
             
             MultiBusiness multiBusiness = new MultiBusiness(errors);
             assertThat(multiBusiness.getErrors()).hasSize(50);
+        }
+    }
+    @Nested
+    @DisplayName("toString 方法测试")
+    class ToStringTest {
+
+        @Test
+        @DisplayName("toString 应包含所有错误信息")
+        void shouldFormatAllErrors() {
+            List<Business> errors = new ArrayList<>();
+            errors.add(Business.of(TestResponseCode.PARAM_ERROR));
+            errors.add(Business.of(TestResponseCode.SYSTEM_ERROR));
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+            String str = multiBusiness.toString();
+
+            assertThat(str).startsWith("Multi={");
+            assertThat(str).contains("errors=[");
+            assertThat(str).contains("1.");
+            assertThat(str).contains("2.");
+            assertThat(str).endsWith("]}");
+        }
+
+        @Test
+        @DisplayName("toString 应正确处理单个错误")
+        void shouldHandleSingleError() {
+            List<Business> errors = List.of(Business.of(TestResponseCode.PARAM_ERROR));
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+            String str = multiBusiness.toString();
+
+            assertThat(str).contains("1.");
+            assertThat(str).doesNotContain("2.");
+        }
+
+        @Test
+        @DisplayName("toString 应处理超过 MAX_ERRORS 的情况")
+        void shouldHandleTruncatedErrors() {
+            List<Business> errors = new ArrayList<>();
+            for (int i = 0; i < 55; i++) {
+                errors.add(Business.of(TestResponseCode.PARAM_ERROR));
+            }
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+            String str = multiBusiness.toString();
+
+            // 只包含 50 个错误
+            assertThat(multiBusiness.getErrors()).hasSize(50);
+            assertThat(str).contains("1.");
+            // 最后一个应该是 50
+            assertThat(str).contains("50.");
+        }
+    }
+
+    @Nested
+    @DisplayName("边界情况测试")
+    class EdgeCaseTest {
+
+        @Test
+        @DisplayName("当错误数量正好为 50 时不应截断")
+        void shouldNotTruncateWhenExactly50() {
+            List<Business> errors = new ArrayList<>();
+            for (int i = 0; i < 50; i++) {
+                errors.add(Business.of(TestResponseCode.PARAM_ERROR));
+            }
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+
+            assertThat(multiBusiness.getErrors()).hasSize(50);
+            // description 应该是 "50 项校验失败" 而不是 "校验失败，错误过多"
+            assertThat(multiBusiness.getDetail()).contains("50");
+        }
+
+        @Test
+        @DisplayName("当错误数量为 51 时应截断为 50")
+        void shouldTruncateWhen51() {
+            List<Business> errors = new ArrayList<>();
+            for (int i = 0; i < 51; i++) {
+                errors.add(Business.of(TestResponseCode.PARAM_ERROR));
+            }
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+
+            assertThat(multiBusiness.getErrors()).hasSize(50);
+            // description 应该是 "校验失败，错误过多"
+            assertThat(multiBusiness.getResponseCode().getDescription()).contains("错误过多");
+        }
+
+        @Test
+        @DisplayName("空错误列表应正确处理")
+        void shouldHandleEmptyList() {
+            List<Business> errors = new ArrayList<>();
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+
+            assertThat(multiBusiness.getErrors()).isEmpty();
+            assertThat(multiBusiness.getDetail()).contains("0");
+        }
+
+        @Test
+        @DisplayName("httpStatus 应为 BAD_REQUEST")
+        void shouldHaveBadRequestStatus() {
+            List<Business> errors = List.of(Business.of(TestResponseCode.PARAM_ERROR));
+
+            MultiBusiness multiBusiness = new MultiBusiness(errors);
+
+            assertThat(multiBusiness.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
 }

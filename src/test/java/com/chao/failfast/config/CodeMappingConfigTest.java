@@ -7,10 +7,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,14 +51,6 @@ class CodeMappingConfigTest {
         @Test
         @DisplayName("范围匹配应当正确解析")
         void shouldResolveRangeMappings() {
-            // 400xx -> 400
-            // Assuming 40000 is mapped to BAD_REQUEST
-            // 40099 should map to BAD_REQUEST if exact match not found
-            // But implementation logic:
-            // int rangeStart = (code / 100) * 100;
-            // HttpStatus rangeStatus = DEFAULT_MAPPINGS.get(rangeStart);
-
-            // 40000 is mapped. So 40099 -> 40000 -> BAD_REQUEST
             assertThat(config.resolveHttpStatus(40099)).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
@@ -136,6 +125,253 @@ class CodeMappingConfigTest {
         void shouldGetAllCodesInGroup() {
             List<Integer> codes = config.getGroupCodes("product");
             assertThat(codes).isEqualTo(Arrays.asList(40400, 40499));
+        }
+    }
+
+    @Nested
+    @DisplayName("getGroupCodesExpanded 重载方法测试")
+    class GetGroupCodesExpandedOverloadTest {
+
+        @Test
+        @DisplayName("当 n <= 0 时应返回空数组")
+        void shouldReturnEmptyArrayWhenNIsZeroOrNegative() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of(1, 2, 3));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.getGroupCodesExpanded("testGroup", 0)).isEqualTo("[]");
+            assertThat(config.getGroupCodesExpanded("testGroup", -1)).isEqualTo("[]");
+        }
+
+        @Test
+        @DisplayName("当组不存在时应返回空数组")
+        void shouldReturnEmptyArrayWhenGroupNotExists() {
+            assertThat(config.getGroupCodesExpanded("nonExistentGroup", 5)).isEqualTo("[]");
+        }
+
+        @Test
+        @DisplayName("当组为空时应返回空数组")
+        void shouldReturnEmptyArrayWhenGroupIsEmpty() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("emptyGroup", Collections.emptyList());
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.getGroupCodesExpanded("emptyGroup", 5)).isEqualTo("[]");
+        }
+
+        @Test
+        @DisplayName("当总数等于 n 时应返回完整列表")
+        void shouldReturnFullListWhenSizeEqualsN() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", Arrays.asList(1, 2, 3, 4, 5));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.getGroupCodesExpanded("testGroup", 5)).isEqualTo("[1, 2, 3, 4, 5]");
+        }
+
+        @Test
+        @DisplayName("当总数大于 n 时应返回省略格式")
+        void shouldReturnAbbreviatedFormatWhenSizeGreaterThanN() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("1-10"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            String result = config.getGroupCodesExpanded("testGroup", 3);
+            assertThat(result).contains("...");
+            assertThat(result).startsWith("[1,");
+            assertThat(result).endsWith(", 10]");
+        }
+
+        @Test
+        @DisplayName("省略格式中间部分应正确截断")
+        void shouldCorrectlyTruncateMiddlePart() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("100-200"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            String result = config.getGroupCodesExpanded("testGroup", 5);
+            // 101, 102, 103 应该被截断显示
+            assertThat(result).contains("...");
+        }
+    }
+
+    @Nested
+    @DisplayName("parseRange 边界测试")
+    class ParseRangeEdgeTest {
+
+        @Test
+        @DisplayName("范围字符串应支持反向范围（大数-小数）")
+        void shouldSupportReverseRange() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("10-5"));  // 反向范围
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(7, "testGroup")).isTrue();
+            assertThat(config.isInGroup(5, "testGroup")).isTrue();
+            assertThat(config.isInGroup(10, "testGroup")).isTrue();
+        }
+
+        @Test
+        @DisplayName("范围字符串应支持点号格式（..）")
+        void shouldSupportDotDotRange() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("5..10"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(7, "testGroup")).isTrue();
+        }
+
+        @Test
+        @DisplayName("范围字符串应支持带空格")
+        void shouldSupportRangeWithSpaces() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("  5  -  10  "));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(7, "testGroup")).isTrue();
+        }
+
+        @Test
+        @DisplayName("无效的范围字符串应被忽略")
+        void shouldIgnoreInvalidRangeString() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("invalid", "abc-def", "1-2-3"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            // 这些无效的范围应该被忽略，组内没有有效范围
+            assertThat(config.isInGroup(1, "testGroup")).isFalse();
+        }
+
+        @Test
+        @DisplayName("数字字符串应被解析为单值")
+        void shouldParseNumberStringAsSingleValue() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("testGroup", List.of("123"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(123, "testGroup")).isTrue();
+            assertThat(config.isInGroup(124, "testGroup")).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("loadCustomMappings 边界测试")
+    class LoadCustomMappingsEdgeTest {
+
+        @Test
+        @DisplayName("无效的业务码应被忽略并记录警告")
+        void shouldIgnoreInvalidBusinessCode() {
+            Map<String, Integer> custom = new HashMap<>();
+            custom.put("not-a-number", 200);
+            properties.getCodeMapping().setHttpStatus(custom);
+
+            // 不应抛出异常
+            config = new CodeMappingConfig(properties);
+            assertThat(config.resolveHttpStatus(40000)).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @DisplayName("无效的HTTP状态码应被忽略并记录警告")
+        void shouldIgnoreInvalidHttpStatus() {
+            Map<String, Integer> custom = new HashMap<>();
+            custom.put("90000", 999);  // 999 不是有效的 HttpStatus
+            properties.getCodeMapping().setHttpStatus(custom);
+
+            // 不应抛出异常
+            config = new CodeMappingConfig(properties);
+        }
+    }
+
+    @Nested
+    @DisplayName("resolveHttpStatus 边界测试")
+    class ResolveHttpStatusEdgeTest {
+
+        @Test
+        @DisplayName("非标准HTTP码（如499）应继续后续匹配")
+        void shouldContinueMatchingForNonStandardHttpCode() {
+            // 499 不是标准 HTTP 状态码，应该走业务码匹配逻辑
+            assertThat(config.resolveHttpStatus(499)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @Test
+        @DisplayName("范围边界值应正确匹配")
+        void shouldCorrectlyMatchRangeBoundaries() {
+            // 40000 是精确匹配
+            assertThat(config.resolveHttpStatus(40000)).isEqualTo(HttpStatus.BAD_REQUEST);
+
+            // 40099 应该匹配 40000 的范围
+            assertThat(config.resolveHttpStatus(40099)).isEqualTo(HttpStatus.BAD_REQUEST);
+
+            // 40100 是精确匹配
+            assertThat(config.resolveHttpStatus(40100)).isEqualTo(HttpStatus.UNAUTHORIZED);
+        }
+
+        @Test
+        @DisplayName("5xx 业务码应正确匹配")
+        void shouldCorrectlyMatch5xxBusinessCodes() {
+            assertThat(config.resolveHttpStatus(50000)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(config.resolveHttpStatus(59999)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(config.resolveHttpStatus(55000)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @Test
+        @DisplayName("3xx 业务码应返回默认500")
+        void shouldReturnDefaultFor3xxBusinessCodes() {
+            assertThat(config.resolveHttpStatus(30000)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Nested
+    @DisplayName("parseGroupRanges 边界测试")
+    class ParseGroupRangesEdgeTest {
+
+        @Test
+        @DisplayName("groups 为 null 时不应抛出异常")
+        void shouldHandleNullGroups() {
+            properties.getCodeMapping().setGroups(null);
+
+            // 不应抛出异常
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(100, "anyGroup")).isFalse();
+        }
+
+        @Test
+        @DisplayName("组内包含 null 元素时应被忽略")
+        void shouldHandleNullElementsInGroup() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            List<Object> listWithNull = new ArrayList<>();
+            listWithNull.add(100);
+            listWithNull.add(null);
+            listWithNull.add(200);
+            groups.put("testGroup", listWithNull);
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            assertThat(config.isInGroup(100, "testGroup")).isTrue();
+            assertThat(config.isInGroup(200, "testGroup")).isTrue();
+        }
+
+        @Test
+        @DisplayName("getGroupCodes 应过滤非整数类型")
+        void shouldFilterNonIntegerTypesInGetGroupCodes() {
+            Map<String, List<Object>> groups = new HashMap<>();
+            groups.put("mixedGroup", Arrays.asList(100, "not-a-number", 200, "300-400"));
+            properties.getCodeMapping().setGroups(groups);
+            config = new CodeMappingConfig(properties);
+
+            List<Integer> codes = config.getGroupCodes("mixedGroup");
+            assertThat(codes).containsExactly(100, 200);
         }
     }
 }

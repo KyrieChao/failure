@@ -244,4 +244,44 @@ public class ChainTest {
         assertSuccess(() -> Failure.begin().notEquals("a", "b").failNow(TestResponseCode.PARAM_ERROR));
         assertBusiness(() -> Failure.begin().notEquals("a", "a", TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
     }
+
+    // ==================== Map Variants ====================
+    @Test
+    public void testMapVariants() {
+        // notEmpty
+        assertSuccess(() -> Failure.begin().notEmpty(Collections.singletonMap("k", "v")).failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().notEmpty(Collections.emptyMap(), TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // sizeBetween
+        assertSuccess(() -> Failure.begin().sizeBetween(Collections.singletonMap("k", "v"), 1, 1).failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().sizeBetween(Collections.singletonMap("k", "v"), 2, 3, TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // sizeEquals
+        assertSuccess(() -> Failure.begin().sizeEquals(Collections.singletonMap("k", "v"), 1).failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().sizeEquals(Collections.singletonMap("k", "v"), 2, TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // containsKey
+        assertSuccess(() -> Failure.begin().containsKey(Collections.singletonMap("k", "v"), "k").failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().containsKey(Collections.singletonMap("k", "v"), "x", TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // notContainsKey
+        assertSuccess(() -> Failure.begin().notContainsKey(Collections.singletonMap("k", "v"), "x").failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().notContainsKey(Collections.singletonMap("k", "v"), "k", TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // containsValue
+        assertSuccess(() -> Failure.begin().containsValue(Collections.singletonMap("k", "v"), "v").failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().containsValue(Collections.singletonMap("k", "v"), "x", TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+    }
+
+    // ==================== Optional Variants ====================
+    @Test
+    public void testOptionalVariants() {
+        // isPresent
+        assertSuccess(() -> Failure.begin().isPresent(java.util.Optional.of("v")).failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().isPresent(java.util.Optional.empty(), TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+
+        // isEmpty
+        assertSuccess(() -> Failure.begin().isEmpty(java.util.Optional.empty()).failNow(TestResponseCode.PARAM_ERROR));
+        assertBusiness(() -> Failure.begin().isEmpty(java.util.Optional.of("v"), TestResponseCode.PARAM_ERROR).fail(), TestResponseCode.PARAM_ERROR);
+    }
 }

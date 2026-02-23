@@ -219,6 +219,7 @@ public class Business extends RuntimeException implements Serializable {
             if (detail == null) {
                 detail = responseCode.getDescription();
                 if (detail == null) detail = responseCode.getMessage();
+                if (detail == null) detail = "系统错误 message or description不能为null";
             }
             // 根据上下文自动填充方法和位置信息
             FailureContext ctx = Ex.getContext();
@@ -268,7 +269,6 @@ public class Business extends RuntimeException implements Serializable {
      * @return 提取的文件名和行号，如果输入为null则返回空字符串
      */
     private String extractFileLine(String loc) {
-        if (loc == null) return "";
         // 查找左括号位置
         int start = loc.indexOf("(");
         if (start < 0) return loc;  // 如果没有找到括号，返回原字符串

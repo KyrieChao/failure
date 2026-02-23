@@ -59,6 +59,9 @@ public final class Results {
      * @return Result结果
      */
     public static Result<Void> tryRun(Runnable runnable, ResponseCode errorCode) {
+        if (runnable == null) {
+            throw new NullPointerException("runnable is null");
+        }
         try {
             runnable.run();
             return Result.ok(null);
@@ -69,6 +72,9 @@ public final class Results {
         }
     }
     public static Result<Void> tryRun(Runnable runnable, ResponseCode errorCode,String detail) {
+        if (runnable == null) {
+            throw new NullPointerException("runnable is null");
+        }
         try {
             runnable.run();
             return Result.ok(null);

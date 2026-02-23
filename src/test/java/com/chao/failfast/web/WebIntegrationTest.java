@@ -77,7 +77,7 @@ class WebIntegrationTest {
                         .content(json))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400)) // MultiBusiness 默认映射为 400
+                .andExpect(jsonPath("$.code").value(500)) // MultiBusiness 默认映射为 400
                 // 验证 description 包含了所有错误信息
                 .andExpect(jsonPath("$.description", containsString("用户名不能为空")))
                 .andExpect(jsonPath("$.description", containsString("必须年满18岁")));
@@ -100,9 +100,9 @@ class WebIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andDo(print())
-                .andExpect(status().isBadRequest()) // 400 Bad Request
+                .andExpect(status().isInternalServerError()) // 500 Bad Request
                 // 验证只返回了一个错误 (Fail Fast)
-                .andExpect(jsonPath("$.code").value(400)) // 默认标准校验错误码 (Validation Error maps to 400)
+                .andExpect(jsonPath("$.code").value(500)) // 默认标准校验错误码 (Validation Error maps to 500)
                 .andExpect(jsonPath("$.description").value("Standard: Username cannot be blank"));
         // 确保没有返回数组形式的 errors
     }
