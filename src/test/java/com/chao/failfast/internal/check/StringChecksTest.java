@@ -151,6 +151,11 @@ class StringChecksTest {
         void shouldReturnFalseWhenStringDoesNotStartWithPrefix() {
             assertThat(StringChecks.startsWith("abcdef", "def")).isFalse();
         }
+        
+        @Test
+        void shouldReturnFalseWhenStringIsNull() {
+            assertThat(StringChecks.startsWith(null, "abc")).isFalse();
+        }
     }
 
     @Nested
@@ -166,6 +171,148 @@ class StringChecksTest {
         @DisplayName("当字符串不以后缀结尾时应返回false")
         void shouldReturnFalseWhenStringDoesNotEndWithSuffix() {
             assertThat(StringChecks.endsWith("abcdef", "abc")).isFalse();
+        }
+        
+        @Test
+        void shouldReturnFalseWhenStringIsNull() {
+            assertThat(StringChecks.endsWith(null, "def")).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("contains 方法测试")
+    class ContainsTest {
+        @Test
+        void shouldReturnTrueWhenStringContainsSubstring() {
+            assertThat(StringChecks.contains("abc", "b")).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWhenStringDoesNotContainSubstring() {
+            assertThat(StringChecks.contains("abc", "d")).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenInputIsNull() {
+            assertThat(StringChecks.contains(null, "b")).isFalse();
+            assertThat(StringChecks.contains("abc", null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("notContains 方法测试")
+    class NotContainsTest {
+        @Test
+        void shouldReturnTrueWhenStringDoesNotContainSubstring() {
+            assertThat(StringChecks.notContains("abc", "d")).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWhenStringContainsSubstring() {
+            assertThat(StringChecks.notContains("abc", "b")).isFalse();
+        }
+
+        @Test
+        void shouldReturnTrueWhenInputIsNull() {
+            assertThat(StringChecks.notContains(null, "b")).isTrue();
+            assertThat(StringChecks.notContains("abc", null)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("lengthMin/Max 方法测试")
+    class LengthMinMaxTest {
+        @Test
+        void shouldCheckMinLength() {
+            assertThat(StringChecks.lengthMin("abc", 3)).isTrue();
+            assertThat(StringChecks.lengthMin("abc", 4)).isFalse();
+            assertThat(StringChecks.lengthMin(null, 1)).isFalse();
+        }
+
+        @Test
+        void shouldCheckMaxLength() {
+            assertThat(StringChecks.lengthMax("abc", 3)).isTrue();
+            assertThat(StringChecks.lengthMax("abc", 2)).isFalse();
+            assertThat(StringChecks.lengthMax(null, 5)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("character check 方法测试")
+    class CharacterCheckTest {
+        @Test
+        void shouldCheckIsNumeric() {
+            assertThat(StringChecks.isNumeric("123")).isTrue();
+            assertThat(StringChecks.isNumeric("12a")).isFalse();
+            assertThat(StringChecks.isNumeric(null)).isFalse();
+            assertThat(StringChecks.isNumeric("")).isFalse();
+        }
+
+        @Test
+        void shouldCheckIsAlpha() {
+            assertThat(StringChecks.isAlpha("abc")).isTrue();
+            assertThat(StringChecks.isAlpha("123")).isFalse();
+            assertThat(StringChecks.isAlpha(null)).isFalse();
+            assertThat(StringChecks.isAlpha("")).isFalse();
+        }
+
+        @Test
+        void shouldCheckIsAlphanumeric() {
+            assertThat(StringChecks.isAlphanumeric("abc123")).isTrue();
+            assertThat(StringChecks.isAlphanumeric("abc-123")).isFalse();
+            assertThat(StringChecks.isAlphanumeric(null)).isFalse();
+            assertThat(StringChecks.isAlphanumeric("")).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("case check 方法测试")
+    class CaseCheckTest {
+        @Test
+        void shouldCheckIsLowerCase() {
+            assertThat(StringChecks.isLowerCase("abc")).isTrue();
+            assertThat(StringChecks.isLowerCase("Abc")).isFalse();
+            assertThat(StringChecks.isLowerCase(null)).isFalse();
+        }
+
+        @Test
+        void shouldCheckIsUpperCase() {
+            assertThat(StringChecks.isUpperCase("ABC")).isTrue();
+            assertThat(StringChecks.isUpperCase("Abc")).isFalse();
+            assertThat(StringChecks.isUpperCase(null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("special format 方法测试")
+    class SpecialFormatTest {
+        @Test
+        void shouldCheckMobile() {
+            assertThat(StringChecks.mobile("13800138000")).isTrue();
+            assertThat(StringChecks.mobile("123")).isFalse();
+            assertThat(StringChecks.mobile(null)).isFalse();
+        }
+
+        @Test
+        void shouldCheckUrl() {
+            assertThat(StringChecks.url("http://www.google.com")).isTrue();
+            assertThat(StringChecks.url("https://example.com")).isTrue();
+            assertThat(StringChecks.url("ftp://example.com")).isFalse();
+            assertThat(StringChecks.url(null)).isFalse();
+        }
+
+        @Test
+        void shouldCheckIpAddress() {
+            assertThat(StringChecks.ipAddress("192.168.1.1")).isTrue();
+            assertThat(StringChecks.ipAddress("256.0.0.1")).isFalse();
+            assertThat(StringChecks.ipAddress(null)).isFalse();
+        }
+
+        @Test
+        void shouldCheckUuid() {
+            assertThat(StringChecks.uuid("123e4567-e89b-12d3-a456-426614174000")).isTrue();
+            assertThat(StringChecks.uuid("invalid-uuid")).isFalse();
+            assertThat(StringChecks.uuid(null)).isFalse();
         }
     }
 }

@@ -144,4 +144,18 @@ class DefaultExceptionHandlerTest {
         assertThat(body).containsEntry("code", 400);
         assertThat(body).containsEntry("description", "message");
     }
+    @Test
+    @DisplayName("处理 BindException 无错误时返回 Unknown error")
+    void handleBindExceptionEmptyErrors() {
+        BindException ex = new BindException(new Object(), "target");
+        // 不添加任何错误，保持 empty
+        ResponseEntity<?> response = handler.handleBindException(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsEntry("code", 40000);
+        assertThat(body).containsEntry("message", "参数绑定失败");
+        assertThat(body).containsEntry("description", "Unknown error");  // ← 覆盖空分支
+    }
 }

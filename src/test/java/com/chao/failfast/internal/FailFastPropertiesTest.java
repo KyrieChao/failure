@@ -20,8 +20,8 @@ class FailFastPropertiesTest {
         properties.setShadowTrace(true);
         
         FailFastProperties.CodeMapping mapping = new FailFastProperties.CodeMapping();
-        Map<Integer, Integer> httpStatus = new HashMap<>();
-        httpStatus.put(1001, 400);
+        Map<String, Integer> httpStatus = new HashMap<>();
+        httpStatus.put("1001", 400);
         mapping.setHttpStatus(httpStatus);
         
         Map<String, List<Object>> groups = new HashMap<>();
@@ -31,7 +31,7 @@ class FailFastPropertiesTest {
         properties.setCodeMapping(mapping);
         
         assertThat(properties.isShadowTrace()).isTrue();
-        assertThat(properties.getCodeMapping().getHttpStatus()).containsEntry(1001, 400);
+        assertThat(properties.getCodeMapping().getHttpStatus()).containsEntry("1001", 400);
         assertThat(properties.getCodeMapping().getGroups()).containsKey("group1");
     }
 }

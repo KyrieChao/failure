@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +47,17 @@ class ResultsTest {
             assertThat(result.isFailure()).isTrue();
             assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getCode());
             assertThat(result.getError().getDetail()).isEqualTo("runtime error");
+        }
+        
+        @Test
+        @DisplayName("tryOf 带详情 当Supplier抛出其他异常时应返回指定详情")
+        void shouldReturnFailureWithDetail() {
+            Result<String> result = Results.tryOf(() -> {
+                throw new RuntimeException("runtime error");
+            }, TestResponseCode.SYSTEM_ERROR, "custom detail");
+
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getError().getDetail()).isEqualTo("custom detail");
         }
     }
 
@@ -126,6 +138,17 @@ class ResultsTest {
             assertThat(result.isFailure()).isTrue();
             assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getCode());
         }
+        
+        @Test
+        @DisplayName("tryRun 带详情 当抛出异常时应返回Fail带详情")
+        void shouldReturnFailWithDetailWhenException() {
+            Result<Void> result = Results.tryRun(() -> {
+                throw new RuntimeException("error");
+            }, TestResponseCode.SYSTEM_ERROR, "custom detail");
+
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getError().getDetail()).isEqualTo("custom detail");
+        }
     }
 
     @Nested
@@ -163,6 +186,33 @@ class ResultsTest {
         void shouldReturnNullWhenResultIsFailure() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
             assertThat(Results.getOrNull(result)).isNull();
+        }
+    }
+    
+    @Nested
+    @DisplayName("traverse 方法测试")
+    class TraverseTest {
+        @Test
+        @DisplayName("当所有转换成功时应返回列表")
+        void shouldReturnSuccessList() {
+            List<Integer> inputs = Arrays.asList(1, 2, 3);
+            Result<List<String>> result = Results.traverse(inputs, i -> Result.ok(String.valueOf(i)));
+            
+            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.get()).containsExactly("1", "2", "3");
+        }
+        
+        @Test
+        @DisplayName("当遇到失败时应立即返回失败")
+        void shouldFailFast() {
+            List<Integer> inputs = Arrays.asList(1, 2, 3);
+            Result<List<String>> result = Results.traverse(inputs, i -> {
+                if (i == 2) return Result.fail(TestResponseCode.PARAM_ERROR);
+                return Result.ok(String.valueOf(i));
+            });
+            
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
     }
 }

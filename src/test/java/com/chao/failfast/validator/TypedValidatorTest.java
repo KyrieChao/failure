@@ -22,6 +22,8 @@ class TypedValidatorTest {
             });
         }
     }
+    static class EmptyValidator extends TypedValidator {
+    }
 
     @Test
     @DisplayName("应当根据类型分发校验")
@@ -69,5 +71,15 @@ class TypedValidatorTest {
         Business error = ctx.getErrors().get(0);
         assertThat(error.getResponseCode().getCode()).isEqualTo(40099);
         assertThat(error.getDetail()).contains("不支持的校验类型");
+    }
+    @Test
+    @DisplayName("当未注册类型时，应当不进行校验")
+    void shouldNotValidateWhenTypeNotRegistered() {
+        EmptyValidator validator = new EmptyValidator();
+        FastValidator.ValidationContext ctx = new FastValidator.ValidationContext(false);
+
+        validator.validate("test", ctx);
+        assertThat(ctx.isValid()).isFalse();
+        assertThat(ctx.getErrors().get(0).getResponseCode().getCode()).isEqualTo(40099);
     }
 }

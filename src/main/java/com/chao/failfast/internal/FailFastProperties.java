@@ -37,7 +37,7 @@ public class FailFastProperties {
          * HTTP状态码映射：错误码 -> HTTP状态码
          * 支持自定义错误码到标准HTTP状态码的映射
          */
-        private Map<Integer, Integer> httpStatus = new HashMap<>();
+        private Map<String, Integer> httpStatus = new HashMap<>();
 
         /**
          * 错误码分组

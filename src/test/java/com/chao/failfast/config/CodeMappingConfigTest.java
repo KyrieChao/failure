@@ -7,7 +7,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,13 +41,13 @@ class CodeMappingConfigTest {
         @Test
         @DisplayName("自定义映射应当覆盖默认映射")
         void shouldResolveCustomMappings() {
-            Map<Integer, Integer> custom = new HashMap<>();
-            custom.put(90000, 418); // I'm a teapot
+            Map<String, Integer> custom = new HashMap<>();
+            custom.put("90000", 418); // I'm a teapot
             properties.getCodeMapping().setHttpStatus(custom);
-            
+
             // Re-initialize config to load custom mappings
             config = new CodeMappingConfig(properties);
-            
+
             assertThat(config.resolveHttpStatus(90000)).isEqualTo(HttpStatus.I_AM_A_TEAPOT);
         }
 
@@ -57,7 +60,7 @@ class CodeMappingConfigTest {
             // But implementation logic:
             // int rangeStart = (code / 100) * 100;
             // HttpStatus rangeStatus = DEFAULT_MAPPINGS.get(rangeStart);
-            
+
             // 40000 is mapped. So 40099 -> 40000 -> BAD_REQUEST
             assertThat(config.resolveHttpStatus(40099)).isEqualTo(HttpStatus.BAD_REQUEST);
         }
@@ -68,7 +71,7 @@ class CodeMappingConfigTest {
             // 49999 is not mapped, range 49900 not mapped.
             // But 40000 <= code < 50000 -> BAD_REQUEST
             assertThat(config.resolveHttpStatus(49999)).isEqualTo(HttpStatus.BAD_REQUEST);
-            
+
             // 59999 -> INTERNAL_SERVER_ERROR
             assertThat(config.resolveHttpStatus(59999)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -94,6 +97,8 @@ class CodeMappingConfigTest {
         void setUpGroups() {
             Map<String, List<Object>> groups = new HashMap<>();
             groups.put("testGroup", Arrays.asList(1001, "2000-2005", "3000..3002"));
+            groups.put("product", Arrays.asList(40400, 40499));
+            groups.put("range", List.of("skksdkm"));
             properties.getCodeMapping().setGroups(groups);
             config = new CodeMappingConfig(properties);
         }
@@ -104,7 +109,7 @@ class CodeMappingConfigTest {
             assertThat(config.isInGroup(1001, "testGroup")).isTrue();
             assertThat(config.isInGroup(2003, "testGroup")).isTrue(); // In 2000-2005
             assertThat(config.isInGroup(3001, "testGroup")).isTrue(); // In 3000..3002
-            
+
             assertThat(config.isInGroup(1002, "testGroup")).isFalse();
             assertThat(config.isInGroup(2006, "testGroup")).isFalse();
         }
@@ -116,14 +121,21 @@ class CodeMappingConfigTest {
             // Total items > 5
             String expanded = config.getGroupCodesExpanded("testGroup");
             assertThat(expanded).contains("...");
-            
+
             // Small group
             Map<String, List<Object>> groups = new HashMap<>();
             groups.put("smallGroup", Arrays.asList(1, 2));
             properties.getCodeMapping().setGroups(groups);
             config = new CodeMappingConfig(properties);
-            
+
             assertThat(config.getGroupCodesExpanded("smallGroup")).isEqualTo("[1, 2]");
+        }
+
+        @Test
+        @DisplayName("获取指定分组的所有错误码(仅返回精确值列表，范围展开不返回)")
+        void shouldGetAllCodesInGroup() {
+            List<Integer> codes = config.getGroupCodes("product");
+            assertThat(codes).isEqualTo(Arrays.asList(40400, 40499));
         }
     }
 }

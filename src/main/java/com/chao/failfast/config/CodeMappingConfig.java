@@ -1,6 +1,7 @@
 package com.chao.failfast.config;
 
 import com.chao.failfast.internal.FailFastProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
  * 错误码映射配置 - 支持配置化HTTP状态映射
  */
 @Component
+@Slf4j
 public class CodeMappingConfig {
 
     private final FailFastProperties properties;
@@ -74,19 +76,16 @@ public class CodeMappingConfig {
      * @param map 用于存储状态码映射的Map集合
      */
     private void loadCustomMappings(Map<Integer, HttpStatus> map) {
-        // 从配置属性中获取自定义的状态码映射
-        Map<Integer, Integer> custom = properties.getCodeMapping().getHttpStatus();
-        // 遍历自定义的状态码映射
-        for (Map.Entry<Integer, Integer> entry : custom.entrySet()) {
+        properties.getCodeMapping().getHttpStatus().forEach((key, status) -> {
             try {
-                // 将自定义的状态码映射添加到目标Map中
-                // entry.getKey() 是自定义的状态码
-                // HttpStatus.valueOf(entry.getValue()) 是将状态码值转换为对应的HttpStatus枚举
-                map.put(entry.getKey(), HttpStatus.valueOf(entry.getValue()));
-            } catch (Exception ignored) {
-                // 如果转换失败，则忽略该异常，继续处理下一个映射
+                int code = Integer.parseInt(key.trim());
+                map.put(code, HttpStatus.valueOf(status));
+            } catch (NumberFormatException e) {
+                log.warn("Invalid business code '{}', must be integer", key);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid HTTP status code {} for business code {}", status, key);
             }
-        }
+        });
     }
 
     /**
@@ -200,33 +199,27 @@ public class CodeMappingConfig {
      */
     public String getGroupCodesExpanded(String groupName, int n) {
         List<CodeRange> ranges = groupRanges.get(groupName);
-        if (ranges == null || ranges.isEmpty()) {
+        if (ranges == null || ranges.isEmpty() || n <= 0) {
             return "[]";
         }
-        Set<Integer> expanded = new TreeSet<>();  // 用 TreeSet 自动排序
+
+        Set<Integer> expanded = new TreeSet<>();
         for (CodeRange r : ranges) {
             for (int i = r.start(); i <= r.end(); i++) {
                 expanded.add(i);
             }
         }
-        int total = expanded.size();
-        if (total == 0) {
-            return "[]";
-        }
-        if (total <= n) {
-            // 小列表，直接返回完整
+
+        if (expanded.size() <= n) {
             return expanded.toString();
-        } else {
-            // 大列表，返回省略格式
-            List<Integer> list = new ArrayList<>(expanded);
-            String start = list.get(0).toString();
-            String end = list.get(total - 1).toString();
-            String middle = list.subList(1, total - 1).stream()
-                    .limit(3)  // 显示前几个中间值作为示例
-                    .map(Object::toString)
-                    .collect(Collectors.joining(", "));
-            return String.format("[%s, %s, ..., %s]", start, middle, end);
         }
+
+        List<Integer> list = new ArrayList<>(expanded);
+        String middle = list.subList(1, list.size() - 1).stream()
+                .limit(3)
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+        return String.format("[%s, %s, ..., %s]", list.get(0), middle, list.get(list.size() - 1));
     }
 
     /**
@@ -237,26 +230,26 @@ public class CodeMappingConfig {
      * @return 对应的HttpStatus对象
      */
     public HttpStatus resolveHttpStatus(int code) {
-        // 1. 精确匹配：查找完全相同的错误码
-        HttpStatus exact = DEFAULT_MAPPINGS.get(code);
-        if (exact != null) return exact;
-        // 2. 范围匹配：根据错误码前缀匹配（如40000~40099匹配40000）
-        int rangeStart = (code / 100) * 100;
-        HttpStatus rangeStatus = DEFAULT_MAPPINGS.get(rangeStart);
-        if (rangeStatus != null) return rangeStatus;
-
-        // 3. 大类匹配：根据错误码范围确定大类
-        if (code >= 40000 && code < 50000) return HttpStatus.BAD_REQUEST;
-        if (code >= 50000 && code < 60000) return HttpStatus.INTERNAL_SERVER_ERROR;
-        // 4. 标准HTTP状态码匹配（100-599）
+        // 1. 标准 HTTP 状态码优先精确匹配（100-599）
         if (code >= 100 && code <= 599) {
             try {
                 return HttpStatus.valueOf(code);
             } catch (IllegalArgumentException ignored) {
-                return HttpStatus.INTERNAL_SERVER_ERROR;
+                // 非标准 HTTP 码（如 499），继续后续匹配
             }
         }
-        // 5. 默认返回500内部服务器错误
+        // 2. 精确匹配自定义映射
+        HttpStatus exact = DEFAULT_MAPPINGS.get(code);
+        if (exact != null) return exact;
+
+        // 3. 范围匹配（如 40001~40099 匹配 40000）
+        int rangeStart = (code / 100) * 100;
+        HttpStatus rangeStatus = DEFAULT_MAPPINGS.get(rangeStart);
+        if (rangeStatus != null) return rangeStatus;
+
+        // 4. 大类匹配（业务码 4xxxx/5xxxx）
+        if (code >= 40000 && code < 50000) return HttpStatus.BAD_REQUEST;
+        // 5. 兜底
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
