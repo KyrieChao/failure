@@ -5,19 +5,40 @@
 [![Release](https://jitpack.io/v/KyrieChao/Failure.svg)](https://jitpack.io/#KyrieChao/Failure)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-**Fail-Fast** 是一个专为 Spring Boot 设计的轻量级、高性能参数校验与业务异常处理框架。它秉承 "Fail Fast, Fail Safe" 的设计哲学，提供流式 API（Fluent API）与注解驱动两种使用模式，旨在解决传统 `if-else` 参数校验代码冗余、错误码管理混乱以及异常处理不统一的痛点。
+**Fail-Fast** 是一个专为 Spring Boot 3.x 设计的轻量级、高性能参数校验与业务异常处理框架。它秉承 "Fail Fast, Fail Safe" 的设计哲学，提供流式 API（Fluent API）、注解驱动以及函数式结果处理三种使用模式，旨在解决传统 `if-else` 参数校验代码冗余、错误码管理混乱以及异常处理不统一的痛点。
 
 核心特性包括：
 - **链式校验**：提供优雅的 Fluent API，支持 `fail-fast`（快速失败）与 `fail-safe`（全量收集）两种模式。
-- **注解驱动**：无缝集成 Spring AOP，支持声明式校验与自定义验证器。
-- **统一异常**：内置标准化的业务异常体系与全局异常处理器，自动映射 HTTP 状态码。
-- **零侵入性**：作为 Starter 引入，开箱即用，与 Spring Validation (`@Valid`) 完美兼容。
+- **丰富的断言库**：内置对象、字符串、数值、集合、日期、枚举、Optional 等上百种校验方法。
+- **高级特性**：支持跨字段比较 (`compare`)、自定义断言 (`satisfies`) 以及反应式失败回调 (`onFail`)。
+- **函数式编程**：提供 `Result<T>` 单子（Monad）类型，支持不抛出异常的错误处理流。
+- **注解驱动**：无缝集成 Spring AOP，支持声明式校验 (`@Validate`) 与自定义验证器 (`FastValidator`)。
+- **灵活配置**：支持错误码到 HTTP 状态码的范围映射（如 `40100..40199` -> `401`）及影子追踪调试。
 
 ---
 
 ## 快速开始 (Quick Start)
 
-### 1. 引入依赖
+### 1. 环境要求 (Prerequisites)
+
+- **Java**: 17+
+- **Spring Boot**: 3.2.x
+
+### 2. 实战示例 (Action Example)
+
+为了帮助您更快上手，我们提供了一个完整的实战示例项目 **[Failure-in-Action](https://github.com/KyrieChao/Failure-in-Action)**。该项目演示了如何在真实的业务场景（如用户注册、登录）中集成 Fail-Fast，包含以下最佳实践：
+
+- **集中式校验**：使用 `TypedValidator` 管理 DTO 校验逻辑。
+- **混合校验模式**：结合流式 API 进行基础格式校验，与自定义业务逻辑（如数据库查重）。
+- **安全实践**：展示如何在校验通过后进行密码加盐、脱敏等操作。
+- **全局异常处理**：标准化的异常响应结构。
+
+建议您 clone 该仓库作为参考：
+```bash
+git clone https://github.com/KyrieChao/Failure-in-Action.git
+```
+
+### 3. 引入依赖 (Installation)
 
 #### 方式一：使用 JitPack (推荐)
 
@@ -40,24 +61,31 @@
 <dependency>
     <groupId>com.github.KyrieChao</groupId>
     <artifactId>Failure</artifactId>
-    <version>Tag</version> <!-- 将 Tag 替换为具体的版本号，如 1.0.0 -->
+    <version>Tag</version> <!-- 建议使用最新 Release 版本，例如 1.2.0 -->
 </dependency>
 ```
 
-#### 方式二：Maven Central (规划中)
+#### 方式二：本地安装 (Local Development)
 
-目前暂未发布到 Maven Central，请使用 JitPack 或本地安装。
+如果您下载了源码，可以通过 Maven 安装到本地仓库：
+
+```bash
+git clone https://github.com/KyrieChao/Failure.git
+cd fail-fast-improved
+mvn clean install
+```
+
+然后在项目中引入：
 
 ```xml
-<!-- 暂不可用 -->
 <dependency>
     <groupId>com.chao</groupId>
     <artifactId>fail-fast-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
-### 2. 最小可运行示例
+### 3. 最小可运行示例
 
 在 Service 或 Controller 中使用 `Failure.begin()` 开启链式校验：
 
@@ -68,12 +96,13 @@ import com.chao.failfast.internal.ResponseCode;
 @Service
 public class UserService {
 
-    public void register(UserDTO user3) {
+    public void register(UserDTO user) {
         // 开启快速失败校验链
         Failure.begin()
-            .notNull(user3, ResponseCode.PARAM_ERROR)                  // 校验对象非空
-            .notBlank(user3.getUsername(), ResponseCode.NAME_EMPTY)    // 校验字符串非空
-            .match(user3.getPhone(), "^1[3-9]\\d{9}$", ResponseCode.PHONE_INVALID) // 正则校验
+            .notNull(user, ResponseCode.PARAM_ERROR)                   // 校验对象非空
+            .notBlank(user.getUsername(), ResponseCode.NAME_EMPTY)     // 校验字符串非空
+            .match(user.getPhone(), "^1[3-9]\\d{9}$", ResponseCode.PHONE_INVALID) // 正则校验
+            .satisfies(user.getAge(), age -> age >= 18, ResponseCode.AGE_INVALID) // 自定义 Predicate
             .fail(); // 执行校验，遇错即抛出异常
 
         // 业务逻辑...
@@ -83,213 +112,210 @@ public class UserService {
 
 ---
 
-## 核心特性 (Core Features)
+## 系统架构与模块 (Architecture)
+
+### 核心模块划分
+
+项目采用清晰的模块化设计，核心包结构如下：
+
+- **`com.chao.failfast`**: 核心入口 (`Failure`)。
+- **`advice`**: 全局异常处理，负责将 `Business` 异常转换为标准 HTTP 响应。
+- **`annotation`**: 定义 `@Validate`, `@FastValidator` 等注解。
+- **`aspect`**: AOP 切面实现，处理注解驱动的校验逻辑。
+- **`config`**: 自动配置与错误码映射配置 (`CodeMappingConfig`)。
+- **`internal`**: 内部核心逻辑。
+    - **`Chain`**: 校验链核心实现，管理校验状态与错误收集。
+    - **`check`**: 具体的校验工具集 (`StringChecks`, `NumberChecks`, `OptionalChecks` 等)。
+- **`result`**: 函数式结果封装 (`Result<T>`)。
+
+### 关键类图 (Key Classes)
+
+```mermaid
+classDiagram
+    class Failure {
+        +begin() Chain
+        +strict() Chain
+    }
+    class Chain {
+        -List~Business~ errors
+        -boolean failFast
+        +check(condition)
+        +fail()
+        +failAll()
+    }
+    class Business {
+        -int code
+        -String message
+    }
+    class DefaultExceptionHandler {
+        +handleBusinessException()
+    }
+    
+    Failure ..> Chain : Creates
+    Chain --> Business : Collects
+    DefaultExceptionHandler ..> Business : Handles
+```
+
+---
+
+## 核心特性详解 (Core Features)
 
 ### 1. 编程式链式校验 (Fluent Validation)
 
-Fail-Fast 提供两种校验模式：
+Fail-Fast 提供灵活的校验模式，满足不同场景需求。
 
-*   **快速失败 (Fail-Fast)**: 遇到第一个错误立即抛出异常，适用于阻断性校验。
-*   **全量收集 (Fail-Safe/Strict)**: 执行所有校验规则，收集所有错误后统一抛出，适用于表单批量校验。
+#### 基础校验
+```java
+Failure.begin()
+    .exists(user, UserCode.NOT_EXIST)
+    .notBlank(user.getUsername(), UserCode.USERNAME_BLANK)
+    .fail();
+```
+
+#### 高级校验 (New)
+支持 `Optional`、自定义谓词 (`Predicate`) 和跨字段比较 (`Comparator`)。
 
 ```java
-// 模式一：快速失败（推荐）
 Failure.begin()
-        .exists(user3, UserCode.NOT_EXIST)
-        .notBlank(user3.getUsername(), UserCode.USERNAME_BLANK, "demo")
-        .email(user3.getEmail(), UserCode.EMAIL_INVALID)
-        .fail();
-
-// 模式二：全量收集
-Failure.strict()
-        .exists(user3, UserCode.NOT_EXIST)
-        .exists(user3, ResponseCode.of(40001, "user3 not found"))
-        .notBlank(user3.getUsername(), UserCode.USERNAME_BLANK)
-        .email(user3.getEmail(), UserCode.EMAIL_INVALID)
-        .failAll();
-
-// 模式三：分段校验
-Failure.begin()
-        .exists(user3)
-        .notBlank(user3.getUsername())
-        .failNow(ResponseCode.of(40001, "user3 object invalid"))
-        .inRange(user3.getAge(), 0, 120)
-        .match(user3.getPhone(), "^1[3-9]\\d{9}$")
-        .failNow(ResponseCode.of(40002, "user3 detail invalid"));
+    // Optional 校验
+    .isPresent(Optional.ofNullable(token), AuthCode.TOKEN_MISSING)
+    
+    // 自定义逻辑 (Satisfies)
+    .satisfies(user.getBalance(), bal -> bal.compareTo(BigDecimal.ZERO) > 0, UserCode.BALANCE_LOW)
+    
+    // 跨字段比较 (Compare)
+    .compare(startTime, endTime, (t1, t2) -> t1.isBefore(t2) ? 0 : -1, CommonCode.TIME_ORDER_ERROR)
+    
+    // 失败回调 (Reactive)
+    .onFail(() -> log.error("Validation failed for user: {}", user.getId()))
+    .fail();
 ```
 
 ### 2. 注解驱动校验 (Annotation Driven)
 
-通过 `@Validate` 注解与 `FastValidator` 接口，实现业务校验逻辑的复用与解耦。
-
-**定义验证器：**
+通过 `@Validate` 注解与 `FastValidator` 接口，实现业务校验逻辑的解耦与复用。推荐使用 **混合校验模式**，即先进行低成本的格式校验，通过后再进行高成本的业务校验（如数据库查询）。
 
 ```java
+// 1. 定义验证器
 @Component
-public class UserValidator extends TypedValidator<UserDTO> {
-    @Override
-    public void validate(UserDTO dto, FailureContext ctx) {
+public class UserValidator extends TypedValidator {
+
+    public UserValidator() {
+        register(UserDTO.class, this::validateUser);
+    }
+
+    private void validateUser(UserDTO dto, ValidationContext ctx) {
+        // 第一步：基础格式校验（使用 Failure.with(ctx)）
+        // 如果开启了 fail-fast，一旦格式错误，ctx 会被标记为 stopped
+        Failure.with(ctx)
+                .notBlank(dto.getUsername(), UserCode.USERNAME_BLANK)
+                .email(dto.getEmail(), UserCode.EMAIL_INVALID)
+                .verify(); // 语义化结束，实际错误已报告给 ctx
+
+        // 第二步：检查是否需要继续
+        // 如果基础格式已有错误，直接返回，避免执行昂贵的数据库查询
+        if (ctx.isFailed()) {
+            return;
+        }
+
+        // 第三步：业务逻辑校验（高成本操作）
         if (userMapper.exists(dto.getUsername())) {
             ctx.reportError(ResponseCode.USER_EXISTS);
         }
     }
 }
-```
 
-**使用注解：**
-
-```java
+// 2. 使用注解
 @PostMapping("/users")
-@Validate(value = UserValidator.class, fast = true) // fast=true 开启快速失败
-public Result<Void> createUser(@RequestBody UserDTO user3) {
-    userService.create(user3);
+@Validate(value = UserValidator.class, fast = true)
+public Result<Void> createUser(@RequestBody UserDTO user) {
+    userService.create(user);
     return Result.ok();
 }
 ```
 
-### 3. 内置丰富断言库
+### 3. 函数式结果处理 (Functional Result)
 
-Fail-Fast 提供了极其丰富的校验方法，涵盖对象、字符串、数值、集合、日期等常见场景。
-
-**[点击查看完整 API 列表 (API Reference)](API_REFERENCE.md)**
-
-部分常用方法示例：
-
-| 分类 | 方法示例 | 说明 |
-| :--- | :--- | :--- |
-| **对象** | `notNull`, `isNull`, `equals` | 基础对象判空与相等性检查 |
-| **字符串** | `notBlank`, `length`, `match`, `email` | 长度、正则、格式校验 |
-| **数值** | `positive`, `negative`, `range` | 数值范围与正负检查 |
-| **集合/数组** | `notEmpty`, `size`, `contains` | 集合大小与元素包含检查 |
-| **日期** | `future`, `past`, `between` | 日期时间先后判断 |
-| **布尔** | `isTrue`, `isFalse` | 状态断言 |
-
-### 4. 函数式结果处理 (Functional Result Handling)
-
-除了抛出异常，Fail-Fast 还提供了 `Result<T>` 和 `Results` 工具类，支持函数式编程风格的错误处理，避免异常作为控制流。
-
-**基础用法：**
+使用 `Result<T>` 替代异常抛出，编写更加函数式的代码。
 
 ```java
-// 返回成功
-Result<String> success = Result.ok("data");
-
-// 返回失败
-Result<String> failure = Result.fail(ResponseCode.PARAM_ERROR);
-
-// 链式处理
-String value = success.map(String::toUpperCase)
-                     .recover(err -> "default")
-                     .get();
-```
-
-**高级用法 (Results 工具类)：**
-
-```java
-// 1. 包装可能抛出异常的代码
+// 包装可能抛出异常的调用
 Result<User> result = Results.tryOf(() -> userService.findUser(id), ResponseCode.DB_ERROR);
 
-// 2. 批量处理（Fail-Fast 模式）
-// 如果所有操作成功，返回 List<T>；如果有任意失败，返回第一个错误
-Result<List<User>> batchResult = Results.sequence(
-    userService.createUser(u1),
-    userService.createUser(u2)
-);
-
-// 3. 批量处理（Fail-Safe 模式）
-// 收集所有结果，如果存在失败，返回包含所有错误的 MultiBusiness 异常
-Result<List<User>> safeResult = Results.sequenceAll(
-    userService.createUser(u1),
-    userService.createUser(u2)
-);
+// 链式处理
+UserDTO dto = result.filter(u -> u.isActive(), ResponseCode.USER_LOCKED)
+                    .map(UserMapper::toDTO)
+                    .recover(err -> UserDTO.guest()) // 降级处理
+                    .get();
 ```
 
 ---
-
-## 状态码映射 (Code Mapping)
-
-Fail-Fast 支持灵活的业务错误码到 HTTP 状态码的映射机制。通过 `CodeMappingConfig`，您可以定义不同层级的映射规则。
-
-**映射优先级：**
-
-1.  **精确匹配**：配置中明确指定的映射（如 `40001 -> 400`）。
-2.  **范围匹配**：根据错误码前缀匹配（如 `401xx` 映射为 `401`）。
-3.  **大类匹配**：
-    *   `40000 - 49999` -> `400 Bad Request`
-    *   `50000 - 59999` -> `500 Internal Server Error`
-4.  **默认回退**：其他情况默认为 `500`。
 
 ## 配置详解 (Configuration)
 
-在 `application.yml` 中可进行如下配置：
+支持在 `application.yml` 中配置错误码映射与调试选项。
 
 ```yaml
 fail-fast:
-  # 是否开启影子追踪（在异常日志中打印触发校验的代码位置，方便调试）
+  # 开启影子追踪：在异常响应中包含触发校验的代码位置（仅开发环境推荐）
   shadow-trace: true
+  
+  # 是否开启详细模式：在 fail-safe 模式下返回所有错误详情
+  verbose: true
+  
   code-mapping:
+    # 明确的状态码映射
     http-status:
-      40001: 400  # BAD_REQUEST
-      40101: 401  # UNAUTHORIZED
-      40301: 403  # FORBIDDEN
-      40401: 404  # NOT_FOUND
-      42201: 422  # UNPROCESSABLE_ENTITY
-      42901: 429  # TOO_MANY_REQUESTS
-      50001: 500  # INTERNAL_SERVER_ERROR
+      40001: 400
+      40100: 401
+    
+    # 错误码分组与范围映射
     groups:
-      auth: [ "40100..40199" ]
-      user3: [ "40400..40499" ]
-      product: [ 40400,40499 ]
-      order: [ "40000", "40001","40400..40499" ]
-      system: "50000..59999"
+      # 支持范围语法 "start..end" 或 "start-end"
+      auth: [ "40100..40199" ] 
+      business: [ "40000..40099", 42200 ]
 ```
 
----
-
-## 异常码说明 (Error Codes)
-
-框架使用 `ResponseCode` 接口定义错误码，推荐在项目中通过枚举实现该接口以统一管理错误码。
-
-| 错误码 (Code) | 描述 (Message) | 建议 HTTP 状态码 |
-| :--- | :--- | :--- |
-| `20000` | 成功 | 200 |
-| `40000` | 请求参数错误 | 400 |
-| `40100` | 未授权 | 401 |
-| `40300` | 禁止访问 | 403 |
-| `50000` | 系统内部错误 | 500 |
+**映射规则优先级：**
+1.  标准 HTTP 状态码 (100-599)
+2.  精确配置匹配
+3.  前缀范围匹配 (如 401xx -> 401)
+4.  大类兜底 (4xxxx -> 400, 5xxxx -> 500)
 
 ---
 
-## 版本兼容性 (Compatibility)
+## 本地开发指南 (Development)
 
-| Fail-Fast Version | Java Version | Spring Boot Version |
-| :--- | :--- | :--- |
-| 1.0.0 | 17+ | 3.2.x |
+### 构建项目
+```bash
+# 编译并跳过测试
+mvn clean package -DskipTests
+
+# 安装到本地仓库
+mvn clean install
+```
+
+### 运行测试
+项目包含单元测试与集成测试，覆盖核心校验逻辑。
+```bash
+mvn test
+```
+
+### 提交规范
+- 请确保新增代码包含相应的单元测试。
+- 遵循现有的代码风格（Lombok, Fluent API）。
 
 ---
 
-## 常见问题 (FAQ)
+## 版本变更 (Changelog)
 
-**Q: `Failure.begin()` 和 `Failure.strict()` 有什么区别？**
-
-A: `begin()` 是快速失败模式，一旦某个校验不通过，立即抛出 `Business` 异常，后续校验不再执行；`strict()` 是严格模式，会执行完所有校验链，将所有错误收集到 `MultiBusiness` 异常中抛出，适合需要一次性返回所有错误字段的场景。
-
-**Q: 如何自定义异常处理逻辑？**
-
-A: 框架提供了默认的 `GlobalExceptionHandler`。如果您需要自定义，可以实现 `FailFastExceptionHandler` 接口，或者定义自己的 `@RestControllerAdvice` 类，并使用 `@Order` 注解确保优先级高于默认处理器。
-
-**Q: 支持分组校验吗？**
-
-A: 支持。在自定义验证器 `FastValidator` 中，您可以根据 `FailureContext` 中的上下文信息来实现分组逻辑，或者简单地定义多个不同的验证器类。
+### v1.2.0 (Current)
+- **Feat**: 新增 `Optional` 校验支持 (`isPresent`, `isEmpty`)。
+- **Feat**: 新增 `satisfies` 通用谓词校验与 `compare` 比较校验。
+- **Feat**: 支持反应式失败回调 `onFail` / `onFailGet`。
+- **Feat**: 增强 `CodeMappingConfig`，支持 YAML 范围语法配置错误码映射。
+- **Refactor**: 优化 `Chain` 类结构，全面委托给 `internal.check` 工具类。
 
 ---
 
 **Fail-Fast** is open source software released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.html).
-
-## 参与贡献 (Contributing)
-
-欢迎提交 Issue 和 Pull Request！详细指南请参考 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-## 版本历史 (Changelog)
-
-查看 [CHANGELOG.md](CHANGELOG.md) 获取详细的版本变更记录。
