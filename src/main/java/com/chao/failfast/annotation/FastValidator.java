@@ -60,6 +60,10 @@ public interface FastValidator<T> {
             this.stopped = true;
         }
 
+        public boolean isFailed() {
+            return !isValid() || stopped;
+        }
+
         public boolean isValid() {
             return errors.isEmpty();
         }

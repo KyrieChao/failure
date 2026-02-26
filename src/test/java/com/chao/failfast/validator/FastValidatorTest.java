@@ -22,6 +22,11 @@ class FastValidatorTest {
                 context.reportError(ResponseCode.of(40000, "不能为空"));
                 return;
             }
+
+            if (!context.isValid() || context.isStopped()) {
+                return;
+            }
+
             if (target.isEmpty()) {
                 context.reportError(ResponseCode.of(40001, "不能为空字符串"));
             }

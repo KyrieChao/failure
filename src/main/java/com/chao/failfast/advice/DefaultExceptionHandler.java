@@ -93,7 +93,7 @@ public class DefaultExceptionHandler extends FailFastExceptionHandler {
     public ResponseEntity<?> handleBindException(BindException e) {
         Map<String, Object> body = new HashMap<>();
         // 固定的错误码和消息
-        body.put("code", 40000);
+        body.put("code", 50000);
         body.put("message", "参数绑定失败");
         // 提取第一个错误的详细描述
         body.put("description", e.getAllErrors().isEmpty() ? "Unknown error" : e.getAllErrors().get(0).getDefaultMessage());

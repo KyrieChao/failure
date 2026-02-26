@@ -85,7 +85,7 @@ class DefaultExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 40000);
+        assertThat(body).containsEntry("code", 50000);
         assertThat(body).containsEntry("message", "参数绑定失败");
         assertThat(body).containsEntry("description", "default message");
     }
@@ -152,7 +152,7 @@ class DefaultExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 40000);
+        assertThat(body).containsEntry("code", 50000);
         assertThat(body).containsEntry("message", "参数绑定失败");
         assertThat(body).containsEntry("description", "Unknown error");  // ← 覆盖空分支
     }

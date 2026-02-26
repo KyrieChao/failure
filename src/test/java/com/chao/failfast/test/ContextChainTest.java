@@ -88,4 +88,21 @@ public class ContextChainTest {
         assertEquals(4001, context.getErrors().get(0).getResponseCode().getCode());
         assertEquals(4002, context.getErrors().get(1).getResponseCode().getCode());
     }
+
+    @Test
+    public void testShouldStop() {
+        ValidationContext context = new ValidationContext(false);
+        assertFalse(context.isFailed());
+
+        context.reportError(ResponseCode.of(5001, "Error"));
+        assertTrue(context.isFailed()); // isValid() == false
+
+        ValidationContext context2 = new ValidationContext(false);
+        context2.stop();
+        assertTrue(context2.isFailed()); // stopped == true
+
+        ValidationContext context3 = new ValidationContext(true); // fast=true
+        context3.reportError(ResponseCode.of(5002, "Error"));
+        assertTrue(context3.isFailed()); // isValid() == false AND stopped == true
+    }
 }
