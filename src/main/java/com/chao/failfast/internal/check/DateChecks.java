@@ -15,12 +15,14 @@ import java.util.Date;
  */
 public final class DateChecks {
 
+
     /**
      * 私有构造方法，防止实例化工具类
      */
     private DateChecks() {}
 
     // Original Date methods
+
     /**
      * 判断日期date1是否在date2之后
      * @param date1 第一个日期
@@ -30,7 +32,6 @@ public final class DateChecks {
     public static boolean after(Date date1, Date date2) {
         return date1 != null && date2 != null && date1.after(date2);
     }
-
     /**
      * 判断日期date1是否在date2之前
      * @param date1 第一个日期

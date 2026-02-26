@@ -53,11 +53,20 @@ public class Business extends RuntimeException implements Serializable {
      * @param location     发生异常的位置信息
      */
     Business(ResponseCode responseCode, String detail, String method, String location, HttpStatus httpStatus) {
+        super(responseCode != null ? responseCode.getMessage() : "Unknown error", null, true, shouldFillStackTrace(responseCode));
         this.responseCode = responseCode;
         this.detail = detail;
         this.method = method;
         this.location = location;
         this.httpStatus = httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    private static boolean shouldFillStackTrace(ResponseCode code) {
+        if (code == null) return true;
+        FailureContext ctx = Ex.getContext();
+        CodeMappingConfig cfg = ctx != null ? ctx.getCodeMappingConfig() : null;
+        boolean printMethod = ctx != null && ctx.isShadowTrace();
+        return printMethod || (cfg != null && cfg.resolveHttpStatus(code.getCode()).is5xxServerError());
     }
 
     public static Business of(int code, String message) {

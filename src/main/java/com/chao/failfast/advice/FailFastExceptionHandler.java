@@ -2,11 +2,13 @@ package com.chao.failfast.advice;
 
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
+import com.chao.failfast.internal.FailFastProperties;
 import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.internal.ResponseCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,17 @@ import java.util.Map;
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public abstract class FailFastExceptionHandler {
+
+    /**
+     * Fail-Fast配置属性
+     * 通过Setter注入，避免构造函数注入导致子类必须调用super
+     */
+    private FailFastProperties properties;
+
+    @Autowired(required = false)
+    public void setFailFastProperties(FailFastProperties properties) {
+        this.properties = properties;
+    }
 
     /**
      * 记录异常日志的通用方法
@@ -72,20 +85,21 @@ public abstract class FailFastExceptionHandler {
      */
     protected ResponseEntity<?> buildMultiErrorResponse(MultiBusiness e) {
         Map<String, Object> body = buildMap(e);
-        // 响应数据不需要有 errors 字段，保持结构统一
-        // body.put("errors", e.getErrors());
-
-        // 将所有错误简要拼接到 description 中，以便前端展示
-        StringBuilder sb = new StringBuilder();
-        sb.append("共 ").append(e.getErrors().size()).append(" 项错误: ");
-        for (int i = 0; i < e.getErrors().size(); i++) {
-            Business err = e.getErrors().get(i);
-            sb.append(i + 1).append(".").append(err.getDetail());
-            if (i < e.getErrors().size() - 1) {
-                sb.append("; ");
-            }
+        // 只有开启verbose模式才返回errors详情
+        if (properties != null && properties.isVerbose()) {
+            body.put("errors", e.getErrors().stream()
+                    .map(err -> {
+                        Map<String, String> item = new HashMap<>(2);
+                        item.put("message", err.getMessage());
+                        item.put("description", err.getResponseCode().getDescription());
+                        item.put("detail", err.getDetail());
+                        return item;
+                    })
+                    .toList()
+            );
         }
-        body.put("description", sb.toString());
+        // 将所有错误简要拼接到 description 中，以便前端展示
+        body.put("description", "共 " + e.getErrors().size() + " 项错误");
         return ResponseEntity.status(e.getHttpStatus()).body(body);
     }
 

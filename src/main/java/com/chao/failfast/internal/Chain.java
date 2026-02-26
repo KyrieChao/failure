@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.annotation.FastValidator.ValidationContext;
 import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.internal.check.*;
 
@@ -39,17 +40,32 @@ public final class Chain {
      */
     private final List<Business> errors = new ArrayList<>();
 
+    /**
+     * 验证上下文 (可选)
+     */
+    private final ValidationContext context;
+
     private Chain(boolean failFast) {
+        this(failFast, null);
+    }
+
+    private Chain(boolean failFast, ValidationContext context) {
         this.failFast = failFast;
+        this.context = context;
     }
 
     public static Chain begin(boolean failFast) {
         return new Chain(failFast);
     }
 
+    public static Chain begin(ValidationContext context) {
+        return new Chain(context.isFast(), context);
+    }
+
     // ==================== 基础状态管理 (From AbstractChain) ====================
 
     private boolean shouldSkip() {
+        if (context != null && context.isStopped()) return true;
         return (!alive && failFast);
     }
 
@@ -87,20 +103,32 @@ public final class Chain {
     }
 
     private void addError(ResponseCode code) {
-        errors.add(Business.of(code));
+        if (context != null) {
+            context.reportError(code);
+        } else {
+            errors.add(Business.of(code));
+        }
     }
 
     private void addError(ResponseCode code, String detail) {
-        errors.add(Business.of(code, detail));
+        if (context != null) {
+            context.reportError(code, detail);
+        } else {
+            errors.add(Business.of(code, detail));
+        }
     }
 
     private void addError(Consumer<Business.Fabricator> consumer) {
         Business.Fabricator fabricator = Business.compose();
         consumer.accept(fabricator);
-        errors.add(fabricator.materialize());
+        if (context != null) {
+            context.reportError(fabricator.materialize());
+        } else {
+            errors.add(fabricator.materialize());
+        }
     }
 
-    public List<Business> getErrors() {
+    public List<Business> getCauses() {
         return new ArrayList<>(errors);
     }
 
@@ -260,16 +288,19 @@ public final class Chain {
         return check(value != null && condition.test(value));
     }
 
-    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code, String detail) {
-        return check(value != null && condition.test(value), code, detail);
+    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code) {
+        boolean valid = value != null && condition.test(value);
+        return check(valid, code);
     }
 
-    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code) {
-        return check(value != null && condition.test(value), code);
+    public <T> Chain satisfies(T value, Predicate<T> condition, ResponseCode code, String detail) {
+        boolean b = value != null && condition.test(value);
+        return check(b, code, detail);
     }
 
     public <T> Chain satisfies(T value, Predicate<T> condition, Consumer<Business.Fabricator> consumer) {
-        return check(value != null && condition.test(value), consumer);
+        boolean b = value != null && condition.test(value);
+        return check(b, consumer);
     }
 
     // ==================== 跨字段/状态校验 (New) ====================
@@ -370,6 +401,10 @@ public final class Chain {
     public Chain failNow(Supplier<Business> exceptionSupplier) {
         if (!alive) throw exceptionSupplier.get();
         return this;
+    }
+
+    public void verify() {
+        // No-op: Errors are reported to context immediately
     }
 
     // ==================== 对象校验 (From ObjectChain) ====================
@@ -1463,10 +1498,11 @@ public final class Chain {
     // Generic Comparable Time API methods
 
     public <T extends Comparable<T>> Chain after(T t1, T t2) {
+        // 调用DateChecks的after方法进行判断，并将结果传递给check方法
         return check(DateChecks.after(t1, t2));
     }
-
     public <T extends Comparable<T>> Chain after(T t1, T t2, ResponseCode code, String detail) {
+        // 调用DateChecks的after方法进行检查，并根据检查结果返回链式对象
         return check(DateChecks.after(t1, t2), code, detail);
     }
 

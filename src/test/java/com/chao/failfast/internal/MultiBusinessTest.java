@@ -1,6 +1,6 @@
 package com.chao.failfast.internal;
 
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,13 +36,13 @@ class MultiBusinessTest {
             errors.add(Business.of(TestResponseCode.PARAM_ERROR));
 
             MultiBusiness multiBusiness = new MultiBusiness(errors);
-            
+
             // Modify original list
             errors.add(Business.of(TestResponseCode.SYSTEM_ERROR));
-            
+
             assertThat(multiBusiness.getErrors()).hasSize(1);
         }
-        
+
         @Test
         @DisplayName("当错误数量超过限制时应截断")
         void shouldTruncateWhenErrorsExceedLimit() {
@@ -50,11 +50,12 @@ class MultiBusinessTest {
             for (int i = 0; i < 60; i++) {
                 errors.add(Business.of(TestResponseCode.PARAM_ERROR));
             }
-            
+
             MultiBusiness multiBusiness = new MultiBusiness(errors);
             assertThat(multiBusiness.getErrors()).hasSize(50);
         }
     }
+
     @Nested
     @DisplayName("toString 方法测试")
     class ToStringTest {
@@ -123,7 +124,7 @@ class MultiBusinessTest {
 
             assertThat(multiBusiness.getErrors()).hasSize(50);
             // description 应该是 "50 项校验失败" 而不是 "校验失败，错误过多"
-            assertThat(multiBusiness.getDetail()).contains("50");
+            assertThat(multiBusiness.getResponseCode().getDescription()).contains("50");
         }
 
         @Test
@@ -149,7 +150,7 @@ class MultiBusinessTest {
             MultiBusiness multiBusiness = new MultiBusiness(errors);
 
             assertThat(multiBusiness.getErrors()).isEmpty();
-            assertThat(multiBusiness.getDetail()).contains("0");
+            assertThat(multiBusiness.getResponseCode().getDescription()).contains("0");
         }
 
         @Test

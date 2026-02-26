@@ -77,10 +77,9 @@ class WebIntegrationTest {
                         .content(json))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(500)) // MultiBusiness 默认映射为 400
+                .andExpect(jsonPath("$.code").value(500)) // MultiBusiness 默认映射为 500
                 // 验证 description 包含了所有错误信息
-                .andExpect(jsonPath("$.description", containsString("用户名不能为空")))
-                .andExpect(jsonPath("$.description", containsString("必须年满18岁")));
+                .andExpect(jsonPath("$.description", containsString("共 2 项错误")));
         // 验证 errors 字段已被移除
         // .andExpect(jsonPath("$.errors").doesNotExist()); // 确保没有 errors 字段
     }
@@ -124,8 +123,7 @@ class WebIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 // 验证 description 包含了所有错误信息
-                .andExpect(jsonPath("$.description", containsString("Standard: Username cannot be blank")))
-                .andExpect(jsonPath("$.description", containsString("Standard: Must be at least 18")));
+                .andExpect(jsonPath("$.description", containsString("共 2 项错误")));
     }
 
     // ================== 示例 Controller 和 DTO ==================

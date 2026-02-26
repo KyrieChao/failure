@@ -56,6 +56,26 @@ class CollectionChecksTest {
         }
     }
 
+    @Test
+    @DisplayName("边界条件：精确匹配上下界")
+    void shouldHandleExactBoundary() {
+        List<String> list = Arrays.asList("a", "b", "c"); // size=3
+
+        assertThat(CollectionChecks.sizeBetween(list, 3, 3)).isTrue();  // min=max=3
+        assertThat(CollectionChecks.sizeBetween(list, 0, 3)).isTrue();  // max=3
+        assertThat(CollectionChecks.sizeBetween(list, 3, 10)).isTrue(); // min=3
+        assertThat(CollectionChecks.sizeBetween(list, 0, 2)).isFalse(); // size > max
+        assertThat(CollectionChecks.sizeBetween(list, 4, 10)).isFalse(); // size < min
+    }
+
+    @Test
+    @DisplayName("空集合边界")
+    void shouldHandleEmptyCollectionBoundary() {
+        assertThat(CollectionChecks.sizeBetween(Collections.emptyList(), 0, 0)).isTrue();
+        assertThat(CollectionChecks.sizeBetween(Collections.emptyList(), 0, 5)).isTrue();
+        assertThat(CollectionChecks.sizeBetween(Collections.emptyList(), 1, 5)).isFalse();
+    }
+
     @Nested
     @DisplayName("sizeEquals 方法测试")
     class SizeEqualsTest {
@@ -127,6 +147,7 @@ class CollectionChecksTest {
             assertThat(CollectionChecks.notContains(null, "a")).isTrue();
         }
     }
+
     @Nested
     @DisplayName("isEmpty 方法测试")
     class IsEmptyTest {

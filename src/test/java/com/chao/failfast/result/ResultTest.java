@@ -1,7 +1,7 @@
 package com.chao.failfast.result;
 
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -150,6 +151,7 @@ class ArrayChecksTest {
         @DisplayName("检查数组是否存在至少一个元素满足指定条件")
         void shouldReturnTrueWhenAnyElementSatisfiesCondition() {
             String[] arr = {"a", "b"};
+//            Set<String> arr = Set.of("a", "b");
             assertThat(ArrayChecks.anyMatch(arr, Objects::nonNull)).isTrue();
             assertThat(ArrayChecks.anyMatch(null, Objects::nonNull)).isFalse();
             assertThat(ArrayChecks.anyMatch(arr, null)).isFalse();

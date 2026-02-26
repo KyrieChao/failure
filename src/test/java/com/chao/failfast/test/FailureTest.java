@@ -3,7 +3,7 @@ package com.chao.failfast.test;
 import com.chao.failfast.Failure;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

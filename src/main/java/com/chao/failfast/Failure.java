@@ -1,5 +1,6 @@
 package com.chao.failfast;
 
+import com.chao.failfast.annotation.FastValidator.ValidationContext;
 import com.chao.failfast.internal.Chain;
 
 /**
@@ -29,5 +30,16 @@ public final class Failure {
      */
     public static Chain strict() {
         return Chain.begin(false);
+    }
+
+    /**
+     * 开始一个新的验证链（集成ValidationContext）
+     * 验证错误将直接报告给上下文，是否快速失败取决于上下文配置
+     *
+     * @param context 验证上下文
+     * @return 新的 Chain 实例
+     */
+    public static Chain with(ValidationContext context) {
+        return Chain.begin(context);
     }
 }

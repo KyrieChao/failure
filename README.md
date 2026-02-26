@@ -68,12 +68,12 @@ import com.chao.failfast.internal.ResponseCode;
 @Service
 public class UserService {
 
-    public void register(UserDTO user) {
+    public void register(UserDTO user3) {
         // 开启快速失败校验链
         Failure.begin()
-            .notNull(user, ResponseCode.PARAM_ERROR)                  // 校验对象非空
-            .notBlank(user.getUsername(), ResponseCode.NAME_EMPTY)    // 校验字符串非空
-            .match(user.getPhone(), "^1[3-9]\\d{9}$", ResponseCode.PHONE_INVALID) // 正则校验
+            .notNull(user3, ResponseCode.PARAM_ERROR)                  // 校验对象非空
+            .notBlank(user3.getUsername(), ResponseCode.NAME_EMPTY)    // 校验字符串非空
+            .match(user3.getPhone(), "^1[3-9]\\d{9}$", ResponseCode.PHONE_INVALID) // 正则校验
             .fail(); // 执行校验，遇错即抛出异常
 
         // 业务逻辑...
@@ -95,27 +95,27 @@ Fail-Fast 提供两种校验模式：
 ```java
 // 模式一：快速失败（推荐）
 Failure.begin()
-        .exists(user, UserCode.NOT_EXIST)
-        .notBlank(user.getUsername(), UserCode.USERNAME_BLANK, "demo")
-        .email(user.getEmail(), UserCode.EMAIL_INVALID)
+        .exists(user3, UserCode.NOT_EXIST)
+        .notBlank(user3.getUsername(), UserCode.USERNAME_BLANK, "demo")
+        .email(user3.getEmail(), UserCode.EMAIL_INVALID)
         .fail();
 
 // 模式二：全量收集
 Failure.strict()
-        .exists(user, UserCode.NOT_EXIST)
-        .exists(user, ResponseCode.of(40001, "user not found"))
-        .notBlank(user.getUsername(), UserCode.USERNAME_BLANK)
-        .email(user.getEmail(), UserCode.EMAIL_INVALID)
+        .exists(user3, UserCode.NOT_EXIST)
+        .exists(user3, ResponseCode.of(40001, "user3 not found"))
+        .notBlank(user3.getUsername(), UserCode.USERNAME_BLANK)
+        .email(user3.getEmail(), UserCode.EMAIL_INVALID)
         .failAll();
 
 // 模式三：分段校验
 Failure.begin()
-        .exists(user)
-        .notBlank(user.getUsername())
-        .failNow(ResponseCode.of(40001, "user object invalid"))
-        .inRange(user.getAge(), 0, 120)
-        .match(user.getPhone(), "^1[3-9]\\d{9}$")
-        .failNow(ResponseCode.of(40002, "user detail invalid"));
+        .exists(user3)
+        .notBlank(user3.getUsername())
+        .failNow(ResponseCode.of(40001, "user3 object invalid"))
+        .inRange(user3.getAge(), 0, 120)
+        .match(user3.getPhone(), "^1[3-9]\\d{9}$")
+        .failNow(ResponseCode.of(40002, "user3 detail invalid"));
 ```
 
 ### 2. 注解驱动校验 (Annotation Driven)
@@ -141,8 +141,8 @@ public class UserValidator extends TypedValidator<UserDTO> {
 ```java
 @PostMapping("/users")
 @Validate(value = UserValidator.class, fast = true) // fast=true 开启快速失败
-public Result<Void> createUser(@RequestBody UserDTO user) {
-    userService.create(user);
+public Result<Void> createUser(@RequestBody UserDTO user3) {
+    userService.create(user3);
     return Result.ok();
 }
 ```
@@ -238,7 +238,7 @@ fail-fast:
       50001: 500  # INTERNAL_SERVER_ERROR
     groups:
       auth: [ "40100..40199" ]
-      user: [ "40400..40499" ]
+      user3: [ "40400..40499" ]
       product: [ 40400,40499 ]
       order: [ "40000", "40001","40400..40499" ]
       system: "50000..59999"

@@ -1,6 +1,6 @@
 package com.chao.failfast.internal;
 
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -232,8 +232,8 @@ public class ChainBranchCoverageTest {
         // 验证：添加第二个错误，但错误列表应该只有一个
         chain.exists(null, TEST_CODE_2);
 
-        assertEquals(1, chain.getErrors().size());
-        assertEquals(TEST_CODE.getCode(), chain.getErrors().get(0).getResponseCode().getCode());
+        assertEquals(1, chain.getCauses().size());
+        assertEquals(TEST_CODE.getCode(), chain.getCauses().get(0).getResponseCode().getCode());
     }
 
     @Test
@@ -248,7 +248,7 @@ public class ChainBranchCoverageTest {
         chain.notNull(null, TEST_CODE_2);
         chain.positive(-1, TestResponseCode.PARAM_INVALID);
 
-        assertEquals(1, chain.getErrors().size());
+        assertEquals(1, chain.getCauses().size());
     }
 
     @Test
@@ -260,7 +260,7 @@ public class ChainBranchCoverageTest {
         chain.notNull(null, TEST_CODE_2);
         chain.positive(-1, TestResponseCode.PARAM_INVALID);
 
-        assertEquals(3, chain.getErrors().size());
+        assertEquals(3, chain.getCauses().size());
     }
 
     // ==================== failNow 在 alive=true 时返回 this ====================
@@ -328,7 +328,7 @@ public class ChainBranchCoverageTest {
         chain.positive(-1); // 本应失败，但被跳过
 
         assertFalse(chain.isValid());
-        assertEquals(1, chain.getErrors().size());
+        assertEquals(1, chain.getCauses().size());
     }
 
     @Test
@@ -342,7 +342,7 @@ public class ChainBranchCoverageTest {
                 .positive(-1, TestResponseCode.PARAM_INVALID);
 
         assertFalse(chain.isValid());
-        assertEquals(3, chain.getErrors().size());
+        assertEquals(3, chain.getCauses().size());
     }
 
     // ==================== 边界情况测试 ====================
@@ -387,6 +387,6 @@ public class ChainBranchCoverageTest {
         chain.state(false);
 
         assertFalse(chain.isValid());
-        assertTrue(chain.getErrors().isEmpty());
+        assertTrue(chain.getCauses().isEmpty());
     }
 }

@@ -77,6 +77,19 @@ class CodeMappingConfigTest {
         void shouldResolveUnknownToInternalServerError() {
             assertThat(config.resolveHttpStatus(99999)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        @Test
+        @DisplayName("标准HTTP边界值应正确解析")
+        void shouldResolveHttpStatusBoundaryValues() {
+            assertThat(config.resolveHttpStatus(100)).isEqualTo(HttpStatus.CONTINUE);
+            assertThat(config.resolveHttpStatus(599)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @Test
+        @DisplayName("非标准但有效的Spring HTTP码")
+        void shouldResolveNonStandardButValidSpringCode() {
+            // 418 是 Spring 的 HttpStatus 枚举，但不是 RFC 标准
+            assertThat(config.resolveHttpStatus(418)).isEqualTo(HttpStatus.I_AM_A_TEAPOT);
+        }
     }
 
     @Nested

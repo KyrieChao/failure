@@ -22,6 +22,13 @@ public class FailFastProperties {
     private boolean shadowTrace;
 
     /**
+     * 是否启用详细错误响应模式
+     * 启用后会在批量错误响应中包含具体的errors列表字段
+     * 默认为false，仅返回description汇总描述
+     */
+    private boolean verbose = false;
+
+    /**
      * 错误码映射配置
      * 包含HTTP状态码映射、分组配置和国际化设置
      */

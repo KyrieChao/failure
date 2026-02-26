@@ -2,7 +2,7 @@ package com.chao.failfast.advice;
 
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,8 +72,6 @@ class DefaultExceptionHandlerTest {
         Map<String, Object> body = (Map<String, Object>) response.getBody();
         assert body != null;
         assertThat(body.get("description").toString()).contains("共 2 项错误");
-        assertThat(body.get("description").toString()).contains("1.错误1");
-        assertThat(body.get("description").toString()).contains("2.错误2");
     }
 
     @Test

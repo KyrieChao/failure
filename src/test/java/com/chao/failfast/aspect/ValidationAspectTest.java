@@ -4,7 +4,7 @@ import com.chao.failfast.annotation.FastValidator;
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.model.enums.TestResponseCode;
+import com.chao.failfast.model.TestResponseCode;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +19,6 @@ import org.springframework.context.ApplicationContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -136,9 +135,9 @@ class ValidationAspectTest {
             Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[0];
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
-            
+
             validationAspect.around(joinPoint, validate);
-            
+
             verify(joinPoint).proceed();
         }
 
@@ -149,7 +148,7 @@ class ValidationAspectTest {
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
             when(joinPoint.getArgs()).thenReturn(new Object[]{"valid"});
-            
+
             // Mock ApplicationContext to return validator instance
             when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
             when(applicationContext.getBean(TestValidator.class)).thenReturn(new TestValidator());
@@ -204,7 +203,7 @@ class ValidationAspectTest {
 
             TestValidator mockValidator = mock(TestValidator.class);
             when(mockValidator.getSupportedType()).thenCallRealMethod();
-            
+
             when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
             when(applicationContext.getBean(TestValidator.class)).thenReturn(mockValidator);
 

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +33,20 @@ class FailFastAutoConfigurationTest {
             assertThat(context).hasSingleBean(ValidationAdapter.class);
             assertThat(context).hasSingleBean(DefaultExceptionHandler.class);
             assertThat(context).hasSingleBean(ValidationAspect.class);
+            assertThat(context).hasSingleBean(FailFastAutoConfiguration.ExInitializer.class);
+        });
+    }
+
+    @Test
+    @DisplayName("应当根据配置创建 CodeMappingConfig")
+    void shouldCreateCodeMappingConfigWithProperties() {
+        contextRunner.withPropertyValues(
+                "fail-fast.code-mapping.http-status.40001=400",
+                "fail-fast.code-mapping.groups.auth=40100..40199"
+        ).run(context -> {
+            CodeMappingConfig config = context.getBean(CodeMappingConfig.class);
+            assertThat(config.resolveHttpStatus(40001)).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(config.isInGroup(40101, "auth")).isTrue();
         });
     }
 
