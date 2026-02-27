@@ -75,7 +75,7 @@ class DefaultExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("处理 BindException 应返回 400")
+    @DisplayName("处理 BindException 应返回 500")
     void handleBindException() {
         BindException ex = new BindException(new Object(), "target");
         ex.addError(new FieldError("target", "field", "default message"));

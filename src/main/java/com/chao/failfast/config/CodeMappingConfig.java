@@ -52,22 +52,22 @@ public class CodeMappingConfig {
         // 4xx 客户端错误状态码
         map.put(40000, HttpStatus.BAD_REQUEST);        // 40000: 请求错误
         map.put(40100, HttpStatus.UNAUTHORIZED);       // 40100: 未授权
-        map.put(40300, HttpStatus.FORBIDDEN);         // 40300: 禁止访问
-        map.put(40400, HttpStatus.NOT_FOUND);         // 40400: 资源不存在
+        map.put(40300, HttpStatus.FORBIDDEN);          // 40300: 禁止访问
+        map.put(40400, HttpStatus.NOT_FOUND);          // 40400: 资源不存在
         map.put(40500, HttpStatus.METHOD_NOT_ALLOWED); // 40500: 方法不允许
-        map.put(40800, HttpStatus.REQUEST_TIMEOUT);   // 40800: 请求超时
-        map.put(40900, HttpStatus.CONFLICT);          // 40900: 冲突
-        map.put(41000, HttpStatus.GONE);              // 41000: 资源已消失
-        map.put(41300, HttpStatus.PAYLOAD_TOO_LARGE); // 41300: 负载过大
+        map.put(40800, HttpStatus.REQUEST_TIMEOUT);    // 40800: 请求超时
+        map.put(40900, HttpStatus.CONFLICT);           // 40900: 冲突
+        map.put(41000, HttpStatus.GONE);               // 41000: 资源已消失
+        map.put(41300, HttpStatus.PAYLOAD_TOO_LARGE);  // 41300: 负载过大
         map.put(41500, HttpStatus.UNSUPPORTED_MEDIA_TYPE); // 41500: 不支持的媒体类型
-        map.put(42200, HttpStatus.UNPROCESSABLE_ENTITY); // 42200: 无法处理的实体
-        map.put(42900, HttpStatus.TOO_MANY_REQUESTS); // 42900: 请求过多
+        map.put(42200, HttpStatus.UNPROCESSABLE_ENTITY);   // 42200: 无法处理的实体
+        map.put(42900, HttpStatus.TOO_MANY_REQUESTS);      // 42900: 请求过多
         // 5xx 服务器错误状态码
         map.put(50000, HttpStatus.INTERNAL_SERVER_ERROR); // 50000: 内部服务器错误
-        map.put(50100, HttpStatus.NOT_IMPLEMENTED);      // 50100: 未实现
-        map.put(50200, HttpStatus.BAD_GATEWAY);          // 50200: 网关错误
-        map.put(50300, HttpStatus.SERVICE_UNAVAILABLE);  // 50300: 服务不可用
-        map.put(50400, HttpStatus.GATEWAY_TIMEOUT);      // 50400: 网关超时
+        map.put(50100, HttpStatus.NOT_IMPLEMENTED);       // 50100: 未实现
+        map.put(50200, HttpStatus.BAD_GATEWAY);           // 50200: 网关错误
+        map.put(50300, HttpStatus.SERVICE_UNAVAILABLE);   // 50300: 服务不可用
+        map.put(50400, HttpStatus.GATEWAY_TIMEOUT);       // 50400: 网关超时
     }
 
     /**

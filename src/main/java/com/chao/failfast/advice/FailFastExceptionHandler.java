@@ -257,12 +257,13 @@ public abstract class FailFastExceptionHandler {
      * @param location 错误发生位置
      * @return 构建好的Business异常对象
      */
+    // todo 默认使用400错误码 待完善
     private Business parseError(String message, String location) {
         Business business;
 
         // 处理空消息情况
         if (message == null) {
-            business = Business.of(ResponseCode.of(500, "Validation Error"), "Invalid parameter");
+            business = Business.of(ResponseCode.of(400, "Validation Error"), "Invalid parameter");
         } else {
             // 解析 "code:message" 格式，支持自定义错误码
             String[] parts = message.split(":", 2);
@@ -271,8 +272,8 @@ public abstract class FailFastExceptionHandler {
                 String msg = parts[1].trim();
                 business = Business.of(ResponseCode.of(code, msg), msg);
             } else {
-                // 默认使用500错误码 (参数校验错误通常是客户端问题)
-                business = Business.of(ResponseCode.of(500, "Validation Error"), message);
+                // 默认使用400错误码 (参数校验错误通常是客户端问题)
+                business = Business.of(ResponseCode.of(400, "Validation Error"), message);
             }
         }
 

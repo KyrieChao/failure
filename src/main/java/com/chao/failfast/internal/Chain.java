@@ -1,7 +1,6 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.annotation.FastValidator.ValidationContext;
-import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.internal.check.*;
 
 import java.math.BigDecimal;
@@ -349,37 +348,22 @@ public final class Chain {
         }
     }
 
-    /**
-     * 待优化
-     */
-    @ToImprove
+
     public Chain failNow(ResponseCode code) {
         if (!alive) throw Business.of(code);
         return this;
     }
 
-    /**
-     * 待优化
-     */
-    @ToImprove
     public Chain failNow(ResponseCode code, String msg) {
         if (!alive) throw Business.of(code, msg);
         return this;
     }
 
-    /**
-     * 待优化
-     */
-    @ToImprove
     public Chain failNow(ResponseCode code, String msgFormat, Object... args) {
         if (!alive) throw Business.of(code, String.format(msgFormat, args));
         return this;
     }
 
-    /**
-     * 待优化
-     */
-    @ToImprove
     public Chain failNow(Consumer<Business.Fabricator> consumer) {
         if (!alive) {
             Business.Fabricator fabricator = Business.compose();
@@ -1501,6 +1485,7 @@ public final class Chain {
         // 调用DateChecks的after方法进行判断，并将结果传递给check方法
         return check(DateChecks.after(t1, t2));
     }
+
     public <T extends Comparable<T>> Chain after(T t1, T t2, ResponseCode code, String detail) {
         // 调用DateChecks的after方法进行检查，并根据检查结果返回链式对象
         return check(DateChecks.after(t1, t2), code, detail);

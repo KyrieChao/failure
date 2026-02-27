@@ -4,6 +4,7 @@ import com.chao.failfast.annotation.FastValidator;
 import com.chao.failfast.internal.ResponseCode;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -39,6 +40,21 @@ public abstract class TypedValidator implements FastValidator<Object> {
     protected final <T> void register(Class<T> type, BiConsumer<T, ValidationContext> validator) {
         validators.put(type, (obj, ctx) -> validator.accept(type.cast(obj), ctx));
     }
+
+
+    /**
+     * 获取所有注册的类型
+     */
+    public Set<Class<?>> getRegisteredTypes() {
+        return Set.copyOf(validators.keySet());
+    }
+
+    @Override
+    public Class<?> getSupportedType() {
+        // 单一类型直接返回，多类型返回 Object
+        return validators.size() == 1 ? validators.keySet().iterator().next() : Object.class;
+    }
+
     /**
      * 执行对象校验的核心方法。
      * <p>

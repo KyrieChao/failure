@@ -1,22 +1,25 @@
 package com.chao.failfast.aspect;
 
 import com.chao.failfast.annotation.FastValidator;
+import com.chao.failfast.annotation.SkipValidation;
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
+import com.chao.failfast.validator.TypedValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,80 +34,120 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(100)
 public class ValidationAspect {
 
-    // 验证器缓存（提升性能，避免每次反射 newInstance）
-    private static final ConcurrentHashMap<Class<? extends FastValidator<Object>>, FastValidator<Object>>
-            VALIDATOR_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<? extends FastValidator<Object>>, FastValidator<Object>> VALIDATOR_CACHE = new ConcurrentHashMap<>();
+
+    private static final Set<Class<?>> SKIP_TYPES = Set.of(
+            jakarta.servlet.ServletRequest.class,
+            jakarta.servlet.ServletResponse.class,
+            jakarta.servlet.http.HttpSession.class,
+            org.springframework.web.multipart.MultipartFile.class,
+            java.io.InputStream.class,
+            java.io.OutputStream.class,
+            java.io.Reader.class,
+            java.io.Writer.class
+    );
+
     @Autowired
     private ApplicationContext applicationContext;
 
     @Around("@annotation(validate)")
     public Object around(ProceedingJoinPoint point, Validate validate) throws Throwable {
-        Object[] args = point.getArgs();
+        if (validate.value().length == 0) return point.proceed();
 
-        // 快速失败开关（默认 true）
-        boolean failFast = validate.fast();
+        // 1. 收集可校验参数
+        List<Object> validatableArgs = collectValidatableArgs(point);
+        if (validatableArgs.isEmpty()) return point.proceed();
 
-        // 如果没有指定自定义验证器 → 直接放行，交给 Spring 处理 @Valid / @Validated
-        if (validate.value().length == 0) {
-            return point.proceed();
-        }
+        // 2. 执行所有验证器
+        List<Business> errors = executeValidators(validate.value(), validatableArgs, validate.fast());
 
-        List<Business> errors = new ArrayList<>();
-        boolean stopped = false;
+        // 3. 处理错误
+        if (!errors.isEmpty()) throw errors.size() == 1 ? errors.get(0) : new MultiBusiness(errors);
 
-        // 执行所有自定义验证器
-        for (Class<? extends FastValidator> validatorClass : validate.value()) {
-            if (stopped) {
-                break;
-            }
-
-            try {
-                // 从缓存获取或创建验证器
-                FastValidator<Object> fastValidator = getOrCreateValidator(validatorClass);
-
-                // 创建验证上下文
-                FastValidator.ValidationContext context = new FastValidator.ValidationContext(failFast);
-
-                // 获取验证器支持的类型（类型安全过滤）
-                Class<?> supportedType = getValidatorSupportedType(fastValidator);
-
-                // 遍历所有方法参数
-                for (Object arg : args) {
-                    if (arg == null) continue;
-                    // 类型兼容性检查
-                    if (!supportedType.isAssignableFrom(arg.getClass())) {
-                        continue;
-                    }
-                    // 执行自定义校验
-                    fastValidator.validate(arg, context);
-                    // 快速失败检查
-                    if (context.isStopped() && failFast) {
-                        stopped = true;
-                        break;
-                    }
-                }
-
-                // 收集错误
-                if (!context.isValid()) {
-                    errors.addAll(context.getErrors());
-                    if (failFast) stopped = true;
-                }
-            } catch (Exception e) {
-                log.error("自定义验证器 {} 执行失败", validatorClass.getSimpleName(), e);
-            }
-        }
-
-        // 处理最终错误
-        if (!errors.isEmpty()) {
-            if (errors.size() == 1) {
-                throw errors.get(0);
-            } else {
-                throw new MultiBusiness(errors);
-            }
-        }
-
-        // 全部通过，继续执行目标方法
         return point.proceed();
+    }
+
+    /**
+     * 收集需要校验的参数（过滤 null、@SkipValidation、容器类型）
+     */
+    private List<Object> collectValidatableArgs(ProceedingJoinPoint point) {
+        Object[] args = point.getArgs();
+        MethodSignature signature = (MethodSignature) point.getSignature();
+        Annotation[][] paramAnnotations = signature.getMethod().getParameterAnnotations();
+
+        List<Object> result = new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
+            if (arg == null) continue;
+            if (hasSkipAnnotation(paramAnnotations[i])) continue;
+            if (shouldSkip(arg.getClass())) continue;
+            result.add(arg);
+        }
+        return result;
+    }
+
+    /**
+     * 执行所有验证器，收集错误
+     */
+    private List<Business> executeValidators(Class<? extends FastValidator>[] validatorClasses, List<Object> args, boolean failFast) {
+        List<Business> errors = new ArrayList<>();
+
+        for (Class<? extends FastValidator> validatorClass : validatorClasses) {
+            FastValidator<Object> validator = getOrCreateValidator(validatorClass);
+            List<Business> validatorErrors = executeSingleValidator(validator, args, failFast);
+            errors.addAll(validatorErrors);
+            if (failFast && !errors.isEmpty()) break;
+        }
+
+        return errors;
+    }
+
+    /**
+     * 执行单个验证器
+     */
+    private List<Business> executeSingleValidator(FastValidator<Object> validator, List<Object> args, boolean failFast) {
+
+        FastValidator.ValidationContext ctx = new FastValidator.ValidationContext(failFast);
+
+        if (validator instanceof TypedValidator typed) {
+            executeTypedValidator(typed, args, ctx);
+        } else {
+            executePlainValidator(validator, args, ctx);
+        }
+
+        return ctx.isValid() ? List.of() : ctx.getErrors();
+    }
+
+    /**
+     * 执行 TypedValidator（多类型）
+     */
+    private void executeTypedValidator(TypedValidator validator, List<Object> args, FastValidator.ValidationContext ctx) {
+        Set<Class<?>> registeredTypes = validator.getRegisteredTypes();
+
+        for (Object arg : args) {
+            if (!registeredTypes.contains(arg.getClass())) continue;
+            validator.validate(arg, ctx);
+            if (ctx.isStopped()) break;
+        }
+    }
+
+    /**
+     * 执行普通 FastValidator（单类型）
+     */
+    private void executePlainValidator(FastValidator<Object> validator, List<Object> args, FastValidator.ValidationContext ctx) {
+
+        Class<?> supportedType = getValidatorSupportedType(validator);
+        if (supportedType == Object.class) {
+            log.warn("验证器 {} 无法确定支持类型，已跳过", validator.getClass().getSimpleName());
+            return;
+        }
+
+        for (Object arg : args) {
+            if (!supportedType.isAssignableFrom(arg.getClass())) continue;
+
+            validator.validate(arg, ctx);
+            if (ctx.isStopped()) break;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -112,8 +155,6 @@ public class ValidationAspect {
         if (applicationContext.getBeanNamesForType(clazz).length > 0) {
             return applicationContext.getBean(clazz);
         }
-
-        // 否则 fallback 到反射创建
         return VALIDATOR_CACHE.computeIfAbsent(
                 (Class<? extends FastValidator<Object>>) clazz,
                 key -> {
@@ -126,43 +167,41 @@ public class ValidationAspect {
     }
 
     /**
-     * 获取验证器支持的类型（用于类型过滤）
+     * 获取验证器支持的类型
+     *
+     * @param validator 验证器实例
+     * @return 支持的类型，如果无法确定则返回Object.class
      */
-    private Class<?> getValidatorSupportedType(FastValidator<?> fastValidator) {
-        Class<?> declared = fastValidator.getSupportedType();
+    private Class<?> getValidatorSupportedType(FastValidator<?> validator) {
+        Class<?> declared = validator.getSupportedType();
         if (declared != null && declared != Object.class) {
             return declared;
         }
-
-        Class<?> clazz = fastValidator.getClass();
-
-        // 1. 尝试从泛型接口推断 (implements Validator<T>)
-        try {
-            for (Type type : clazz.getGenericInterfaces()) {
-                if (type instanceof ParameterizedType pt) {
-                    if (FastValidator.class.equals(pt.getRawType())) {
-                        Type[] args = pt.getActualTypeArguments();
-                        if (args.length > 0 && args[0] instanceof Class<?> c) {
-                            return c;
-                        }
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-
-        // 2. 尝试从泛型父类推断 (extends BaseValidator<T>)
-        try {
-            Type genericSuper = clazz.getGenericSuperclass();
-            if (genericSuper instanceof ParameterizedType pt) {
-                Type[] args = pt.getActualTypeArguments();
-                if (args.length > 0 && args[0] instanceof Class<?> c) {
-                    return c;
-                }
-            }
-        } catch (Exception ignored) {
-        }
-
+        // 如果无法从声明中获取类型，则通过反射推断泛型类型
         return Object.class;
+    }
+
+    /**
+     * 判断给定的类是否应该被跳过
+     *
+     * @param clazz 需要检查的类
+     * @return 如果类在SKIP_TYPES列表中或其父类/接口在SKIP_TYPES列表中，则返回true；否则返回false
+     */
+    private boolean shouldSkip(Class<?> clazz) {
+        return SKIP_TYPES.stream().anyMatch(t -> t.isAssignableFrom(clazz));
+    }
+
+    /**
+     * 检查注解数组中是否包含SkipValidation注解
+     *
+     * @param annotations 需要检查的注解数组
+     * @return 如果包含SkipValidation注解则返回true，否则返回false
+     */
+    private boolean hasSkipAnnotation(Annotation[] annotations) {
+        if (annotations == null) return false;
+        for (Annotation ann : annotations) {
+            if (ann instanceof SkipValidation) return true;
+        }
+        return false;
     }
 }
