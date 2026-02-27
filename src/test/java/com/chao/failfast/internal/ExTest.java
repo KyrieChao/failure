@@ -249,37 +249,27 @@ class ExTest {
             formatMethod.setAccessible(true);
 
             // 测试 lambda$methodName$0 格式 - 正常解析
-            StackWalker.StackFrame frame1 = mock(StackWalker.StackFrame.class);
-            when(frame1.getClassName()).thenReturn("com.example.TestClass");
-            when(frame1.getMethodName()).thenReturn("lambda$testMethod$0");
+            StackWalker.StackFrame frame1 = createMockFrame("com.example.TestClass", "lambda$testMethod$0", 0);
             String result1 = (String) formatMethod.invoke(null, frame1);
             assertThat(result1).isEqualTo("TestClass#testMethod");
 
             // 测试普通方法名
-            StackWalker.StackFrame frame2 = mock(StackWalker.StackFrame.class);
-            when(frame2.getClassName()).thenReturn("com.example.TestClass");
-            when(frame2.getMethodName()).thenReturn("normalMethod");
+            StackWalker.StackFrame frame2 = createMockFrame("com.example.TestClass", "normalMethod", 0);
             String result2 = (String) formatMethod.invoke(null, frame2);
             assertThat(result2).isEqualTo("TestClass#normalMethod");
 
             // 测试 lambda$ 但只有一个 $ 的情况（firstDollar == lastDollar，条件失败）
-            StackWalker.StackFrame frame3 = mock(StackWalker.StackFrame.class);
-            when(frame3.getClassName()).thenReturn("com.example.TestClass");
-            when(frame3.getMethodName()).thenReturn("lambda$");
+            StackWalker.StackFrame frame3 = createMockFrame("com.example.TestClass", "lambda$", 0);
             String result3 = (String) formatMethod.invoke(null, frame3);
             assertThat(result3).isEqualTo("TestClass#lambda$");
 
             // 测试 lambda$xxx 但没有第二个 $（lastDollar == firstDollar，条件失败）
-            StackWalker.StackFrame frame4 = mock(StackWalker.StackFrame.class);
-            when(frame4.getClassName()).thenReturn("com.example.TestClass");
-            when(frame4.getMethodName()).thenReturn("lambda$test");
+            StackWalker.StackFrame frame4 = createMockFrame("com.example.TestClass", "lambda$test", 0);
             String result4 = (String) formatMethod.invoke(null, frame4);
             assertThat(result4).isEqualTo("TestClass#lambda$test");
 
             // 测试 lambda$0$xxx（数字在中间，firstDollar=6, lastDollar=8，条件成功）
-            StackWalker.StackFrame frame5 = mock(StackWalker.StackFrame.class);
-            when(frame5.getClassName()).thenReturn("com.example.TestClass");
-            when(frame5.getMethodName()).thenReturn("lambda$0$test");
+            StackWalker.StackFrame frame5 = createMockFrame("com.example.TestClass", "lambda$0$test", 0);
             String result5 = (String) formatMethod.invoke(null, frame5);
             assertThat(result5).isEqualTo("TestClass#0");
         }
@@ -295,24 +285,15 @@ class ExTest {
             Method formatMethod = Ex.class.getDeclaredMethod("formatLocation", StackWalker.StackFrame.class);
             formatMethod.setAccessible(true);
 
-            StackWalker.StackFrame frame1 = mock(StackWalker.StackFrame.class);
-            when(frame1.getClassName()).thenReturn("com.example.TestClass");
-            when(frame1.getMethodName()).thenReturn("testMethod");
-            when(frame1.getLineNumber()).thenReturn(100);
+            StackWalker.StackFrame frame1 = createMockFrame("com.example.TestClass", "testMethod", 100);
             String result1 = (String) formatMethod.invoke(null, frame1);
             assertThat(result1).isEqualTo("TestClass.testMethod(TestClass.java:100)");
 
-            StackWalker.StackFrame frame2 = mock(StackWalker.StackFrame.class);
-            when(frame2.getClassName()).thenReturn("com.example.TestClass");
-            when(frame2.getMethodName()).thenReturn("testMethod");
-            when(frame2.getLineNumber()).thenReturn(0);
+            StackWalker.StackFrame frame2 = createMockFrame("com.example.TestClass", "testMethod", 0);
             String result2 = (String) formatMethod.invoke(null, frame2);
             assertThat(result2).isEqualTo("TestClass.testMethod(TestClass.java)");
 
-            StackWalker.StackFrame frame3 = mock(StackWalker.StackFrame.class);
-            when(frame3.getClassName()).thenReturn("com.example.TestClass");
-            when(frame3.getMethodName()).thenReturn("testMethod");
-            when(frame3.getLineNumber()).thenReturn(-1);
+            StackWalker.StackFrame frame3 = createMockFrame("com.example.TestClass", "testMethod", -1);
             String result3 = (String) formatMethod.invoke(null, frame3);
             assertThat(result3).isEqualTo("TestClass.testMethod(TestClass.java)");
         }
@@ -346,8 +327,7 @@ class ExTest {
             };
 
             for (String className : skipPrefixes) {
-                StackWalker.StackFrame frame = mock(StackWalker.StackFrame.class);
-                when(frame.getClassName()).thenReturn(className);
+                StackWalker.StackFrame frame = createMockFrame(className, "method", 0);
                 Boolean result = (Boolean) isNotSkippedMethod.invoke(null, frame);
                 assertThat(result).as("Class %s should be skipped", className).isFalse();
             }
@@ -360,8 +340,7 @@ class ExTest {
             };
 
             for (String className : nonSkipPrefixes) {
-                StackWalker.StackFrame frame = mock(StackWalker.StackFrame.class);
-                when(frame.getClassName()).thenReturn(className);
+                StackWalker.StackFrame frame = createMockFrame(className, "method", 0);
                 Boolean result = (Boolean) isNotSkippedMethod.invoke(null, frame);
                 assertThat(result).as("Class %s should not be skipped", className).isTrue();
             }
@@ -405,5 +384,20 @@ class ExTest {
             assertThat(shouldBeFiltered("com.example.UserService")).isFalse();
             assertThat(shouldBeFiltered("com.example.MyValidationService")).isFalse();
         }
+    }
+
+    private StackWalker.StackFrame createMockFrame(String className, String methodName, int lineNumber) {
+        return new StackWalker.StackFrame() {
+            @Override public String getClassName() { return className; }
+            @Override public String getMethodName() { return methodName; }
+            @Override public int getLineNumber() { return lineNumber; }
+            @Override public int getByteCodeIndex() { return 0; }
+            @Override public String getFileName() { return null; }
+            @Override public boolean isNativeMethod() { return false; }
+            @Override public StackTraceElement toStackTraceElement() { return null; }
+            @Override public Class<?> getDeclaringClass() { return null; }
+            @Override public java.lang.invoke.MethodType getMethodType() { return null; }
+            @Override public String getDescriptor() { return null; }
+        };
     }
 }

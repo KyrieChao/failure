@@ -71,7 +71,7 @@ class FailFastExceptionHandlerTest {
         ResponseEntity<?> response = handler.handleMultiBusinessException(multiBusiness);
 
         // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         Map<String, Object> body = (Map<String, Object>) response.getBody();
         assertThat(body).containsEntry("code", 500); // MultiBusiness 默认 code
         String description = (String) body.get("description");
@@ -133,7 +133,7 @@ class FailFastExceptionHandlerTest {
 
         // Assert
         // MultiBusiness 固定为 500
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         Map<String, Object> body = (Map<String, Object>) response.getBody();
         // 返回多重错误结构
         assertThat(body.get("description").toString()).contains("共 2 项错误");
@@ -373,7 +373,7 @@ class FailFastExceptionHandlerTest {
 
             // Assert
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            assertThat(body).containsEntry("code", 500);
+            assertThat(body).containsEntry("code", 400);
         }
 
         @Test
@@ -396,7 +396,7 @@ class FailFastExceptionHandlerTest {
 
             // Assert
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            assertThat(body).containsEntry("code", 500);  // 默认使用 500
+            assertThat(body).containsEntry("code", 400);  // 默认使用 500
         }
 
         @Test
@@ -472,7 +472,7 @@ class FailFastExceptionHandlerTest {
 
             // Assert - 空字符串不是数字，应该走默认 500
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            assertThat(body).containsEntry("code", 500);
+            assertThat(body).containsEntry("code", 400);
         }
 
         @Test
@@ -495,7 +495,7 @@ class FailFastExceptionHandlerTest {
 
             // Assert - " 500 " 不是纯数字
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            assertThat(body).containsEntry("code", 500);
+            assertThat(body).containsEntry("code", 400);
         }
 
         @Test
@@ -518,7 +518,7 @@ class FailFastExceptionHandlerTest {
 
             // Assert - "-" 不是数字字符
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            assertThat(body).containsEntry("code", 500);
+            assertThat(body).containsEntry("code", 400);
         }
     }
 

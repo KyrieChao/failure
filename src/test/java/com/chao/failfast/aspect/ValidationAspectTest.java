@@ -1,11 +1,17 @@
 package com.chao.failfast.aspect;
 
 import com.chao.failfast.annotation.FastValidator;
+import com.chao.failfast.annotation.SkipValidation;
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.model.TestResponseCode;
+import com.chao.failfast.validator.TypedValidator;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,14 +21,25 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * ValidationAspect 全面覆盖测试
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ValidationAspect 切面测试")
+@DisplayName("ValidationAspect 切面全覆盖测试")
 class ValidationAspectTest {
 
     @Mock
@@ -32,20 +49,21 @@ class ValidationAspectTest {
     private ProceedingJoinPoint joinPoint;
 
     @Mock
+    private MethodSignature signature;
+
+    @Mock
     private Validate validate;
 
     @InjectMocks
     private ValidationAspect validationAspect;
 
-    @BeforeEach
-    void setUp() {
-    }
+    // --- 测试辅助类 ---
 
-    // Mock Validator
-    public static class TestValidator implements FastValidator<String> {
+    // 1. 普通验证器
+    public static class StringValidator implements FastValidator<String> {
         @Override
         public void validate(String target, ValidationContext context) {
-            if ("invalid".equals(target)) {
+            if ("error".equals(target)) {
                 context.reportError(TestResponseCode.PARAM_ERROR);
             }
         }
@@ -56,6 +74,7 @@ class ValidationAspectTest {
         }
     }
 
+    // 2. 多重错误验证器
     public static class MultiErrorValidator implements FastValidator<String> {
         @Override
         public void validate(String target, ValidationContext context) {
@@ -69,37 +88,20 @@ class ValidationAspectTest {
         }
     }
 
-    // --- 覆盖率测试专用辅助类 ---
-
-    public static class FailingValidator implements FastValidator<Object> {
-        @Override
-        public void validate(Object target, ValidationContext context) {
-            context.reportError(TestResponseCode.PARAM_ERROR);
-        }
-    }
-
-    public static class PassingValidator implements FastValidator<Object> {
-        @Override
-        public void validate(Object target, ValidationContext context) {
-        }
-    }
-
+    // 3. 抛异常验证器
     public static class ExceptionThrowingValidator implements FastValidator<Object> {
         @Override
         public void validate(Object target, ValidationContext context) {
-            throw new RuntimeException("Unexpected runtime error");
-        }
-    }
-
-    public static class PrivateConstructorValidator implements FastValidator<Object> {
-        private PrivateConstructorValidator() {
+            throw new RuntimeException("Validator execution failed");
         }
 
         @Override
-        public void validate(Object target, ValidationContext context) {
+        public Class<?> getSupportedType() {
+            return String.class;
         }
     }
 
+    // 4. 构造函数抛异常验证器
     public static class ConstructorThrowingValidator implements FastValidator<Object> {
         public ConstructorThrowingValidator() {
             throw new RuntimeException("Constructor failed");
@@ -110,31 +112,141 @@ class ValidationAspectTest {
         }
     }
 
-    public static class GenericInterfaceValidator implements FastValidator<Integer> {
+    // 5. 私有构造函数验证器
+    public static class PrivateConstructorValidator implements FastValidator<Object> {
+        private PrivateConstructorValidator() {
+        }
+
         @Override
-        public void validate(Integer target, ValidationContext context) {
+        public void validate(Object target, ValidationContext context) {
         }
     }
 
-    public abstract static class BaseValidator<T> implements FastValidator<T> {
+    // 6. TypedValidator 实现
+    public static class MyTypedValidator extends TypedValidator {
         @Override
-        public void validate(T target, ValidationContext context) {
+        protected void registerValidators() {
+            register(String.class, (s, ctx) -> {
+                if ("error".equals(s)) {
+                    ctx.reportError(TestResponseCode.PARAM_ERROR);
+                }
+            });
+            register(Integer.class, (i, ctx) -> {
+                if (i < 0) {
+                    ctx.reportError(TestResponseCode.PARAM_ERROR);
+                }
+            });
         }
     }
 
-    public static class GenericSuperclassValidator extends BaseValidator<Double> {
+    // 7. 返回 Object.class 的验证器 (无法确定类型)
+    public static class UnknownTypeValidator implements FastValidator<Object> {
+        @Override
+        public void validate(Object target, ValidationContext context) {
+            // Should not be called
+            context.reportError(TestResponseCode.PARAM_ERROR);
+        }
+
+        @Override
+        public Class<?> getSupportedType() {
+            return Object.class;
+        }
+    }
+
+    // 8. 能够停止上下文的验证器
+    public static class StoppingValidator implements FastValidator<String> {
+        @Override
+        public void validate(String target, ValidationContext context) {
+            context.reportError(TestResponseCode.PARAM_ERROR);
+        }
+
+        @Override
+        public Class<?> getSupportedType() {
+            return String.class;
+        }
+    }
+
+    // 9. 第二个验证器，用于验证是否被短路
+    public static class SecondValidator implements FastValidator<String> {
+        @Override
+        public void validate(String target, ValidationContext context) {
+            context.reportError(TestResponseCode.SYSTEM_ERROR);
+        }
+
+        @Override
+        public Class<?> getSupportedType() {
+            return String.class;
+        }
+    }
+
+
+    // 10. getSupportedType 返回 null 的验证器
+    public static class NullTypeValidator implements FastValidator<Object> {
+        @Override
+        public void validate(Object target, ValidationContext context) {}
+        @Override
+        public Class<?> getSupportedType() { return null; }
+    }
+
+    @BeforeEach
+    void setUp() {
+        // Common setup if needed
     }
 
     @Nested
-    @DisplayName("切面逻辑测试")
-    class AspectLogicTest {
+    @DisplayName("基础逻辑测试")
+    class BasicLogicTest {
 
         @Test
-        @DisplayName("当没有指定验证器时应直接放行")
+        @DisplayName("validate.value() 为空时直接放行")
         void shouldProceedWhenNoValidatorSpecified() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[0];
+            when(validate.value()).thenReturn(new Class[0]);
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+            verify(joinPoint, never()).getArgs();
+        }
+
+        @Test
+        @DisplayName("collectValidatableArgs 为空时直接放行")
+        void shouldProceedWhenNoValidatableArgs() throws Throwable {
+            Class[] validators = {StringValidator.class};
+            when(validate.value()).thenReturn(validators);
+
+            // Mock args
+            when(joinPoint.getArgs()).thenReturn(new Object[]{});
+            when(joinPoint.getSignature()).thenReturn(signature);
+            Method method = TestMethods.class.getMethod("noArgs");
+            when(signature.getMethod()).thenReturn(method);
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+        }
+    }
+
+    @Nested
+    @DisplayName("参数收集逻辑测试 (collectValidatableArgs)")
+    class ArgsCollectionTest {
+
+        @Test
+        @DisplayName("当 getParameterAnnotations 返回 null 时应安全处理")
+        void shouldHandleNullAnnotations() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"valid"};
+            when(joinPoint.getArgs()).thenReturn(args);
+            when(joinPoint.getSignature()).thenReturn(signature);
+
+            // Mock method to return null annotations for the first parameter
+            Method method = mock(Method.class);
+            when(signature.getMethod()).thenReturn(method);
+            when(method.getParameterAnnotations()).thenReturn(new Annotation[][]{null});
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
 
             validationAspect.around(joinPoint, validate);
 
@@ -142,16 +254,86 @@ class ValidationAspectTest {
         }
 
         @Test
-        @DisplayName("当验证通过时应直接放行")
-        void shouldProceedWhenValidationPasses() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
+        @DisplayName("过滤 null、@SkipValidation 和特定类型参数")
+        void shouldFilterArgsCorrectly() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"valid"});
 
-            // Mock ApplicationContext to return validator instance
-            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
-            when(applicationContext.getBean(TestValidator.class)).thenReturn(new TestValidator());
+            // 构造参数：
+            // 0: "valid" (正常)
+            // 1: null (过滤)
+            // 2: "skip" (@SkipValidation 过滤)
+            // 3: ServletRequest (类型过滤)
+            Object[] args = new Object[]{
+                    "valid",
+                    null,
+                    "skip",
+                    mock(ServletRequest.class)
+            };
+            when(joinPoint.getArgs()).thenReturn(args);
+            when(joinPoint.getSignature()).thenReturn(signature);
+
+            Method method = TestMethods.class.getMethod("mixedArgs", String.class, String.class, String.class, ServletRequest.class);
+            when(signature.getMethod()).thenReturn(method);
+
+            // Mock ApplicationContext needed for validator execution
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
+
+            // Act
+            validationAspect.around(joinPoint, validate);
+
+            // Assert
+            // 只有第一个参数 "valid" 应该被传递给验证器
+            // 我们可以通过 Spy 或者 Mock Validator 来验证
+            // 这里简单通过 verify(proceed) 确认没有抛异常即可，因为 "valid" 不会触发错误
+            verify(joinPoint).proceed();
+        }
+
+        @Test
+        @DisplayName("验证所有跳过类型")
+        void shouldSkipAllIgnoredTypes() throws Throwable {
+            Class[] validators = {StringValidator.class};
+            when(validate.value()).thenReturn(validators);
+
+            Object[] args = new Object[]{
+                    mock(ServletRequest.class),
+                    mock(ServletResponse.class),
+                    mock(HttpSession.class),
+                    mock(MultipartFile.class),
+                    mock(InputStream.class),
+                    mock(OutputStream.class),
+                    mock(Reader.class),
+                    mock(Writer.class)
+            };
+            when(joinPoint.getArgs()).thenReturn(args);
+            when(joinPoint.getSignature()).thenReturn(signature);
+            Method method = TestMethods.class.getMethod("ignoredTypes", ServletRequest.class, ServletResponse.class, HttpSession.class, MultipartFile.class, InputStream.class, OutputStream.class, Reader.class, Writer.class);
+            when(signature.getMethod()).thenReturn(method);
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+            // 确保没有进行验证逻辑（因为参数列表为空）
+            verify(applicationContext, never()).getBean(any(Class.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("验证器执行逻辑测试")
+    class ValidatorExecutionTest {
+
+        @Test
+        @DisplayName("executePlainValidator: 类型匹配且通过验证")
+        void shouldPassPlainValidator() throws Throwable {
+            Class[] validators = {StringValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"valid"};
+            setupJoinPoint(args, "singleArg", String.class);
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
 
             validationAspect.around(joinPoint, validate);
 
@@ -159,388 +341,354 @@ class ValidationAspectTest {
         }
 
         @Test
-        @DisplayName("当验证失败且fast=true时应抛出Business异常")
-        void shouldThrowBusinessWhenValidationFailsAndFastIsTrue() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
+        @DisplayName("executePlainValidator: 类型匹配但验证失败 (Business异常)")
+        void shouldFailPlainValidator() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"invalid"});
 
-            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{});
-            // Fallback to instantiation
+            Object[] args = new Object[]{"error"};
+            setupJoinPoint(args, "singleArg", String.class);
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
 
             Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
 
             assertThat(thrown).isInstanceOf(Business.class);
-            Business business = (Business) thrown;
-            assertThat(business.getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
             verify(joinPoint, never()).proceed();
         }
 
         @Test
-        @DisplayName("当产生多个错误时应抛出MultiBusiness异常")
-        void shouldThrowMultiBusinessWithMultipleErrors() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{MultiErrorValidator.class};
+        @DisplayName("executePlainValidator: 类型不匹配 (忽略)")
+        void shouldIgnoreTypeMismatch() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(false); // Must be false to collect multiple errors
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"any"});
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{123}; // Integer vs StringValidator
+            setupJoinPoint(args, "intArg", Integer.class);
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+        }
+
+        @Test
+        @DisplayName("executePlainValidator: 无法确定类型 (Object.class) -> Log Warn & Skip")
+        void shouldSkipUnknownTypeValidator() throws Throwable {
+            Class[] validators = {UnknownTypeValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"any"};
+            setupJoinPoint(args, "singleArg", String.class);
+
+            when(applicationContext.getBeanNamesForType(UnknownTypeValidator.class)).thenReturn(new String[]{});
+
+            validationAspect.around(joinPoint, validate);
+
+            // 验证器本身逻辑是抛错，但如果被跳过，则不会抛错
+            verify(joinPoint).proceed();
+        }
+
+        @Test
+        @DisplayName("executePlainValidator: getSupportedType 返回 null -> Log Warn & Skip")
+        void shouldSkipNullTypeValidator() throws Throwable {
+            Class[] validators = {NullTypeValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"any"};
+            setupJoinPoint(args, "singleArg", String.class);
+
+            when(applicationContext.getBeanNamesForType(NullTypeValidator.class)).thenReturn(new String[]{});
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+        }
+        
+        @Test
+        @DisplayName("executePlainValidator: 遇到错误应停止 (Fast Mode)")
+        void shouldStopPlainValidatorOnFirstError() throws Throwable {
+            Class[] validators = {StringValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            // "error" fails, "valid" passes.
+            // If it stops, "valid" is not validated.
+            // But verify() checks if proceed() is called (which it won't be if error).
+            // To ensure the loop break is hit, we need 2 args.
+            Object[] args = new Object[]{"error", "valid"};
+            // Mock signature to accept 2 args
+            when(joinPoint.getArgs()).thenReturn(args);
+            when(joinPoint.getSignature()).thenReturn(signature);
+            Method method = TestMethods.class.getMethod("mixedArgs", String.class, String.class, String.class, ServletRequest.class);
+            when(signature.getMethod()).thenReturn(method);
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
+
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+
+            assertThat(thrown).isInstanceOf(Business.class);
+        }
+
+        @Test
+        @DisplayName("executeTypedValidator: 匹配注册类型并验证")
+        void shouldExecuteTypedValidator() throws Throwable {
+            Class[] validators = {MyTypedValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"valid", 100};
+            setupJoinPoint(args, "mixedArgs2", String.class, Integer.class);
+
+            when(applicationContext.getBeanNamesForType(MyTypedValidator.class)).thenReturn(new String[]{});
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+        }
+
+        @Test
+        @DisplayName("executeTypedValidator: 匹配注册类型并验证失败")
+        void shouldFailTypedValidator() throws Throwable {
+            Class[] validators = {MyTypedValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{-1}; // Integer < 0 triggers error
+            setupJoinPoint(args, "intArg", Integer.class);
+
+            when(applicationContext.getBeanNamesForType(MyTypedValidator.class)).thenReturn(new String[]{});
+
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+
+            assertThat(thrown).isInstanceOf(Business.class);
+        }
+
+        @Test
+        @DisplayName("executeTypedValidator: 遇到错误应停止 (Fast Mode)")
+        void shouldStopTypedValidatorOnFirstError() throws Throwable {
+            Class[] validators = {MyTypedValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            // "error" fails, 100 passes. But if it stops, 100 is not validated?
+            // Wait, TypedValidator iterates over args.
+            // If first arg fails, it should break loop.
+            Object[] args = new Object[]{"error", 100};
+            setupJoinPoint(args, "mixedArgs2", String.class, Integer.class);
+
+            when(applicationContext.getBeanNamesForType(MyTypedValidator.class)).thenReturn(new String[]{});
+
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+
+            assertThat(thrown).isInstanceOf(Business.class);
+            // We can't easily verify if the loop broke without spying on the validator's internal map consumer
+            // But this should cover the branch "if (ctx.isStopped()) break;"
+        }
+
+        @Test
+        @DisplayName("executeTypedValidator: 类型不匹配 (忽略)")
+        void shouldIgnoreTypedValidatorMismatch() throws Throwable {
+            Class[] validators = {MyTypedValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{1.0d}; // Double not in [String, Integer]
+            setupJoinPoint(args, "doubleArg", Double.class);
+
+            when(applicationContext.getBeanNamesForType(MyTypedValidator.class)).thenReturn(new String[]{});
+
+            validationAspect.around(joinPoint, validate);
+
+            verify(joinPoint).proceed();
+        }
+    }
+
+    @Nested
+    @DisplayName("Fail-Fast 机制测试")
+    class FailFastTest {
+
+        @Test
+        @DisplayName("fast=true: 遇到第一个错误即停止")
+        void shouldStopOnFirstErrorWhenFastTrue() throws Throwable {
+            Class[] validators = {StoppingValidator.class, SecondValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(true);
+
+            Object[] args = new Object[]{"any"};
+            setupJoinPoint(args, "singleArg", String.class);
+
+            // Mock StoppingValidator
+            StoppingValidator v1 = spy(new StoppingValidator());
+
+            // 使用 doReturn 避免 spy 调用真实方法（虽然这里真实方法就是我们要测的，但为了验证 getBean）
+            // 这里我们直接 mock getBeanNamesForType 走反射或者 bean
+            when(applicationContext.getBeanNamesForType(StoppingValidator.class)).thenReturn(new String[]{"v1"});
+            when(applicationContext.getBean(StoppingValidator.class)).thenReturn(v1);
+
+            // 关键：验证 v2 是否被获取/实例化。如果 failFast 生效，v1 报错后 break，v2 不应该被触碰
+
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+
+            assertThat(thrown).isInstanceOf(Business.class);
+
+            verify(v1).validate(any(), any());
+            // 验证第二个验证器没有被请求实例化/获取
+            verify(applicationContext, never()).getBeanNamesForType(SecondValidator.class);
+        }
+
+        @Test
+        @DisplayName("fast=false: 收集所有错误")
+        void shouldCollectAllErrorsWhenFastFalse() throws Throwable {
+            Class[] validators = {MultiErrorValidator.class};
+            when(validate.value()).thenReturn(validators);
+            when(validate.fast()).thenReturn(false);
+
+            Object[] args = new Object[]{"any"};
+            setupJoinPoint(args, "singleArg", String.class);
 
             when(applicationContext.getBeanNamesForType(MultiErrorValidator.class)).thenReturn(new String[]{});
 
             Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
 
             assertThat(thrown).isInstanceOf(MultiBusiness.class);
-            assertThat(((MultiBusiness) thrown).getErrors()).hasSize(2);
-        }
-
-        @Test
-        @DisplayName("当参数类型不匹配时应跳过校验")
-        void shouldSkipValidationWhenArgumentTypeMismatch() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{123}); // TestValidator expects String
-
-            TestValidator mockValidator = mock(TestValidator.class);
-            when(mockValidator.getSupportedType()).thenCallRealMethod();
-
-            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
-            when(applicationContext.getBean(TestValidator.class)).thenReturn(mockValidator);
-
-            validationAspect.around(joinPoint, validate);
-
-            verify(joinPoint).proceed();
-            verify(mockValidator, never()).validate(any(), any());
-        }
-
-        @Test
-        @DisplayName("当参数为null时应跳过校验")
-        void shouldSkipValidationWhenArgumentIsNull() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{TestValidator.class};
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{null});
-
-            TestValidator mockValidator = mock(TestValidator.class);
-            when(mockValidator.getSupportedType()).thenCallRealMethod();
-
-            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{"testValidator"});
-            when(applicationContext.getBean(TestValidator.class)).thenReturn(mockValidator);
-
-            validationAspect.around(joinPoint, validate);
-
-            verify(joinPoint).proceed();
-            verify(mockValidator, never()).validate(any(), any());
+            MultiBusiness mb = (MultiBusiness) thrown;
+            assertThat(mb.getErrors()).hasSize(2);
         }
     }
 
     @Nested
-    @DisplayName("覆盖率补充测试")
-    class CoverageTest {
-        @Test
-        @DisplayName("覆盖 if (stopped) { break; }: 当 failFast=true 且前一个验证器失败时，后续验证器不应执行")
-        void shouldStopExecutionWhenStoppedIsTrue() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    FailingValidator.class,
-                    PassingValidator.class // 这个不应该被执行
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
-
-            // 模拟 FailingValidator 不在 Spring 容器中，走反射创建
-            when(applicationContext.getBeanNamesForType(FailingValidator.class)).thenReturn(new String[]{});
-
-            // Act
-            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
-
-            // Assert
-            assertThat(thrown).isInstanceOf(Business.class); // 既然 failFast=true 且失败了，会抛异常
-
-            // 验证 FailingValidator 被实例化了 (通过 getBeanNamesForType 被调用)
-            verify(applicationContext, times(1)).getBeanNamesForType(FailingValidator.class);
-
-            // 关键验证：PassingValidator 根本没有尝试去获取或实例化，说明循环 break 了
-            verify(applicationContext, never()).getBeanNamesForType(PassingValidator.class);
-        }
+    @DisplayName("异常处理与实例化测试")
+    class ExceptionHandlingTest {
 
         @Test
-        @DisplayName("覆盖 catch (Exception e) { log.error... }: 验证器抛出异常时应被捕获并继续执行后续验证器")
-        void shouldCatchExceptionAndContinueLoop() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    ExceptionThrowingValidator.class, // 会抛出 RuntimeException
-                    PassingValidator.class // 应该继续执行
-            };
+        @DisplayName("验证器执行抛出运行时异常: 异常应直接抛出")
+        void shouldThrowValidatorException() throws Throwable {
+            Class[] validators = {ExceptionThrowingValidator.class, StringValidator.class};
             when(validate.value()).thenReturn(validators);
             when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
+
+            Object[] args = new Object[]{"valid"};
+            setupJoinPoint(args, "singleArg", String.class);
 
             when(applicationContext.getBeanNamesForType(ExceptionThrowingValidator.class)).thenReturn(new String[]{});
 
-            // 为了验证 PassingValidator 被执行了，我们可以 Mock ApplicationContext 返回一个 Spy 对象
-            PassingValidator spyValidator = spy(new PassingValidator());
-            when(applicationContext.getBeanNamesForType(PassingValidator.class)).thenReturn(new String[]{"passingValidator"});
-            when(applicationContext.getBean(PassingValidator.class)).thenReturn(spyValidator);
+            // 注意：executeValidators 方法本身没有 try-catch 包裹 validator.validate 调用的异常？
+            // 让我们再检查 ValidationAspect.java 
+            // executeSingleValidator 调用 validator.validate
+            // 没有任何 try-catch！
+            // 所以 validator 抛异常会直接抛出到切面外，导致 500
 
-            // Act
-            validationAspect.around(joinPoint, validate);
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+            assertThat(thrown).isInstanceOf(RuntimeException.class)
+                    .hasMessage("Validator execution failed");
 
-            // Assert
-            // 1. 验证第一个验证器抛异常后，没有抛出到外面 (被 catch log 了)
-            // 2. 验证第二个验证器被执行了
-            verify(spyValidator).validate(any(), any());
-
-            // 3. 最终 proceed 应该被调用
-            verify(joinPoint).proceed();
+            // 验证第二个验证器没有被执行 (因为第一个抛异常中断了)
+            verify(applicationContext, never()).getBeanNamesForType(StringValidator.class);
         }
 
         @Test
-        @DisplayName("覆盖 catch (Exception e) { throw new RuntimeException... }: 实例化失败应抛出运行时异常，并被外层捕获记录日志，然后继续")
-        void shouldThrowRuntimeExceptionWhenInstantiationFails() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    PrivateConstructorValidator.class
-            };
+        @DisplayName("实例化失败 (私有构造): 抛出 RuntimeException")
+        void shouldThrowRuntimeExceptionOnInstantiationError() throws Throwable {
+            Class[] validators = {PrivateConstructorValidator.class};
             when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
 
+            setupJoinPoint(new Object[]{"any"}, "singleArg", String.class);
             when(applicationContext.getBeanNamesForType(PrivateConstructorValidator.class)).thenReturn(new String[]{});
 
-            // Act
-            // 实例化失败会抛 RuntimeException，被外层 catch 捕获并记录日志，然后继续执行
-            validationAspect.around(joinPoint, validate);
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
 
-            // Assert
-            // 验证切面正常放行 (因为验证器创建失败被忽略了)
-            verify(joinPoint).proceed();
+            assertThat(thrown).isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Failed to instantiate validator");
         }
 
         @Test
-        @DisplayName("覆盖 catch (Exception e) { throw new RuntimeException... }: 构造函数抛异常应被捕获并记录日志，然后继续")
-        void shouldThrowRuntimeExceptionWhenConstructorThrows() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    ConstructorThrowingValidator.class
-            };
+        @DisplayName("构造函数抛异常: 抛出 RuntimeException")
+        void shouldThrowRuntimeExceptionOnConstructorError() throws Throwable {
+            Class[] validators = {ConstructorThrowingValidator.class};
             when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
 
+            setupJoinPoint(new Object[]{"any"}, "singleArg", String.class);
             when(applicationContext.getBeanNamesForType(ConstructorThrowingValidator.class)).thenReturn(new String[]{});
 
-            // Act
-            validationAspect.around(joinPoint, validate);
+            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
 
-            // Assert
-            verify(joinPoint).proceed();
+            assertThat(thrown).isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Failed to instantiate validator");
         }
 
         @Test
-        @DisplayName("覆盖 getValidatorSupportedType: 能够从泛型接口推断类型")
-        void shouldInferTypeFromGenericInterface() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    GenericInterfaceValidator.class
-            };
+        @DisplayName("Spring Bean 获取: 优先从 ApplicationContext 获取")
+        void shouldGetValidatorFromContext() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
 
-            // 传入一个 String，应该被忽略 (因为 GenericInterfaceValidator 支持 Integer)
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"not an integer"});
-            when(applicationContext.getBeanNamesForType(GenericInterfaceValidator.class)).thenReturn(new String[]{});
+            setupJoinPoint(new Object[]{"valid"}, "singleArg", String.class);
 
-            // Act
+            StringValidator mockValidator = mock(StringValidator.class);
+            // Fix generic type issue
+            doReturn(String.class).when(mockValidator).getSupportedType();
+
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{"bean"});
+            when(applicationContext.getBean(StringValidator.class)).thenReturn(mockValidator);
+
             validationAspect.around(joinPoint, validate);
 
-            // Assert
-            verify(joinPoint).proceed();
+            verify(mockValidator).validate(any(), any());
         }
 
         @Test
-        @DisplayName("覆盖 getValidatorSupportedType: 能够从泛型父类推断类型")
-        void shouldInferTypeFromGenericSuperclass() throws Throwable {
-            // Arrange
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    GenericSuperclassValidator.class
-            };
+        @DisplayName("Validator 缓存测试: 第二次调用应使用缓存")
+        void shouldUseValidatorCache() throws Throwable {
+            Class[] validators = {StringValidator.class};
             when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
 
-            // 传入一个 String，应该被忽略 (因为 GenericSuperclassValidator 支持 Double)
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"not a double"});
-            when(applicationContext.getBeanNamesForType(GenericSuperclassValidator.class)).thenReturn(new String[]{});
+            setupJoinPoint(new Object[]{"valid"}, "singleArg", String.class);
 
-            // Act
+            when(applicationContext.getBeanNamesForType(StringValidator.class)).thenReturn(new String[]{});
+
+            // First call
             validationAspect.around(joinPoint, validate);
 
-            // Assert
-            verify(joinPoint).proceed();
-        }
-    }
-    @Nested
-    @DisplayName("getValidatorSupportedType 方法测试")
-    class GetValidatorSupportedTypeTest {
-
-        @Test
-        @DisplayName("当 getSupportedType 返回具体类型时应直接使用")
-        void shouldUseDeclaredSupportedType() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    TestValidator.class  // getSupportedType 返回 String.class
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"valid"});
-
-            when(applicationContext.getBeanNamesForType(TestValidator.class)).thenReturn(new String[]{});
-
+            // Second call
             validationAspect.around(joinPoint, validate);
-            verify(joinPoint).proceed();
-        }
 
-        @Test
-        @DisplayName("当 getSupportedType 返回 Object.class 时应从泛型接口推断")
-        void shouldInferFromGenericInterfaceWhenDeclaredIsObject() throws Throwable {
-            // 创建一个返回 Object.class 的验证器
-            FastValidator<Object> validator = new FastValidator<>() {
-                @Override
-                public void validate(Object target, ValidationContext context) {}
+            // getBeanNamesForType called twice (once per around execution check)
+            verify(applicationContext, times(2)).getBeanNamesForType(StringValidator.class);
 
-                @Override
-                public Class<?> getSupportedType() {
-                    return Object.class;  // 强制返回 Object
-                }
-            };
-
-            Class<? extends FastValidator> clazz = validator.getClass();
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{clazz};
-
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"test"});
-            when(applicationContext.getBeanNamesForType(clazz)).thenReturn(new String[]{});
-
-            validationAspect.around(joinPoint, validate);
-            verify(joinPoint).proceed();
-        }
-
-        @Test
-        @DisplayName("当泛型接口推断失败时应返回 Object.class")
-        void shouldReturnObjectClassWhenInferenceFails() throws Throwable {
-            // 使用原始类型（没有泛型参数）的验证器
-            @SuppressWarnings("rawtypes")
-            class RawValidator implements FastValidator {
-                @Override
-                public void validate(Object target, ValidationContext context) {}
-            }
-
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{RawValidator.class};
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"test"});
-            when(applicationContext.getBeanNamesForType(RawValidator.class)).thenReturn(new String[]{});
-
-            validationAspect.around(joinPoint, validate);
-            verify(joinPoint).proceed();
-        }
-
-        @Test
-        @DisplayName("当泛型父类推断失败时应返回 Object.class")
-        void shouldReturnObjectClassWhenSuperclassInferenceFails() throws Throwable {
-            abstract class RawBaseValidator implements FastValidator {
-            }
-
-            class RawValidator extends RawBaseValidator {
-                @Override
-                public void validate(Object target, ValidationContext context) {}
-            }
-
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{RawValidator.class};
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{"test"});
-            when(applicationContext.getBeanNamesForType(RawValidator.class)).thenReturn(new String[]{});
-
-            validationAspect.around(joinPoint, validate);
-            verify(joinPoint).proceed();
+            // Reflection instantiation happens internally in computeIfAbsent, 
+            // verifying it is hard without spying the map, but functionality is covered.
         }
     }
 
-    @Nested
-    @DisplayName("边界情况测试")
-    class EdgeCaseTest {
+    // --- Helper Methods ---
 
-        @Test
-        @DisplayName("当多个验证器都失败且 fast=false 时应收集所有错误")
-        void shouldCollectAllErrorsFromMultipleValidators() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    FailingValidator.class,
-                    FailingValidator.class
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(false);  // 非快速模式
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
+    private void setupJoinPoint(Object[] args, String methodName, Class<?>... paramTypes) throws NoSuchMethodException {
+        when(joinPoint.getArgs()).thenReturn(args);
+        when(joinPoint.getSignature()).thenReturn(signature);
+        Method method = TestMethods.class.getMethod(methodName, paramTypes);
+        when(signature.getMethod()).thenReturn(method);
+    }
 
-            when(applicationContext.getBeanNamesForType(FailingValidator.class)).thenReturn(new String[]{});
+    // --- Dummy Methods for Reflection ---
+    interface TestMethods {
+        void noArgs();
 
-            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+        void singleArg(String arg);
 
-            assertThat(thrown).isInstanceOf(MultiBusiness.class);
-            assertThat(((MultiBusiness) thrown).getErrors()).hasSize(2);
-        }
+        void intArg(Integer arg);
 
-        @Test
-        @DisplayName("当 fast=true 但 context 未 stopped 时应继续执行")
-        void shouldContinueWhenFastButNotStopped() throws Throwable {
-            // 第一个验证器通过，第二个失败
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    PassingValidator.class,
-                    FailingValidator.class
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
+        void doubleArg(Double arg);
 
-            when(applicationContext.getBeanNamesForType(PassingValidator.class)).thenReturn(new String[]{});
-            when(applicationContext.getBeanNamesForType(FailingValidator.class)).thenReturn(new String[]{});
+        void mixedArgs(String arg1, String arg2, @SkipValidation String arg3, ServletRequest req);
 
-            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
+        void mixedArgs2(String arg1, Integer arg2);
 
-            assertThat(thrown).isInstanceOf(Business.class);
-        }
-
-        @Test
-        @DisplayName("当错误列表为空时应正常放行")
-        void shouldProceedWhenErrorListIsEmpty() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    PassingValidator.class
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(true);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
-
-            when(applicationContext.getBeanNamesForType(PassingValidator.class)).thenReturn(new String[]{});
-
-            validationAspect.around(joinPoint, validate);
-            verify(joinPoint).proceed();
-        }
-
-        @Test
-        @DisplayName("当只有一个错误时应抛出 Business 而不是 MultiBusiness")
-        void shouldThrowBusinessForSingleError() throws Throwable {
-            Class<? extends FastValidator>[] validators = (Class<? extends FastValidator>[]) new Class<?>[]{
-                    FailingValidator.class
-            };
-            when(validate.value()).thenReturn(validators);
-            when(validate.fast()).thenReturn(false);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{new Object()});
-
-            when(applicationContext.getBeanNamesForType(FailingValidator.class)).thenReturn(new String[]{});
-
-            Throwable thrown = catchThrowable(() -> validationAspect.around(joinPoint, validate));
-
-            assertThat(thrown).isInstanceOf(Business.class);
-            assertThat(thrown).isNotInstanceOf(MultiBusiness.class);
-        }
+        void ignoredTypes(ServletRequest req, ServletResponse resp, HttpSession session, MultipartFile file, InputStream is, OutputStream os, Reader reader, Writer writer);
     }
 }

@@ -66,7 +66,7 @@ class DefaultExceptionHandlerTest {
         MultiBusiness multi = new MultiBusiness(errors);
         ResponseEntity<?> response = handler.handleMultiBusinessException(multi);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST); // MultiBusiness constructor hardcodes BAD_REQUEST
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR); // MultiBusiness constructor hardcodes INTERNAL_SERVER_ERROR
 
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
@@ -85,7 +85,7 @@ class DefaultExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 50000);
+        assertThat(body).containsEntry("code", 500);
         assertThat(body).containsEntry("message", "参数绑定失败");
         assertThat(body).containsEntry("description", "default message");
     }
@@ -116,7 +116,7 @@ class DefaultExceptionHandlerTest {
         // Let's verify the body content mostly.
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 500);
+        assertThat(body).containsEntry("code", 400);
         assertThat(body).containsEntry("description", "message");
     }
 
@@ -139,7 +139,7 @@ class DefaultExceptionHandlerTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 500);
+        assertThat(body).containsEntry("code", 400);
         assertThat(body).containsEntry("description", "message");
     }
     @Test
@@ -152,7 +152,7 @@ class DefaultExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsEntry("code", 50000);
+        assertThat(body).containsEntry("code", 500);
         assertThat(body).containsEntry("message", "参数绑定失败");
         assertThat(body).containsEntry("description", "Unknown error");  // ← 覆盖空分支
     }

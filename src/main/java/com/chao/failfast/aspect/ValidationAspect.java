@@ -13,6 +13,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -178,7 +179,8 @@ public class ValidationAspect {
             return declared;
         }
         // 如果无法从声明中获取类型，则通过反射推断泛型类型
-        return Object.class;
+        Class<?> type = GenericTypeResolver.resolveTypeArgument(validator.getClass(), FastValidator.class);
+        return type != null ? type : Object.class;
     }
 
     /**

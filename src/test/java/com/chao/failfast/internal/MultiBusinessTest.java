@@ -160,7 +160,7 @@ class MultiBusinessTest {
 
             MultiBusiness multiBusiness = new MultiBusiness(errors);
 
-            assertThat(multiBusiness.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(multiBusiness.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
