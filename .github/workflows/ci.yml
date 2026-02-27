@@ -28,6 +28,7 @@ jobs:
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: KyrieChao/Failure
           files: ./target/site/jacoco/jacoco.xml
           flags: unittests
           name: codecov-umbrella
