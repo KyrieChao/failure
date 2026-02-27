@@ -1,7 +1,7 @@
 # Fail-Fast Spring Boot Starter
 
 [![Java CI with Maven](https://github.com/KyrieChao/Failure/actions/workflows/ci.yml/badge.svg)](https://github.com/KyrieChao/Failure/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/KyrieChao/Failure/graph/badge.svg)](https://codecov.io/KyrieChao/Failure)
+[![codecov](https://codecov.io/gh/KyrieChao/Failure/graph/badge.svg)](https://codecov.io/gh/KyrieChao/Failure)
 [![Release](https://jitpack.io/v/KyrieChao/Failure.svg)](https://jitpack.io/#KyrieChao/Failure)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -163,7 +163,8 @@ fail-fast:
 ```
 
 映射优先级：标准 HTTP 码 → 精确配置 → 前缀范围 → 大类兜底（4xxxx→400, 5xxxx→500）。
-
+- 精确值（数字或字符串）：40001 / "40001"
+- 自动顺序：5-1 会自动转为 1-5
 ### 贡献指南
 
 - Fork 仓库，创建特性分支
