@@ -19,7 +19,7 @@ class ChainCoverageTest {
     private static final ResponseCode CODE = TestResponseCode.PARAM_ERROR;
 
     @Test
-    @DisplayName("测试所有方法的成功路径 (Fail-Safe 模式)")
+    @DisplayName("测试所有方法的成功路径 (Fail-Strict 模式)")
     void testAllMethodsSuccess() {
         Chain chain = Chain.begin(false);
 
@@ -167,7 +167,7 @@ class ChainCoverageTest {
     }
 
     @Test
-    @DisplayName("测试所有方法的失败路径 (Fail-Safe 模式)")
+    @DisplayName("测试所有方法的失败路径 (Fail-Strict 模式)")
     void testAllMethodsFailure() {
         Chain chain = Chain.begin(false);
         int expectedErrors = 0;

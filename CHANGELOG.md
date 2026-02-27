@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Core**: 实现了基于 Fluent API 的链式校验 (`Failure.begin()`, `Failure.strict()`)。
-- **Core**: 支持 `Fail-Fast` (快速失败) 和 `Fail-Safe` (全量收集) 两种模式。
+- **Core**: 支持 `Fail-Fast` (快速失败) 和 `Fail-Strict` (全量收集) 两种模式。
 - **Annotation**: 引入 `@Validate` 注解和 `FastValidator` 接口，支持 AOP 切面校验。
 - **Validation**: 内置丰富的校验断言库 (String, Number, Collection, Date, etc.)。
 - **Exception**: 统一的异常处理机制 (`DefaultExceptionHandler`) 和错误码接口 (`ResponseCode`)。

@@ -71,7 +71,7 @@ public final class Results {
             return Result.fail(errorCode, e.getMessage());
         }
     }
-    public static Result<Void> tryRun(Runnable runnable, ResponseCode errorCode,String detail) {
+    public static Result<Void> tryRun(Runnable runnable, ResponseCode errorCode, String detail) {
         if (runnable == null) {
             throw new NullPointerException("runnable is null");
         }

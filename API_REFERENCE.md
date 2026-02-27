@@ -1,5 +1,7 @@
 # API Reference
 
+[English Version](./API_REFERENCE.en.md)
+
 本文档详尽列出了 `Failure` 校验框架的核心 API、设计模式及最佳实践。基于 fluent-interface 风格设计，旨在提供高可读性、强类型安全且易于扩展的校验体验。
 
 ---
@@ -30,7 +32,7 @@ Failure.strict()
     .failAll(); // 终结操作，若有错误则抛出包含所有错误的 MultiBusiness 异常
 ```
 
-### 1.3 Contextual (上下文集成模式) [推荐]
+### 1.3 Contextual (上下文集成模式)
 **适用场景**：结合 `TypedValidator` 或 `ValidationContext` 使用，将校验逻辑与业务逻辑解耦。参考 [Failure-in-Action](https://github.com/KyrieChao/Failure-in-Action) 最佳实践。
 
 ```java
@@ -194,7 +196,7 @@ register(UserRegisterDTO.class, (dto, ctx) -> {
 ## 5. 版本变更记录
 
 **v1.2.1 (Doc Updated)**
-- **新增设计模式章节**：明确区分 Fail-Fast、Fail-Safe 和 Contextual 三种模式的用法。
+- **新增设计模式章节**：明确区分 Fail-Fast、Fail-Strict 和 Contextual 三种模式的用法。
 - **引入最佳实践**：采纳 `Failure-in-Action` 中的 `TypedValidator` 模式作为推荐实践。
 - **API 列表更新**：
   - 补充 `verify()` 方法说明 (Context 模式专用)。

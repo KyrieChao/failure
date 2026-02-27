@@ -110,8 +110,8 @@ class FailFastExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleMethodArgumentNotValidException: 关闭快速失败 (Fail-Safe)，返回所有错误")
-    void handleMethodArgumentNotValidException_FailSafe() throws NoSuchMethodException {
+    @DisplayName("handleMethodArgumentNotValidException: 关闭快速失败 (Fail-Strict)，返回所有错误")
+    void handleMethodArgumentNotValidException_FailStrict() throws NoSuchMethodException {
         // Arrange
         BindingResult bindingResult = mock(BindingResult.class);
         List<FieldError> fieldErrors = Arrays.asList(
@@ -123,7 +123,7 @@ class FailFastExceptionHandlerTest {
 
         // 模拟方法上有 @Validate(fast = false) 注解
         MethodParameter parameter = mock(MethodParameter.class);
-        Method method = TestController.class.getMethod("failSafeMethod");
+        Method method = TestController.class.getMethod("failStrictMethod");
         when(parameter.getMethod()).thenReturn(method);
 
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(parameter, bindingResult);
@@ -605,7 +605,7 @@ class FailFastExceptionHandlerTest {
 
     static class TestController {
         @Validate(fast = false)
-        public void failSafeMethod() {
+        public void failStrictMethod() {
         }
     }
 }

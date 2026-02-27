@@ -52,8 +52,8 @@ class FailureTest {
     }
 
     @Nested
-    @DisplayName("Fail-Safe (Strict) 模式测试")
-    class FailSafeModeTest {
+    @DisplayName("Fail-Strict 模式测试")
+    class FailStrictModeTest {
 
         @Test
         @DisplayName("应当收集所有错误并抛出 MultiBusiness 异常")
