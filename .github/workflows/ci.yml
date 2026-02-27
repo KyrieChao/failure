@@ -21,7 +21,7 @@ jobs:
           cache: 'maven'
 
       - name: Build and Test with Maven
-        run: mvn clean test jacoco:report   # 关键修改：强制生成 report
+        run: mvn clean test jacoco:report
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -31,6 +31,3 @@ jobs:
           files: ./target/site/jacoco/jacoco.xml
           fail_ci_if_error: true
           verbose: true
-          # flags 和 name 可选，先注释掉调试
-          # flags: unittests
-          # name: codecov-umbrella

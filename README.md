@@ -8,7 +8,7 @@
 [English Version](./README.en.md)
 
 本项目是对 Fail‑Fast 校验框架的增强实现与示例说明。本文档为中文版本；结构与示例代码风格参考上游项目：
-- https://github.com/KyrieChao/failure
+- https://github.com/KyrieChao/Failure
 - https://github.com/KyrieChao/Failure-in-Action
 
 链接、占位符与依赖坐标保持与原项目一致。英文版请见顶部“English Version”链接。
@@ -179,6 +179,6 @@ Apache License 2.0，参见 LICENSE。
 
 - Author: KyrieChao
 - GitHub: https://github.com/KyrieChao
-- Issues: https://github.com/KyrieChao/failure/issues
+- Issues: https://github.com/KyrieChao/Failure/issues
 
 — 完 —

@@ -149,6 +149,6 @@ Apache License 2.0. See LICENSE.
 
 - Author: KyrieChao
 - GitHub: https://github.com/KyrieChao
-- Issues: https://github.com/KyrieChao/failure/issues
+- Issues: https://github.com/KyrieChao/Failure/issues
 
 — End —
