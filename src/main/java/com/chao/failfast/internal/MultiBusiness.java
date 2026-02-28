@@ -55,7 +55,7 @@ public class MultiBusiness extends Business {
             if (i < errors.size() - 1) sb.append(",\n");
             else sb.append("\n");
         }
-        sb.append("]}");
+        sb.append("}");
         return sb.toString();
     }
 }

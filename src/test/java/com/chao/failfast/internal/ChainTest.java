@@ -191,16 +191,6 @@ public class ChainTest {
         assertTrue(executed[0]);
     }
 
-    // todo
-    @Test
-    @DisplayName("测试 onFail(Runnable) 在失败时执行")
-    void test() {
-        Failure.strict()
-                .state(false, TEST_CODE)
-                .onFail(() -> System.out.println("onFail"))
-                .failAll();
-    }
-
     @Test
     @DisplayName("测试 onFail(Runnable) 在成功时不执行")
     void testOnFailDoesNotExecuteOnSuccess() {

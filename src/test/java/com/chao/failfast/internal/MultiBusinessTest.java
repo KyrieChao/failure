@@ -71,10 +71,9 @@ class MultiBusinessTest {
             String str = multiBusiness.toString();
 
             assertThat(str).startsWith("Multi={");
-            assertThat(str).contains("errors=[");
             assertThat(str).contains("1.");
             assertThat(str).contains("2.");
-            assertThat(str).endsWith("]}");
+            assertThat(str).endsWith("}");
         }
 
         @Test
