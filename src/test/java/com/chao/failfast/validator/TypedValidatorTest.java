@@ -16,7 +16,6 @@ class TypedValidatorTest {
         protected void registerValidators() {
             register(String.class, (s, ctx) -> {
                 if (s.isEmpty()) ctx.reportError(ResponseCode.of(400, "Empty string"));
-                ctx.hasCauses()
             });
             register(Integer.class, (i, ctx) -> {
                 if (i < 0) ctx.reportError(ResponseCode.of(400, "Negative integer"));
