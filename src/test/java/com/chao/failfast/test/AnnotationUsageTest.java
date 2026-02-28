@@ -5,7 +5,7 @@ import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.aspect.ValidationAspect;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import lombok.Data;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

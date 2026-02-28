@@ -1,6 +1,7 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.config.CodeMappingConfig;
+import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;

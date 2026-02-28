@@ -1,7 +1,7 @@
 package com.chao.failfast.result;
 
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
@@ -37,8 +37,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
         this.code = code;
         this.message = message;
         this.description = description;
-        this.timestamp = ZonedDateTime.now(ZoneId.of("Asia/Shanghai"))
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        this.timestamp = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     /**

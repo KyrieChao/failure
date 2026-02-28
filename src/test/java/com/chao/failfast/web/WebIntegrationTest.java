@@ -4,7 +4,7 @@ import com.chao.failfast.Failure;
 import com.chao.failfast.annotation.FastValidator;
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.config.FailFastAutoConfiguration;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

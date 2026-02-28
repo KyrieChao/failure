@@ -1,6 +1,7 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.config.CodeMappingConfig;
+import com.chao.failfast.internal.core.FailureProperties;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ public class FailureContext {
     /**
      * 全局配置属性
      */
-    private final FailFastProperties properties;
+    private final FailureProperties properties;
     /**
      * 全局代码映射配置
      */
@@ -41,7 +42,7 @@ public class FailureContext {
      *
      * @param properties FailFast配置属性
      */
-    public FailureContext(FailFastProperties properties, CodeMappingConfig codeMappingConfig) {
+    public FailureContext(FailureProperties properties, CodeMappingConfig codeMappingConfig) {
         this.properties = properties;
         this.codeMappingConfig = codeMappingConfig;
     }

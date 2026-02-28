@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -387,6 +388,6 @@ public class ChainBranchCoverageTest {
         chain.state(false);
 
         assertFalse(chain.isValid());
-        assertTrue(chain.getCauses().isEmpty());
+        assertFalse(chain.getCauses().isEmpty());
     }
 }

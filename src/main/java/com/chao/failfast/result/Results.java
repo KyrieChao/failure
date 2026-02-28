@@ -2,7 +2,7 @@ package com.chao.failfast.result;
 
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 
 import java.util.ArrayList;
 import java.util.List;

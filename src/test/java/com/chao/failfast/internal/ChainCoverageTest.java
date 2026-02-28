@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -403,8 +404,7 @@ class ChainCoverageTest {
         Chain chain2 = Chain.begin(false); // failFast=false
         chain2.isTrue(false); // Calls state(false) -> check(false) -> alive=false. No error added.
         assertFalse(chain2.isValid());
-        assertTrue(chain2.getCauses().isEmpty());
-
+        assertFalse(chain2.getCauses().isEmpty());
         // Now fail() should throw generic Business exception
         assertThrows(Business.class, chain2::fail);
     }

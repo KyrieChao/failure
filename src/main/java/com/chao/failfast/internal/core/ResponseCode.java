@@ -1,4 +1,4 @@
-package com.chao.failfast.internal;
+package com.chao.failfast.internal.core;
 
 /**
  * 响应码接口 - 支持配置化HTTP状态映射

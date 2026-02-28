@@ -1,6 +1,7 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.Failure;
+import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.model.TestResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -236,8 +237,8 @@ public class ChainTest {
         assertThrows(Business.class, () -> Failure.begin().exists(null, TEST_CODE, TEST_DETAIL).fail());
 
         // Consumer 版本
-        assertDoesNotThrow(() -> Failure.begin().exists(obj, TEST_CONSUMER).fail());
-        assertThrows(Business.class, () -> Failure.begin().exists(null, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().exists(obj, spec -> spec.fabricator(TEST_CONSUMER)).fail());
+        assertThrows(Business.class, () -> Failure.begin().exists(null, spec -> spec.fabricator(TEST_CONSUMER)).fail());
     }
 
     @Test
@@ -248,7 +249,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notNull(obj).fail());
         assertDoesNotThrow(() -> Failure.begin().notNull(obj, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notNull(obj, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notNull(obj, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notNull(obj, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notNull(null, TEST_CODE).fail());
     }
@@ -261,7 +262,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isNull(null).fail());
         assertDoesNotThrow(() -> Failure.begin().isNull(null, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isNull(null, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isNull(null, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isNull(null, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isNull(obj, TEST_CODE).fail());
     }
@@ -274,7 +275,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().instanceOf(str, String.class).fail());
         assertDoesNotThrow(() -> Failure.begin().instanceOf(str, String.class, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().instanceOf(str, String.class, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().instanceOf(str, String.class, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().instanceOf(str, String.class, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().instanceOf(str, Integer.class, TEST_CODE).fail());
     }
@@ -287,7 +288,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notInstanceOf(str, Integer.class).fail());
         assertDoesNotThrow(() -> Failure.begin().notInstanceOf(str, Integer.class, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notInstanceOf(str, Integer.class, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notInstanceOf(str, Integer.class, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notInstanceOf(str, Integer.class, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notInstanceOf(str, String.class, TEST_CODE).fail());
     }
@@ -296,7 +297,7 @@ public class ChainTest {
     @DisplayName("测试 allNotNull() 所有重载")
     void testAllNotNullAllVariants() {
         assertDoesNotThrow(() -> Failure.begin().allNotNull("a", "b", "c").fail());
-        assertDoesNotThrow(() -> Failure.begin().allNotNull(TEST_CODE, "a", "b").fail());
+        assertDoesNotThrow(() -> Failure.begin().allNotNull(TEST_CODE, (Object) "", "a", "b").fail());
         assertDoesNotThrow(() -> Failure.begin().allNotNull(TEST_CODE, TEST_DETAIL, "a", "b").fail());
         assertDoesNotThrow(() -> Failure.begin().allNotNull(TEST_CONSUMER, "a", "b").fail());
 
@@ -311,7 +312,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().state(true).fail());
         assertDoesNotThrow(() -> Failure.begin().state(true, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().state(true, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().state(true, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().state(true, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().state(false, TEST_CODE).fail());
     }
@@ -322,7 +323,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isTrue(true).fail());
         assertDoesNotThrow(() -> Failure.begin().isTrue(true, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isTrue(true, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isTrue(true, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isTrue(true, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isTrue(false, TEST_CODE).fail());
     }
@@ -333,7 +334,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isFalse(false).fail());
         assertDoesNotThrow(() -> Failure.begin().isFalse(false, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isFalse(false, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isFalse(false, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isFalse(false, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isFalse(true, TEST_CODE).fail());
     }
@@ -346,7 +347,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().blank("").fail());
         assertDoesNotThrow(() -> Failure.begin().blank("", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().blank("", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().blank("", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().blank("", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().blank("a", TEST_CODE).fail());
     }
@@ -357,7 +358,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notBlank("a").fail());
         assertDoesNotThrow(() -> Failure.begin().notBlank("a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notBlank("a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notBlank("a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notBlank("a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notBlank("", TEST_CODE).fail());
     }
@@ -368,7 +369,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notEmpty("a").fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty("a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty("a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notEmpty("a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notEmpty("a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notEmpty("", TEST_CODE).fail());
     }
@@ -379,7 +380,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().lengthBetween("abc", 1, 5).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthBetween("abc", 1, 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthBetween("abc", 1, 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().lengthBetween("abc", 1, 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().lengthBetween("abc", 1, 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().lengthBetween("abc", 5, 10, TEST_CODE).fail());
     }
@@ -390,7 +391,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().match("123", "\\d+").fail());
         assertDoesNotThrow(() -> Failure.begin().match("123", "\\d+", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().match("123", "\\d+", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().match("123", "\\d+", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().match("123", "\\d+", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().match("abc", "\\d+", TEST_CODE).fail());
     }
@@ -401,7 +402,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().email("test@example.com").fail());
         assertDoesNotThrow(() -> Failure.begin().email("test@example.com", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().email("test@example.com", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().email("test@example.com", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().email("test@example.com", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().email("invalid", TEST_CODE).fail());
     }
@@ -412,7 +413,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().equalsIgnoreCase("abc", "ABC").fail());
         assertDoesNotThrow(() -> Failure.begin().equalsIgnoreCase("abc", "ABC", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().equalsIgnoreCase("abc", "ABC", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().equalsIgnoreCase("abc", "ABC", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().equalsIgnoreCase("abc", "ABC", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().equalsIgnoreCase("abc", "xyz", TEST_CODE).fail());
     }
@@ -423,7 +424,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().startsWith("abc", "a").fail());
         assertDoesNotThrow(() -> Failure.begin().startsWith("abc", "a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().startsWith("abc", "a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().startsWith("abc", "a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().startsWith("abc", "a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().startsWith("abc", "b", TEST_CODE).fail());
     }
@@ -434,7 +435,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().endsWith("abc", "c").fail());
         assertDoesNotThrow(() -> Failure.begin().endsWith("abc", "c", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().endsWith("abc", "c", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().endsWith("abc", "c", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().endsWith("abc", "c", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().endsWith("abc", "a", TEST_CODE).fail());
     }
@@ -445,7 +446,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().contains("abc", "b").fail());
         assertDoesNotThrow(() -> Failure.begin().contains("abc", "b", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().contains("abc", "b", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().contains("abc", "b", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().contains("abc", "b", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().contains("abc", "x", TEST_CODE).fail());
     }
@@ -456,7 +457,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notContains("abc", "x").fail());
         assertDoesNotThrow(() -> Failure.begin().notContains("abc", "x", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notContains("abc", "x", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notContains("abc", "x", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notContains("abc", "x", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notContains("abc", "b", TEST_CODE).fail());
     }
@@ -467,7 +468,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().lengthMin("abc", 2).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthMin("abc", 2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthMin("abc", 2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().lengthMin("abc", 2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().lengthMin("abc", 2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().lengthMin("a", 5, TEST_CODE).fail());
     }
@@ -478,7 +479,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().lengthMax("a", 5).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthMax("a", 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().lengthMax("a", 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().lengthMax("a", 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().lengthMax("a", 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().lengthMax("abcdef", 5, TEST_CODE).fail());
     }
@@ -489,7 +490,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isNumeric("123").fail());
         assertDoesNotThrow(() -> Failure.begin().isNumeric("123", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isNumeric("123", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isNumeric("123", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isNumeric("123", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isNumeric("abc", TEST_CODE).fail());
     }
@@ -500,7 +501,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isAlpha("abc").fail());
         assertDoesNotThrow(() -> Failure.begin().isAlpha("abc", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isAlpha("abc", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isAlpha("abc", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isAlpha("abc", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isAlpha("123", TEST_CODE).fail());
     }
@@ -511,7 +512,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isAlphanumeric("abc123").fail());
         assertDoesNotThrow(() -> Failure.begin().isAlphanumeric("abc123", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isAlphanumeric("abc123", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isAlphanumeric("abc123", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isAlphanumeric("abc123", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isAlphanumeric("abc-123", TEST_CODE).fail());
     }
@@ -522,7 +523,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isLowerCase("abc").fail());
         assertDoesNotThrow(() -> Failure.begin().isLowerCase("abc", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isLowerCase("abc", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isLowerCase("abc", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isLowerCase("abc", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isLowerCase("ABC", TEST_CODE).fail());
     }
@@ -533,7 +534,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isUpperCase("ABC").fail());
         assertDoesNotThrow(() -> Failure.begin().isUpperCase("ABC", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isUpperCase("ABC", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isUpperCase("ABC", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isUpperCase("ABC", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isUpperCase("abc", TEST_CODE).fail());
     }
@@ -544,7 +545,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().mobile("13800138000").fail());
         assertDoesNotThrow(() -> Failure.begin().mobile("13800138000", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().mobile("13800138000", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().mobile("13800138000", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().mobile("13800138000", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().mobile("12345678901", TEST_CODE).fail());
     }
@@ -555,7 +556,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().url("https://example.com").fail());
         assertDoesNotThrow(() -> Failure.begin().url("https://example.com", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().url("https://example.com", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().url("https://example.com", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().url("https://example.com", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().url("not-a-url", TEST_CODE).fail());
     }
@@ -566,7 +567,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().ipAddress("192.168.1.1").fail());
         assertDoesNotThrow(() -> Failure.begin().ipAddress("192.168.1.1", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().ipAddress("192.168.1.1", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().ipAddress("192.168.1.1", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().ipAddress("192.168.1.1", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().ipAddress("999.999.999.999", TEST_CODE).fail());
     }
@@ -577,7 +578,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().uuid("550e8400-e29b-41d4-a716-446655440000").fail());
         assertDoesNotThrow(() -> Failure.begin().uuid("550e8400-e29b-41d4-a716-446655440000", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().uuid("550e8400-e29b-41d4-a716-446655440000", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().uuid("550e8400-e29b-41d4-a716-446655440000", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().uuid("550e8400-e29b-41d4-a716-446655440000", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().uuid("not-a-uuid", TEST_CODE).fail());
     }
@@ -592,7 +593,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notEmpty(list).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(list, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(list, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notEmpty(list, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notEmpty(list, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notEmpty(Collections.emptyList(), TEST_CODE).fail());
     }
@@ -605,7 +606,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(list, 1, 3).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(list, 1, 3, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(list, 1, 3, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeBetween(list, 1, 3, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeBetween(list, 1, 3, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeBetween(list, 5, 10, TEST_CODE).fail());
     }
@@ -618,7 +619,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(list, 2).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(list, 2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(list, 2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeEquals(list, 2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeEquals(list, 2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeEquals(list, 5, TEST_CODE).fail());
     }
@@ -631,7 +632,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().contains(list, "a").fail());
         assertDoesNotThrow(() -> Failure.begin().contains(list, "a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().contains(list, "a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().contains(list, "a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().contains(list, "a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().contains(list, "x", TEST_CODE).fail());
     }
@@ -644,7 +645,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notContains(list, "x").fail());
         assertDoesNotThrow(() -> Failure.begin().notContains(list, "x", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notContains(list, "x", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notContains(list, "x", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notContains(list, "x", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notContains(list, "a", TEST_CODE).fail());
     }
@@ -655,7 +656,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyList()).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyList(), TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyList(), TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyList(), TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyList(), spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isEmpty(List.of("a"), TEST_CODE).fail());
     }
@@ -668,7 +669,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(list).fail());
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(list, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(list, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(list, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(list, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         List<String> withNull = new ArrayList<>();
         withNull.add("a");
@@ -684,7 +685,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().allMatch(list, n -> n % 2 == 0).fail());
         assertDoesNotThrow(() -> Failure.begin().allMatch(list, n -> n % 2 == 0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().allMatch(list, n -> n % 2 == 0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().allMatch(list, n -> n % 2 == 0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().allMatch(list, n -> n % 2 == 0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().allMatch(List.of(1, 2, 3), n -> n % 2 == 0, TEST_CODE).fail());
     }
@@ -697,7 +698,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().anyMatch(list, n -> n % 2 == 0).fail());
         assertDoesNotThrow(() -> Failure.begin().anyMatch(list, n -> n % 2 == 0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().anyMatch(list, n -> n % 2 == 0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().anyMatch(list, n -> n % 2 == 0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().anyMatch(list, n -> n % 2 == 0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().anyMatch(List.of(1, 3, 5), n -> n % 2 == 0, TEST_CODE).fail());
     }
@@ -712,7 +713,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notEmpty(arr).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(arr, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(arr, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notEmpty(arr, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notEmpty(arr, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notEmpty(new String[]{}, TEST_CODE).fail());
     }
@@ -725,7 +726,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(arr, 1, 3).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(arr, 1, 3, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(arr, 1, 3, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeBetween(arr, 1, 3, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeBetween(arr, 1, 3, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeBetween(arr, 5, 10, TEST_CODE).fail());
     }
@@ -738,7 +739,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(arr, 2).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(arr, 2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(arr, 2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeEquals(arr, 2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeEquals(arr, 2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeEquals(arr, 5, TEST_CODE).fail());
     }
@@ -751,7 +752,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().contains(arr, "a").fail());
         assertDoesNotThrow(() -> Failure.begin().contains(arr, "a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().contains(arr, "a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().contains(arr, "a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().contains(arr, "a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().contains(arr, "x", TEST_CODE).fail());
     }
@@ -764,7 +765,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notContains(arr, "x").fail());
         assertDoesNotThrow(() -> Failure.begin().notContains(arr, "x", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notContains(arr, "x", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notContains(arr, "x", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notContains(arr, "x", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notContains(arr, "a", TEST_CODE).fail());
     }
@@ -775,7 +776,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isEmpty(new String[]{}).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(new String[]{}, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(new String[]{}, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isEmpty(new String[]{}, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isEmpty(new String[]{}, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isEmpty(new String[]{"a"}, TEST_CODE).fail());
     }
@@ -788,7 +789,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(arr).fail());
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(arr, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(arr, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(arr, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().hasNoNullElements(arr, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().hasNoNullElements(new String[]{"a", null}, TEST_CODE).fail());
     }
@@ -801,7 +802,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().allMatch(arr, n -> n % 2 == 0).fail());
         assertDoesNotThrow(() -> Failure.begin().allMatch(arr, n -> n % 2 == 0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().allMatch(arr, n -> n % 2 == 0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().allMatch(arr, n -> n % 2 == 0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().allMatch(arr, n -> n % 2 == 0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().allMatch(new Integer[]{1, 2, 3}, n -> n % 2 == 0, TEST_CODE).fail());
     }
@@ -814,7 +815,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().anyMatch(arr, n -> n % 2 == 0).fail());
         assertDoesNotThrow(() -> Failure.begin().anyMatch(arr, n -> n % 2 == 0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().anyMatch(arr, n -> n % 2 == 0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().anyMatch(arr, n -> n % 2 == 0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().anyMatch(arr, n -> n % 2 == 0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().anyMatch(new Integer[]{1, 3, 5}, n -> n % 2 == 0, TEST_CODE).fail());
     }
@@ -827,7 +828,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().positive(1).fail());
         assertDoesNotThrow(() -> Failure.begin().positive(1, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().positive(1, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().positive(1, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().positive(1, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().positive(-1, TEST_CODE).fail());
     }
@@ -838,7 +839,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().positiveNumber(1).fail());
         assertDoesNotThrow(() -> Failure.begin().positiveNumber(1, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().positiveNumber(1, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().positiveNumber(1, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().positiveNumber(1, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().positiveNumber(-1, TEST_CODE).fail());
     }
@@ -849,7 +850,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().inRange(5, 1, 10).fail());
         assertDoesNotThrow(() -> Failure.begin().inRange(5, 1, 10, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().inRange(5, 1, 10, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().inRange(5, 1, 10, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().inRange(5, 1, 10, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().inRange(0, 1, 10, TEST_CODE).fail());
     }
@@ -860,7 +861,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().inRangeNumber(5, 1, 10).fail());
         assertDoesNotThrow(() -> Failure.begin().inRangeNumber(5, 1, 10, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().inRangeNumber(5, 1, 10, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().inRangeNumber(5, 1, 10, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().inRangeNumber(5, 1, 10, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().inRangeNumber(0, 1, 10, TEST_CODE).fail());
     }
@@ -871,7 +872,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().nonNegative(0).fail());
         assertDoesNotThrow(() -> Failure.begin().nonNegative(0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().nonNegative(0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().nonNegative(0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().nonNegative(0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().nonNegative(-1, TEST_CODE).fail());
     }
@@ -882,7 +883,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().greaterThan(5, 3).fail());
         assertDoesNotThrow(() -> Failure.begin().greaterThan(5, 3, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().greaterThan(5, 3, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().greaterThan(5, 3, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().greaterThan(5, 3, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().greaterThan(3, 5, TEST_CODE).fail());
     }
@@ -893,7 +894,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().greaterOrEqual(5, 5).fail());
         assertDoesNotThrow(() -> Failure.begin().greaterOrEqual(5, 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().greaterOrEqual(5, 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().greaterOrEqual(5, 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().greaterOrEqual(5, 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().greaterOrEqual(3, 5, TEST_CODE).fail());
     }
@@ -904,7 +905,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().lessThan(3, 5).fail());
         assertDoesNotThrow(() -> Failure.begin().lessThan(3, 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().lessThan(3, 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().lessThan(3, 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().lessThan(3, 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().lessThan(5, 3, TEST_CODE).fail());
     }
@@ -915,7 +916,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().lessOrEqual(5, 5).fail());
         assertDoesNotThrow(() -> Failure.begin().lessOrEqual(5, 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().lessOrEqual(5, 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().lessOrEqual(5, 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().lessOrEqual(5, 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().lessOrEqual(5, 3, TEST_CODE).fail());
     }
@@ -926,7 +927,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notZero(5).fail());
         assertDoesNotThrow(() -> Failure.begin().notZero(5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notZero(5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notZero(5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notZero(5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notZero(0, TEST_CODE).fail());
     }
@@ -937,7 +938,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isZero(0).fail());
         assertDoesNotThrow(() -> Failure.begin().isZero(0, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isZero(0, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isZero(0, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isZero(0, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isZero(5, TEST_CODE).fail());
     }
@@ -948,7 +949,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().negative(-5).fail());
         assertDoesNotThrow(() -> Failure.begin().negative(-5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().negative(-5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().negative(-5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().negative(-5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().negative(5, TEST_CODE).fail());
     }
@@ -959,7 +960,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().multipleOf(10, 5).fail());
         assertDoesNotThrow(() -> Failure.begin().multipleOf(10, 5, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().multipleOf(10, 5, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().multipleOf(10, 5, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().multipleOf(10, 5, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().multipleOf(10, 3, TEST_CODE).fail());
     }
@@ -970,7 +971,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().decimalScale(new BigDecimal("1.23"), 2).fail());
         assertDoesNotThrow(() -> Failure.begin().decimalScale(new BigDecimal("1.23"), 2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().decimalScale(new BigDecimal("1.23"), 2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().decimalScale(new BigDecimal("1.23"), 2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().decimalScale(new BigDecimal("1.23"), 2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().decimalScale(new BigDecimal("1.234"), 2, TEST_CODE).fail());
     }
@@ -986,7 +987,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().after(future, now).fail());
         assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().after(future, now, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().after(now, future, TEST_CODE).fail());
     }
@@ -1000,7 +1001,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().before(now, future).fail());
         assertDoesNotThrow(() -> Failure.begin().before(now, future, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().before(now, future, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().before(now, future, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().before(now, future, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().before(future, now, TEST_CODE).fail());
     }
@@ -1014,7 +1015,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().after(future, now).fail());
         assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().after(future, now, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().after(future, now, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().after(now, future, TEST_CODE).fail());
     }
@@ -1027,7 +1028,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().afterOrEqual(now, now).fail());
         assertDoesNotThrow(() -> Failure.begin().afterOrEqual(now, now, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().afterOrEqual(now, now, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().afterOrEqual(now, now, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().afterOrEqual(now, now, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().afterOrEqual(now.minusDays(1), now, TEST_CODE).fail());
     }
@@ -1041,7 +1042,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().before(past, now).fail());
         assertDoesNotThrow(() -> Failure.begin().before(past, now, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().before(past, now, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().before(past, now, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().before(past, now, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().before(now, past, TEST_CODE).fail());
     }
@@ -1054,7 +1055,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().beforeOrEqual(now, now).fail());
         assertDoesNotThrow(() -> Failure.begin().beforeOrEqual(now, now, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().beforeOrEqual(now, now, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().beforeOrEqual(now, now, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().beforeOrEqual(now, now, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().beforeOrEqual(now.plusDays(1), now, TEST_CODE).fail());
     }
@@ -1067,7 +1068,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().between(now, now.minusDays(1), now.plusDays(1)).fail());
         assertDoesNotThrow(() -> Failure.begin().between(now, now.minusDays(1), now.plusDays(1), TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().between(now, now.minusDays(1), now.plusDays(1), TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().between(now, now.minusDays(1), now.plusDays(1), TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().between(now, now.minusDays(1), now.plusDays(1), spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().between(now.plusDays(5), now.minusDays(1), now.plusDays(1), TEST_CODE).fail());
     }
@@ -1080,7 +1081,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isPast(past).fail());
         assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isPast(past, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         Date future = new Date(System.currentTimeMillis() + 10000);
         assertThrows(Business.class, () -> Failure.begin().isPast(future, TEST_CODE).fail());
@@ -1094,7 +1095,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isFuture(future).fail());
         assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isFuture(future, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         Date past = new Date(System.currentTimeMillis() - 10000);
         assertThrows(Business.class, () -> Failure.begin().isFuture(past, TEST_CODE).fail());
@@ -1108,7 +1109,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isPast(past).fail());
         assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isPast(past, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isPast(past, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         LocalDate future = LocalDate.now().plusDays(1);
         assertThrows(Business.class, () -> Failure.begin().isPast(future, TEST_CODE).fail());
@@ -1122,7 +1123,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isFuture(future).fail());
         assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isFuture(future, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isFuture(future, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         LocalDate past = LocalDate.now().minusDays(1);
         assertThrows(Business.class, () -> Failure.begin().isFuture(past, TEST_CODE).fail());
@@ -1136,7 +1137,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isToday(today).fail());
         assertDoesNotThrow(() -> Failure.begin().isToday(today, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isToday(today, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isToday(today, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isToday(today, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         LocalDate yesterday = today.minusDays(1);
         assertThrows(Business.class, () -> Failure.begin().isToday(yesterday, TEST_CODE).fail());
@@ -1152,7 +1153,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().enumValue(TestEnum.class, "A").fail());
         assertDoesNotThrow(() -> Failure.begin().enumValue(TestEnum.class, "A", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().enumValue(TestEnum.class, "A", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().enumValue(TestEnum.class, "A", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().enumValue(TestEnum.class, "A", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().enumValue(TestEnum.class, "X", TEST_CODE).fail());
     }
@@ -1163,7 +1164,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().enumConstant(TestEnum.A, TestEnum.class).fail());
         assertDoesNotThrow(() -> Failure.begin().enumConstant(TestEnum.A, TestEnum.class, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().enumConstant(TestEnum.A, TestEnum.class, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().enumConstant(TestEnum.A, TestEnum.class, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().enumConstant(TestEnum.A, TestEnum.class, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         // 这里传入 null 会失败，因为 null 不是有效的枚举常量
         assertThrows(Business.class, () -> Failure.begin().enumConstant(null, TestEnum.class, TEST_CODE).fail());
@@ -1179,7 +1180,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().same(obj, obj).fail());
         assertDoesNotThrow(() -> Failure.begin().same(obj, obj, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().same(obj, obj, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().same(obj, obj, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().same(obj, obj, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         Object other = new Object();
         assertThrows(Business.class, () -> Failure.begin().same(obj, other, TEST_CODE).fail());
@@ -1194,7 +1195,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notSame(obj1, obj2).fail());
         assertDoesNotThrow(() -> Failure.begin().notSame(obj1, obj2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notSame(obj1, obj2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notSame(obj1, obj2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notSame(obj1, obj2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notSame(obj1, obj1, TEST_CODE).fail());
     }
@@ -1205,7 +1206,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().equals("a", "a").fail());
         assertDoesNotThrow(() -> Failure.begin().equals("a", "a", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().equals("a", "a", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().equals("a", "a", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().equals("a", "a", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().equals("a", "b", TEST_CODE).fail());
     }
@@ -1216,7 +1217,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notEquals("a", "b").fail());
         assertDoesNotThrow(() -> Failure.begin().notEquals("a", "b", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notEquals("a", "b", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notEquals("a", "b", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notEquals("a", "b", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notEquals("a", "a", TEST_CODE).fail());
     }
@@ -1231,7 +1232,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notEmpty(map).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(map, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notEmpty(map, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notEmpty(map, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notEmpty(map, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notEmpty(Collections.emptyMap(), TEST_CODE).fail());
     }
@@ -1242,7 +1243,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyMap()).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyMap(), TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyMap(), TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyMap(), TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isEmpty(Collections.emptyMap(), spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().isEmpty(Map.of("k", "v"), TEST_CODE).fail());
     }
@@ -1255,7 +1256,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().containsKey(map, "key").fail());
         assertDoesNotThrow(() -> Failure.begin().containsKey(map, "key", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().containsKey(map, "key", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().containsKey(map, "key", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().containsKey(map, "key", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().containsKey(map, "missing", TEST_CODE).fail());
     }
@@ -1268,7 +1269,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().notContainsKey(map, "missing").fail());
         assertDoesNotThrow(() -> Failure.begin().notContainsKey(map, "missing", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().notContainsKey(map, "missing", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().notContainsKey(map, "missing", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().notContainsKey(map, "missing", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().notContainsKey(map, "key", TEST_CODE).fail());
     }
@@ -1281,7 +1282,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().containsValue(map, "value").fail());
         assertDoesNotThrow(() -> Failure.begin().containsValue(map, "value", TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().containsValue(map, "value", TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().containsValue(map, "value", TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().containsValue(map, "value", spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().containsValue(map, "missing", TEST_CODE).fail());
     }
@@ -1294,7 +1295,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(map, 1, 3).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(map, 1, 3, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeBetween(map, 1, 3, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeBetween(map, 1, 3, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeBetween(map, 1, 3, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeBetween(map, 5, 10, TEST_CODE).fail());
     }
@@ -1307,7 +1308,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(map, 2).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(map, 2, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().sizeEquals(map, 2, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().sizeEquals(map, 2, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().sizeEquals(map, 2, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().sizeEquals(map, 5, TEST_CODE).fail());
     }
@@ -1322,7 +1323,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isPresent(present).fail());
         assertDoesNotThrow(() -> Failure.begin().isPresent(present, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isPresent(present, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isPresent(present, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isPresent(present, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         Optional<String> empty = Optional.empty();
         assertThrows(Business.class, () -> Failure.begin().isPresent(empty, TEST_CODE).fail());
@@ -1336,7 +1337,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().isEmpty(empty).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(empty, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().isEmpty(empty, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().isEmpty(empty, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().isEmpty(empty, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         Optional<String> present = Optional.of("value");
         assertThrows(Business.class, () -> Failure.begin().isEmpty(present, TEST_CODE).fail());
@@ -1350,7 +1351,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().satisfies(5, n -> n > 3).fail());
         assertDoesNotThrow(() -> Failure.begin().satisfies(5, n -> n > 3, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().satisfies(5, n -> n > 3, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().satisfies(5, n -> n > 3, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().satisfies(5, n -> n > 3, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().satisfies(1, n -> n > 3, TEST_CODE).fail());
         assertThrows(Business.class, () -> Failure.begin().satisfies(null, (Integer n) -> n > 3, TEST_CODE).fail());
@@ -1364,7 +1365,7 @@ public class ChainTest {
         assertDoesNotThrow(() -> Failure.begin().compare(5, 5, Integer::compare).fail());
         assertDoesNotThrow(() -> Failure.begin().compare(5, 5, Integer::compare, TEST_CODE).fail());
         assertDoesNotThrow(() -> Failure.begin().compare(5, 5, Integer::compare, TEST_CODE, TEST_DETAIL).fail());
-        assertDoesNotThrow(() -> Failure.begin().compare(5, 5, Integer::compare, TEST_CONSUMER).fail());
+        assertDoesNotThrow(() -> Failure.begin().compare(5, 5, Integer::compare, spec -> spec.fabricator(TEST_CONSUMER)).fail());
 
         assertThrows(Business.class, () -> Failure.begin().compare(3, 5, Integer::compare, TEST_CODE).fail());
     }

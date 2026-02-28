@@ -1,10 +1,11 @@
 package com.chao.failfast.advice;
 
+import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.FailFastProperties;
+import com.chao.failfast.internal.core.FailureProperties;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -38,70 +39,13 @@ public abstract class FailFastExceptionHandler {
      * Fail-Fast配置属性
      * 通过Setter注入，避免构造函数注入导致子类必须调用super
      */
-    private FailFastProperties properties;
+    private FailureProperties properties;
 
     @Autowired(required = false)
-    public void setFailFastProperties(FailFastProperties properties) {
+    public void setFailFastProperties(FailureProperties properties) {
         this.properties = properties;
     }
 
-    /**
-     * 记录异常日志的通用方法
-     * 根据异常类型决定日志记录格式
-     *
-     * @param e 要记录的Business异常对象
-     */
-    protected void logException(Business e) {
-        if (e instanceof MultiBusiness m) {
-            // 批量异常：记录错误数量和每个具体错误
-            log.error("Multi Failure: {} errors", m.getErrors().size());
-            for (int i = 0; i < m.getErrors().size(); i++) {
-                log.error("{}. {}", i + 1, m.getErrors().get(i).toString());
-            }
-        } else {
-            // 单个异常：直接记录异常信息
-            log.error("Failure :{}", e.toString());
-        }
-    }
-
-    /**
-     * 构建单个异常的HTTP响应体
-     * 子类可以重写此方法来自定义响应格式
-     *
-     * @param e Business异常对象
-     * @return ResponseEntity响应对象
-     */
-    protected ResponseEntity<?> buildResponse(Business e) {
-        Map<String, Object> body = buildMap(e);
-        return ResponseEntity.status(e.getHttpStatus()).body(body);
-    }
-
-    /**
-     * 构建批量异常的HTTP响应体
-     * 子类可以重写此方法来自定义批量错误的响应格式
-     *
-     * @param e MultiBusiness批量异常对象
-     * @return ResponseEntity响应对象
-     */
-    protected ResponseEntity<?> buildMultiErrorResponse(MultiBusiness e) {
-        Map<String, Object> body = buildMap(e);
-        // 只有开启verbose模式才返回errors详情
-        if (properties != null && properties.isVerbose()) {
-            body.put("errors", e.getErrors().stream()
-                    .map(err -> {
-                        Map<String, String> item = new HashMap<>(2);
-                        item.put("message", err.getMessage());
-                        item.put("description", err.getResponseCode().getDescription());
-                        item.put("detail", err.getDetail());
-                        return item;
-                    })
-                    .toList()
-            );
-        }
-        // 将所有错误简要拼接到 description 中，以便前端展示
-        body.put("description", "共 " + e.getErrors().size() + " 项错误");
-        return ResponseEntity.status(e.getHttpStatus()).body(body);
-    }
 
     /**
      * 处理单个Business异常的入口方法
@@ -186,6 +130,94 @@ public abstract class FailFastExceptionHandler {
     }
 
     /**
+     * 构建单个异常的HTTP响应体
+     * 子类可以重写此方法来自定义响应格式
+     *
+     * @param e Business异常对象
+     * @return ResponseEntity响应对象
+     */
+    protected ResponseEntity<?> buildResponse(Business e) {
+        Map<String, Object> body = buildMap(e);
+        return ResponseEntity.status(e.getHttpStatus()).body(body);
+    }
+
+    /**
+     * 构建批量异常的HTTP响应体
+     * 子类可以重写此方法来自定义批量错误的响应格式
+     *
+     * @param e MultiBusiness批量异常对象
+     * @return ResponseEntity响应对象
+     */
+    protected ResponseEntity<?> buildMultiErrorResponse(MultiBusiness e) {
+        Map<String, Object> body = buildMap(e);
+        // 只有开启verbose模式才返回errors详情
+        if (properties != null && properties.isVerbose()) {
+            body.put("errors", e.getErrors().stream()
+                    .map(err -> {
+                        Map<String, String> item = new HashMap<>(2);
+                        item.put("message", err.getMessage());
+                        item.put("description", err.getResponseCode().getDescription());
+                        item.put("detail", err.getDetail());
+                        return item;
+                    })
+                    .toList()
+            );
+        }
+        // 将所有错误简要拼接到 description 中，以便前端展示
+        body.put("description", "共 " + e.getErrors().size() + " 项错误");
+        return ResponseEntity.status(e.getHttpStatus()).body(body);
+    }
+
+    /**
+     * 统一处理多个验证错误
+     * 根据错误数量决定返回单个错误还是批量错误响应
+     *
+     * @param errors Business错误列表
+     * @return ResponseEntity响应对象
+     */
+    private ResponseEntity<?> handleMultiErrors(List<Business> errors) {
+        // 处理空错误列表的情况
+        if (errors.isEmpty()) {
+            return buildResponse(
+                    Business.of(
+                            ResponseCode.of(500, "Validation Error"), "Unknown validation error"
+                    )
+            );
+        }
+
+        // 单个错误：使用单错误处理逻辑
+        if (errors.size() == 1) {
+            Business first = errors.get(0);
+            logException(first);
+            return buildResponse(first);
+        }
+
+        // 多个错误：构建批量错误对象
+        MultiBusiness multi = new MultiBusiness(errors);
+        logException(multi);
+        return buildMultiErrorResponse(multi);
+    }
+
+    /**
+     * 记录异常日志的通用方法
+     * 根据异常类型决定日志记录格式
+     *
+     * @param e 要记录的Business异常对象
+     */
+    protected void logException(Business e) {
+        if (e instanceof MultiBusiness m) {
+            // 批量异常：记录错误数量和每个具体错误
+            log.error("Multi Failure: {} errors", m.getErrors().size());
+            for (int i = 0; i < m.getErrors().size(); i++) {
+                log.error("{}. {}", i + 1, m.getErrors().get(i).toString());
+            }
+        } else {
+            // 单个异常：直接记录异常信息
+            log.error("Failure :{}", e.toString());
+        }
+    }
+
+    /**
      * 格式化校验异常的位置信息
      * 统一处理不同类型的校验错误位置格式
      * 格式示例:
@@ -224,32 +256,6 @@ public abstract class FailFastExceptionHandler {
     }
 
     /**
-     * 统一处理多个验证错误
-     * 根据错误数量决定返回单个错误还是批量错误响应
-     *
-     * @param errors Business错误列表
-     * @return ResponseEntity响应对象
-     */
-    private ResponseEntity<?> handleMultiErrors(List<Business> errors) {
-        // 处理空错误列表的情况
-        if (errors.isEmpty()) {
-            return buildResponse(Business.of(ResponseCode.of(500, "Validation Error"), "Unknown validation error"));
-        }
-
-        // 单个错误：使用单错误处理逻辑
-        if (errors.size() == 1) {
-            Business first = errors.get(0);
-            logException(first);
-            return buildResponse(first);
-        }
-
-        // 多个错误：构建批量错误对象
-        MultiBusiness multi = new MultiBusiness(errors);
-        logException(multi);
-        return buildMultiErrorResponse(multi);
-    }
-
-    /**
      * 解析验证错误消息并构建成Business异常
      * 支持 "code:message" 格式的自定义错误码
      *
@@ -257,7 +263,7 @@ public abstract class FailFastExceptionHandler {
      * @param location 错误发生位置
      * @return 构建好的Business异常对象
      */
-    // todo 默认使用400错误码 待完善
+    @ToImprove(value = "默认使用400错误码 待完善")
     private Business parseError(String message, String location) {
         Business business;
 
@@ -300,6 +306,12 @@ public abstract class FailFastExceptionHandler {
     }
 
 
+    /**
+     * 构建包含业务响应信息的Map对象
+     *
+     * @param e 业务对象，包含响应代码、消息和详细信息
+     * @return 包含响应代码、消息、详细信息和时间戳的Map对象
+     */
     private Map<String, Object> buildMap(Business e) {
         Map<String, Object> body = new HashMap<>();
         body.put("code", e.getResponseCode().getCode());

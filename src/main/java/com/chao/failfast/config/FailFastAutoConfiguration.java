@@ -6,7 +6,7 @@ import com.chao.failfast.aspect.ValidationAspect;
 import com.chao.failfast.integration.ValidationAdapter;
 import com.chao.failfast.internal.Ex;
 import com.chao.failfast.internal.FailureContext;
-import com.chao.failfast.internal.FailFastProperties;
+import com.chao.failfast.internal.core.FailureProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.*;
 import jakarta.validation.Validator;
@@ -31,21 +31,21 @@ import java.io.IOException;
  */
 @Slf4j
 @AutoConfiguration
-@EnableConfigurationProperties(FailFastProperties.class)
+@EnableConfigurationProperties(FailureProperties.class)
 @ConditionalOnClass(Validator.class)
 public class FailFastAutoConfiguration {
 
     /**
      * FailFast配置属性
      */
-    private final FailFastProperties properties;
+    private final FailureProperties properties;
 
     /**
      * 构造函数
      *
      * @param properties FailFast配置属性
      */
-    public FailFastAutoConfiguration(FailFastProperties properties) {
+    public FailFastAutoConfiguration(FailureProperties properties) {
         this.properties = properties;
     }
 

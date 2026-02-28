@@ -1,7 +1,7 @@
 package com.chao.failfast.annotation;
 
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

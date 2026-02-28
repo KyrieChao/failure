@@ -1,6 +1,6 @@
 package com.chao.failfast.model;
 
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 
 /**
  * 测试用响应码

@@ -1,6 +1,6 @@
 package com.chao.failfast.internal;
 
-import com.chao.failfast.internal.check.DateChecks;
+import com.chao.failfast.internal.core.ResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,9 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.*;
-import java.time.chrono.ChronoLocalDate;
-import java.time.chrono.ChronoLocalDateTime;
-import java.time.chrono.ChronoZonedDateTime;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +45,8 @@ class ChainDateMethodsTest {
             Date future = new Date(System.currentTimeMillis() + 10000);
             Chain chain = Chain.begin(false).isPast(future);
             assertThat(chain.isValid()).isFalse();
-            assertThat(chain.getCauses()).isEmpty();
+            // 默认错误
+            assertThat(chain.getCauses()).isNotEmpty();
         }
 
         @Test
@@ -56,7 +54,10 @@ class ChainDateMethodsTest {
         void isPast_Now_Valid() {
             Date now = new Date();
             // Sleep a tiny bit to ensure strictly before
-            try { Thread.sleep(1); } catch (InterruptedException e) {}
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ignored) {
+            }
             Chain chain = Chain.begin(false).isPast(now);
             assertThat(chain.isValid()).isTrue();
         }
@@ -96,53 +97,53 @@ class ChainDateMethodsTest {
             LocalDateTime localDateTime = LocalDateTime.now();
             Instant instant = Instant.now();
             ZonedDateTime zonedDateTime = ZonedDateTime.now();
-            
+
             ResponseCode code = ResponseCode.of(1, "test");
             Consumer<Business.Fabricator> consumer = f -> f.responseCode(code);
 
             return Stream.of(
-                // Date
-                c -> c.isPast(date, code),
-                c -> c.isPast(date, code, "detail"),
-                c -> c.isPast(date, consumer),
-                c -> c.isFuture(date, code),
-                c -> c.isFuture(date, code, "detail"),
-                c -> c.isFuture(date, consumer),
-                
-                // LocalDate
-                c -> c.isPast(localDate, code),
-                c -> c.isPast(localDate, code, "detail"),
-                c -> c.isPast(localDate, consumer),
-                c -> c.isFuture(localDate, code),
-                c -> c.isFuture(localDate, code, "detail"),
-                c -> c.isFuture(localDate, consumer),
-                c -> c.isToday(localDate, code),
-                c -> c.isToday(localDate, code, "detail"),
-                c -> c.isToday(localDate, consumer),
+                    // Date
+                    c -> c.isPast(date, code),
+                    c -> c.isPast(date, code, "detail"),
+                    c -> c.isPast(date, spec -> spec.fabricator(consumer)),
+                    c -> c.isFuture(date, code),
+                    c -> c.isFuture(date, code, "detail"),
+                    c -> c.isFuture(date, spec -> spec.fabricator(consumer)),
 
-                // LocalDateTime
-                c -> c.isPast(localDateTime, code),
-                c -> c.isPast(localDateTime, code, "detail"),
-                c -> c.isPast(localDateTime, consumer),
-                c -> c.isFuture(localDateTime, code),
-                c -> c.isFuture(localDateTime, code, "detail"),
-                c -> c.isFuture(localDateTime, consumer),
+                    // LocalDate
+                    c -> c.isPast(localDate, code),
+                    c -> c.isPast(localDate, code, "detail"),
+                    c -> c.isPast(localDate, spec -> spec.fabricator(consumer)),
+                    c -> c.isFuture(localDate, code),
+                    c -> c.isFuture(localDate, code, "detail"),
+                    c -> c.isFuture(localDate, spec -> spec.fabricator(consumer)),
+                    c -> c.isToday(localDate, code),
+                    c -> c.isToday(localDate, code, "detail"),
+                    c -> c.isToday(localDate, spec -> spec.fabricator(consumer)),
 
-                // Instant
-                c -> c.isPast(instant, code),
-                c -> c.isPast(instant, code, "detail"),
-                c -> c.isPast(instant, consumer),
-                c -> c.isFuture(instant, code),
-                c -> c.isFuture(instant, code, "detail"),
-                c -> c.isFuture(instant, consumer),
-                
-                // ZonedDateTime
-                c -> c.isPast(zonedDateTime, code),
-                c -> c.isPast(zonedDateTime, code, "detail"),
-                c -> c.isPast(zonedDateTime, consumer),
-                c -> c.isFuture(zonedDateTime, code),
-                c -> c.isFuture(zonedDateTime, code, "detail"),
-                c -> c.isFuture(zonedDateTime, consumer)
+                    // LocalDateTime
+                    c -> c.isPast(localDateTime, code),
+                    c -> c.isPast(localDateTime, code, "detail"),
+                    c -> c.isPast(localDateTime, spec -> spec.fabricator(consumer)),
+                    c -> c.isFuture(localDateTime, code),
+                    c -> c.isFuture(localDateTime, code, "detail"),
+                    c -> c.isFuture(localDateTime, spec -> spec.fabricator(consumer)),
+
+                    // Instant
+                    c -> c.isPast(instant, code),
+                    c -> c.isPast(instant, code, "detail"),
+                    c -> c.isPast(instant, spec -> spec.fabricator(consumer)),
+                    c -> c.isFuture(instant, code),
+                    c -> c.isFuture(instant, code, "detail"),
+                    c -> c.isFuture(instant, spec -> spec.fabricator(consumer)),
+
+                    // ZonedDateTime
+                    c -> c.isPast(zonedDateTime, code),
+                    c -> c.isPast(zonedDateTime, code, "detail"),
+                    c -> c.isPast(zonedDateTime, spec -> spec.fabricator(consumer)),
+                    c -> c.isFuture(zonedDateTime, code),
+                    c -> c.isFuture(zonedDateTime, code, "detail"),
+                    c -> c.isFuture(zonedDateTime, spec -> spec.fabricator(consumer))
             );
         }
 
@@ -243,7 +244,7 @@ class ChainDateMethodsTest {
             Chain chain = Chain.begin(false).isFuture(past);
             assertThat(chain.isValid()).isFalse();
         }
-        
+
         @Test
         @DisplayName("isFuture(LocalDateTime) - Now should be invalid")
         void isFuture_Now_Invalid() {
@@ -288,7 +289,7 @@ class ChainDateMethodsTest {
             Chain chain = Chain.begin(false).isFuture(past);
             assertThat(chain.isValid()).isFalse();
         }
-        
+
         @Test
         @DisplayName("isFuture(Instant) - Now (very close) should be invalid")
         void isFuture_Now_Invalid() {
@@ -346,7 +347,7 @@ class ChainDateMethodsTest {
             chain.isFuture((LocalDate) null);
             assertThat(chain.isValid()).isFalse();
         }
-        
+
         @Test
         void testNullLocalDateTime() {
             Chain chain = Chain.begin(false);
@@ -355,7 +356,7 @@ class ChainDateMethodsTest {
             chain.isFuture((LocalDateTime) null);
             assertThat(chain.isValid()).isFalse();
         }
-        
+
         @Test
         void testNullInstant() {
             Chain chain = Chain.begin(false);
@@ -364,7 +365,7 @@ class ChainDateMethodsTest {
             chain.isFuture((Instant) null);
             assertThat(chain.isValid()).isFalse();
         }
-        
+
         @Test
         void testNullZonedDateTime() {
             Chain chain = Chain.begin(false);
@@ -378,32 +379,32 @@ class ChainDateMethodsTest {
     @Nested
     @DisplayName("Overload Tests with ResponseCode and Consumer")
     class OverloadTests {
-        
+
         @Test
         void testIsPast_WithResponseCode() {
             Date future = new Date(System.currentTimeMillis() + 10000);
             ResponseCode code = ResponseCode.of(400, "Future date not allowed");
-            
+
             Chain chain = Chain.begin(false).isPast(future, code);
             assertThat(chain.isValid()).isFalse();
             assertThat(chain.getCauses()).hasSize(1);
             assertThat(chain.getCauses().get(0).getResponseCode().getCode()).isEqualTo(400);
         }
-        
+
         @Test
         void testIsPast_WithResponseCodeAndDetail() {
             Date future = new Date(System.currentTimeMillis() + 10000);
             ResponseCode code = ResponseCode.of(400, "Future date not allowed");
-            
+
             Chain chain = Chain.begin(false).isPast(future, code, "detail info");
             assertThat(chain.isValid()).isFalse();
             assertThat(chain.getCauses().get(0).getDetail()).contains("detail info");
         }
-        
+
         @Test
         void testIsPast_WithConsumer() {
             Date future = new Date(System.currentTimeMillis() + 10000);
-            
+
             Chain chain = Chain.begin(false).isPast(future, fab -> fab.responseCode(ResponseCode.of(500, "Custom error")));
             assertThat(chain.isValid()).isFalse();
             assertThat(chain.getCauses().get(0).getResponseCode().getCode()).isEqualTo(500);
@@ -413,18 +414,18 @@ class ChainDateMethodsTest {
         void testIsFuture_WithResponseCode() {
             Date past = new Date(System.currentTimeMillis() - 10000);
             ResponseCode code = ResponseCode.of(400, "Past date not allowed");
-            
+
             Chain chain = Chain.begin(false).isFuture(past, code);
             assertThat(chain.isValid()).isFalse();
             assertThat(chain.getCauses()).hasSize(1);
             assertThat(chain.getCauses().get(0).getResponseCode().getCode()).isEqualTo(400);
         }
     }
-    
+
     @Nested
     @DisplayName("Leap Year and Special Time Tests")
     class SpecialTimeTests {
-        
+
         @Test
         void testLeapYear() {
             LocalDate leapDay = LocalDate.of(2024, 2, 29);
@@ -437,30 +438,30 @@ class ChainDateMethodsTest {
             }
         }
     }
-    
+
     @Nested
     @DisplayName("Concurrency Tests")
     class ConcurrencyTests {
-        
+
         @Test
         void testConcurrentValidation() throws InterruptedException {
             int threadCount = 20;
             ExecutorService executor = Executors.newFixedThreadPool(threadCount);
             CountDownLatch latch = new CountDownLatch(threadCount);
             AtomicInteger errorCount = new AtomicInteger(0);
-            
+
             for (int i = 0; i < threadCount; i++) {
                 executor.submit(() -> {
                     try {
                         Date now = new Date();
-                        Thread.sleep(1); 
+                        Thread.sleep(1);
                         Date future = new Date(System.currentTimeMillis() + 10000);
                         Date past = new Date(System.currentTimeMillis() - 10000);
-                        
-                        boolean valid1 = Chain.begin(true).isPast(now).isValid(); 
-                        boolean valid2 = Chain.begin(true).isFuture(future).isValid(); 
-                        boolean valid3 = Chain.begin(true).isPast(future).isValid(); 
-                        
+
+                        boolean valid1 = Chain.begin(true).isPast(now).isValid();
+                        boolean valid2 = Chain.begin(true).isFuture(future).isValid();
+                        boolean valid3 = Chain.begin(true).isPast(future).isValid();
+
                         if (!valid1 || !valid2 || valid3) {
                             errorCount.incrementAndGet();
                         }
@@ -471,7 +472,7 @@ class ChainDateMethodsTest {
                     }
                 });
             }
-            
+
             latch.await(5, TimeUnit.SECONDS);
             executor.shutdown();
             assertThat(errorCount.get()).isEqualTo(0);

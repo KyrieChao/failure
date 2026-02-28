@@ -7,12 +7,12 @@ import java.util.regex.Pattern;
  * 提供各种常用的字符串校验方法，如空值校验、长度校验、格式校验等
  */
 public final class StringChecks {
-    // 邮箱格式的正则表达式模式
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
-    private static final Pattern Mobile = Pattern.compile("^1[3-9]\\d{9}$");
-    private static final Pattern URL = Pattern.compile("^(http|https)://.*$");
-    private static final Pattern IP4 = Pattern.compile("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+    // 正则表达式
     private static final Pattern UUID = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+    private static final Pattern IP4 = Pattern.compile("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+    private static final Pattern URL = Pattern.compile("^(http|https)://.*$");
+    private static final Pattern Mobile = Pattern.compile("^1[3-9]\\d{9}$");
 
 
     // 私有构造方法，防止实例化工具类

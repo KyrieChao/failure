@@ -1,6 +1,7 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.config.CodeMappingConfig;
+import com.chao.failfast.internal.core.FailureProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,12 +14,12 @@ import static org.mockito.Mockito.when;
 @DisplayName("FailureContext 上下文测试")
 class FailureContextTest {
 
-    private FailFastProperties properties;
+    private FailureProperties properties;
     private FailureContext context;
 
     @BeforeEach
     void setUp() {
-        properties = mock(FailFastProperties.class);
+        properties = mock(FailureProperties.class);
         CodeMappingConfig config = mock(CodeMappingConfig.class);
         context = new FailureContext(properties, config);
     }

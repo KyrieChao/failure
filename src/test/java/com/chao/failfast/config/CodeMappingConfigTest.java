@@ -1,6 +1,6 @@
 package com.chao.failfast.config;
 
-import com.chao.failfast.internal.FailFastProperties;
+import com.chao.failfast.internal.core.FailureProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,12 +15,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CodeMappingConfigTest {
 
     private CodeMappingConfig config;
-    private FailFastProperties properties;
+    private FailureProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new FailFastProperties();
-        FailFastProperties.CodeMapping mapping = new FailFastProperties.CodeMapping();
+        properties = new FailureProperties();
+        FailureProperties.CodeMapping mapping = new FailureProperties.CodeMapping();
         properties.setCodeMapping(mapping);
         config = new CodeMappingConfig(properties);
     }

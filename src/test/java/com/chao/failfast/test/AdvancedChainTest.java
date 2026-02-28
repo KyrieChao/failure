@@ -4,8 +4,8 @@ import com.chao.failfast.Failure;
 import com.chao.failfast.annotation.FastValidator;
 import com.chao.failfast.config.CodeMappingConfig;
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.FailFastProperties;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.FailureProperties;
+import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.result.Result;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -106,8 +106,8 @@ class AdvancedChainTest {
     @Test
     @DisplayName("CodeMappingConfig: getGroupCodesExpanded 演示")
     void testCodeMappingConfig() {
-        FailFastProperties props = new FailFastProperties();
-        FailFastProperties.CodeMapping mapping = new FailFastProperties.CodeMapping();
+        FailureProperties props = new FailureProperties();
+        FailureProperties.CodeMapping mapping = new FailureProperties.CodeMapping();
 
         // 模拟配置: groupA -> [1000-1010]
         Map<String, List<Object>> groups = new java.util.HashMap<>();

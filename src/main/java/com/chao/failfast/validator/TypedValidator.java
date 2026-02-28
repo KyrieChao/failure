@@ -1,7 +1,7 @@
 package com.chao.failfast.validator;
 
 import com.chao.failfast.annotation.FastValidator;
-import com.chao.failfast.internal.ResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 
 import java.util.Map;
 import java.util.Set;

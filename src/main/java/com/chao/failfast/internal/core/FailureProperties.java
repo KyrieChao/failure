@@ -1,4 +1,4 @@
-package com.chao.failfast.internal;
+package com.chao.failfast.internal.core;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,7 +14,7 @@ import java.util.Map;
  */
 @Data
 @ConfigurationProperties(prefix = "fail-fast")
-public class FailFastProperties {
+public class FailureProperties {
     /**
      * 是否打印方法名（调试用，生产环境建议关闭）
      * 启用后会在异常信息中包含方法名和位置信息，便于调试

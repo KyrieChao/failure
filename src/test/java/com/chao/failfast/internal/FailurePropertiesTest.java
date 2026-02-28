@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.internal.core.FailureProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,15 +12,15 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("FailFastProperties 配置属性测试")
-class FailFastPropertiesTest {
+class FailurePropertiesTest {
 
     @Test
     @DisplayName("应当正确设置和获取属性")
     void shouldSetAndGetProperties() {
-        FailFastProperties properties = new FailFastProperties();
+        FailureProperties properties = new FailureProperties();
         properties.setShadowTrace(true);
         
-        FailFastProperties.CodeMapping mapping = new FailFastProperties.CodeMapping();
+        FailureProperties.CodeMapping mapping = new FailureProperties.CodeMapping();
         Map<String, Integer> httpStatus = new HashMap<>();
         httpStatus.put("1001", 400);
         mapping.setHttpStatus(httpStatus);

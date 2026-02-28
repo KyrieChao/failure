@@ -1,6 +1,6 @@
 package com.chao.failfast.config;
 
-import com.chao.failfast.internal.FailFastProperties;
+import com.chao.failfast.internal.core.FailureProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CodeMappingConfig {
 
-    private final FailFastProperties properties;
+    private final FailureProperties properties;
     private final Map<Integer, HttpStatus> DEFAULT_MAPPINGS;
     private final Map<String, List<CodeRange>> groupRanges = new HashMap<>();
     private static final Pattern RANGE_PATTERN = Pattern.compile("^\\s*(\\d+)\\s*\\.\\.\\s*(\\d+)\\s*$|^\\s*(\\d+)\\s*-\\s*(\\d+)\\s*$");
@@ -27,7 +27,7 @@ public class CodeMappingConfig {
      *
      * @param properties 包含失败快速属性的配置对象
      */
-    public CodeMappingConfig(FailFastProperties properties) {
+    public CodeMappingConfig(FailureProperties properties) {
         // 将传入的properties赋值给实例变量
         this.properties = properties;
         // 创建一个临时的HashMap用于存储状态码映射

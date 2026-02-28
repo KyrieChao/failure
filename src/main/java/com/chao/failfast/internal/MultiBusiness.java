@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.internal.core.ResponseCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
