@@ -99,8 +99,8 @@ class AdvancedChainTest {
         context.stop();
 
         assertTrue(context.isStopped());
-        assertEquals(1, context.getErrors().size());
-        assertEquals(9002, context.getErrors().get(0).getResponseCode().getCode());
+        assertEquals(1, context.hasCauses().size());
+        assertEquals(9002, context.hasCauses().get(0).getResponseCode().getCode());
     }
 
     @Test

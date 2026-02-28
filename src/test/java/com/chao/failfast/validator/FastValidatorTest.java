@@ -122,7 +122,7 @@ class FastValidatorTest {
             ctx.reportError(ResponseCode.of(40000, "错误"));
 
             assertThat(ctx.isValid()).isFalse();
-            assertThat(ctx.getErrors()).hasSize(1);
+            assertThat(ctx.hasCauses()).hasSize(1);
         }
 
         @Test
@@ -133,7 +133,7 @@ class FastValidatorTest {
             ctx.reportError(ResponseCode.of(40000, "错误"), "详细错误信息");
 
             assertThat(ctx.isValid()).isFalse();
-            List<Business> errors = ctx.getErrors();
+            List<Business> errors = ctx.hasCauses();
             assertThat(errors).hasSize(1);
             assertThat(errors.get(0).getDetail()).isEqualTo("详细错误信息");
         }
@@ -146,7 +146,7 @@ class FastValidatorTest {
 
             ctx.reportError(error);
 
-            assertThat(ctx.getErrors()).hasSize(1);
+            assertThat(ctx.hasCauses()).hasSize(1);
             assertThat(ctx.getFirstError()).isEqualTo(error);
         }
 
@@ -159,7 +159,7 @@ class FastValidatorTest {
             ctx.reportError(ResponseCode.of(40001, "第二个错误")); // 应该被忽略
 
             assertThat(ctx.isStopped()).isTrue();
-            assertThat(ctx.getErrors()).hasSize(1);
+            assertThat(ctx.hasCauses()).hasSize(1);
         }
 
         @Test
@@ -171,7 +171,7 @@ class FastValidatorTest {
             ctx.reportError(ResponseCode.of(40001, "第二个错误"));
 
             assertThat(ctx.isStopped()).isFalse();
-            assertThat(ctx.getErrors()).hasSize(2);
+            assertThat(ctx.hasCauses()).hasSize(2);
         }
 
         @Test
@@ -182,7 +182,7 @@ class FastValidatorTest {
 
             ctx.reportError(ResponseCode.of(40000, "错误"));
 
-            assertThat(ctx.getErrors()).isEmpty();
+            assertThat(ctx.hasCauses()).isEmpty();
         }
     }
 
@@ -242,7 +242,7 @@ class FastValidatorTest {
             FastValidator.ValidationContext ctx = new FastValidator.ValidationContext(false);
             ctx.reportError(ResponseCode.of(40000, "错误"));
 
-            List<Business> errors = ctx.getErrors();
+            List<Business> errors = ctx.hasCauses();
 
             assertThat(errors).hasSize(1);
             // 验证返回的是不可修改列表
@@ -256,7 +256,7 @@ class FastValidatorTest {
         @DisplayName("无错误时应返回空列表")
         void shouldReturnEmptyListWhenNoErrors() {
             FastValidator.ValidationContext ctx = new FastValidator.ValidationContext(false);
-            assertThat(ctx.getErrors()).isEmpty();
+            assertThat(ctx.hasCauses()).isEmpty();
         }
     }
 
@@ -314,14 +314,14 @@ class FastValidatorTest {
             FastValidator.ValidationContext ctx2 = new FastValidator.ValidationContext(false);
             validator.validate(null, ctx2);
             assertThat(ctx2.isValid()).isFalse();
-            assertThat(ctx2.getErrors()).hasSize(1);
+            assertThat(ctx2.hasCauses()).hasSize(1);
             assertThat(ctx2.getFirstError().getResponseCode().getCode()).isEqualTo(40000);
 
             // 空字符串
             FastValidator.ValidationContext ctx3 = new FastValidator.ValidationContext(false);
             validator.validate("", ctx3);
             assertThat(ctx3.isValid()).isFalse();
-            assertThat(ctx3.getErrors()).hasSize(1);
+            assertThat(ctx3.hasCauses()).hasSize(1);
 
             // 长度超过10
             FastValidator.ValidationContext ctx4 = new FastValidator.ValidationContext(false);

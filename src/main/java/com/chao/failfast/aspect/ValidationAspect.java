@@ -116,7 +116,7 @@ public class ValidationAspect {
             executePlainValidator(validator, args, ctx);
         }
 
-        return ctx.isValid() ? List.of() : ctx.getErrors();
+        return ctx.isValid() ? List.of() : ctx.hasCauses();
     }
 
     /**

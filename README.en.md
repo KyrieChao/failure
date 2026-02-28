@@ -17,33 +17,34 @@ Fail-Fast is a lightweight, high-performance validation and business-exception f
 
 ## 🚀 Core Features
 
-- **Fluent Validation Chain**: Supports both `Fail-Fast` (immediate failure) and `Fail-Strict` (collect all errors) modes.
+- **Fluent Validation Chain**: Supports `Fail-Fast` (immediate failure) and `Fail-Strict` (collect all errors) modes.
 - **Rich Assertions**: Built-in 50+ validation methods for Objects, Strings, Numbers, Collections, Date/Time, Enums, Optionals, etc.
 - **Context Integration**: Supports `TypedValidator` pattern to decouple validation logic from business logic.
 - **Annotation-Driven**: Provides `@Validate` annotation and `FastValidator` interface for AOP-based validation.
 - **Functional Results**: Provides `Result<T>` monad with `map`, `flatMap`, `recover` operations.
 - **Smart Exception Handling**: Automatically maps business error codes to HTTP status codes, with `shadow-trace` for quick debugging.
 
-## 📚 API Reference
+---
 
-**For detailed API documentation, method signatures, and usage examples, please refer to the complete reference document:**
+## 📚 Documentation
 
-👉 **[API_REFERENCE.en.md](./API_REFERENCE.en.md)** 👈
-
-This document includes:
-- Detailed explanation of Fail-Fast / Fail-Strict / Contextual modes
-- Complete list of validation methods (String, Number, Date, Collection, etc.)
-- Best practices and design patterns
+| Document | Content |
+| :--- | :--- |
+| [Quick Start](#%EF%B8%8F-quick-start) | Installation, basic usage, and three modes introduction |
+| [API Reference](./API_REFERENCE.en.md) | Complete API list, method details, and best practices |
+| [Configuration](#%EF%B8%8F-configuration) | application.yml configuration details |
 
 ---
 
 ## 🛠️ Quick Start
 
 ### 1. Requirements
+
 - JDK 17+
 - Spring Boot 3.2.x+
 
 ### 2. Dependency
+
 This project is published on JitPack. Add the repository and dependency to your `pom.xml`:
 
 ```xml
@@ -57,31 +58,109 @@ This project is published on JitPack. Add the repository and dependency to your 
 <dependency>
     <groupId>com.github.KyrieChao</groupId>
     <artifactId>Failure</artifactId>
-    <version>Tag</version> <!-- Replace with the latest Release version, e.g., 1.2.1 -->
+    <version>1.3.1</version>
 </dependency>
 ```
 
-### 3. Basic Usage
+---
 
-**Scenario 1: Fail-Fast**
+## 💡 Three Validation Modes
+
+### Mode 1: Fail-Fast (Immediate Failure)
+
+**Scenario**: Defensive programming for parameters. Stops subsequent logic immediately upon finding an invalid parameter.
+
 ```java
-// Throws exception immediately if notBlank fails
+// Throws exception immediately if notBlank fails, subsequent checks will not be executed
 Failure.begin()
     .notBlank(username, UserCode.USERNAME_REQUIRED)
     .email(email, UserCode.EMAIL_INVALID)
     .fail();
 ```
 
-**Scenario 2: Fail-Strict (Collect All)**
+**Terminal Methods**:
+
+| Method | Description |
+| :--- | :--- |
+| `.fail()` | Standard terminal method, throws the first exception if errors exist |
+| `.failNow(code, message)` | **Force Immediate Failure**, throws specified exception regardless of previous checks |
+
 ```java
-// Collects all errors and throws them together
-Failure.strict()
-    .notBlank(username, UserCode.USERNAME_REQUIRED)
-    .email(email, UserCode.EMAIL_INVALID)
-    .failAll();
+// Force failure example: Permission check
+Failure.begin()
+    .notNull(user, UserCode.USER_NOT_FOUND)
+    .failNow(UserCode.PERMISSION_DENIED, "Access Denied")  // Throws immediately
+    .state(user.getRole() == Role.ADMIN, UserCode.PERMISSION_DENIED)  // Will not execute
+    .fail();
 ```
 
-For more advanced usage (like Context Integration, Custom Assertions), please refer to [API_REFERENCE.en.md](./API_REFERENCE.en.md).
+---
+
+### Mode 2: Fail-Strict (Collect All)
+
+**Scenario**: Form submission, batch import, etc., where all errors need to be returned at once.
+
+```java
+// All validations are executed, errors are collected and thrown together
+Failure.strict()
+    .notBlank(username, UserCode.USERNAME_REQUIRED, "Username cannot be empty")
+    .email(email, UserCode.EMAIL_INVALID, "Invalid email format")
+    .min(age, 18, UserCode.AGE_TOO_YOUNG, "Must be at least 18 years old")
+    .failAll();  // Must use failAll()
+```
+
+**Manual Error Retrieval (No Exception)**:
+
+```java
+var chain = Failure.strict()
+    .notBlank(username, UserCode.USERNAME_REQUIRED)
+    .email(email, UserCode.EMAIL_INVALID);
+
+if (!chain.isValid()) {
+    var causes = chain.getCauses();  // Get all errors
+    return Result.failure("Validation failed", causes);
+}
+```
+
+---
+
+### Mode 3: Contextual (Context Integration)
+
+**Scenario**: Used with `@Validate` annotation to decouple validation logic from business code.
+
+```java
+// Controller
+@PostMapping("/register")
+@Validate(value = UserRegisterValidator.class, fast = false)  // fast=false collects all errors
+public Result<?> register(@RequestBody UserRegisterDTO dto) {
+    userService.register(dto);
+    return Result.success("Registration successful");
+}
+
+// Validator
+@Component
+public class UserRegisterValidator implements FastValidator<UserRegisterDTO> {
+    @Override
+    public void validate(UserRegisterDTO dto, ValidationContext ctx) {
+        Failure.with(ctx)
+            .notBlank(dto.getUsername(), UserCode.USERNAME_REQUIRED)
+            .email(dto.getEmail(), UserCode.EMAIL_INVALID)
+            .verify();  // Contextual mode uses verify()
+    }
+
+    @Override
+    public Class<?> getSupportedType() {
+        return UserRegisterDTO.class;
+    }
+}
+```
+
+**@Validate fast parameter**:
+
+| fast Value | Behavior | Scenario |
+| :--- | :--- | :--- |
+| `true` (Default) | Stops immediately after first error | Performance priority |
+| `false` | Executes all validation rules | Show all errors |
 
 ---
 
@@ -92,17 +171,22 @@ Configure framework behavior in `application.yml`:
 ```yaml
 fail-fast:
   shadow-trace: true   # Include class name and line number of the validation point in exception stack trace
-  verbose: true        # Include detailed errors list in multi-error response (Fail-Strict)
+  verbose: true        # Include detailed errors list in multi-error response
   code-mapping:
     http-status:
-      40001: 400       # Exact mapping: Error Code 40001 -> HTTP 400
+      40001: 400       # Error Code 40001 -> HTTP 400
       40100: 401
     groups:
-      auth: [ "40100..40199" ]        # Range mapping: 401xx -> Default mapping rule
-      business: [ "40000..40099" ]
-      # Exact value (number or string): 40001 / "40001"
-      # Auto-ordering: 5-1 will be automatically converted to 1-5
+      auth: ["40100..40199"]      # Range mapping
+      business: ["40000..40099"]
 ```
+
+---
+
+## 📖 More Documentation
+
+- **[API_REFERENCE.en.md](./API_REFERENCE.en.md)** - Complete API Reference, Design Patterns
+- **[Failure-in-Action](https://github.com/KyrieChao/Failure-in-Action)** - Live Demo Project
 
 ## 🤝 Contributing
 

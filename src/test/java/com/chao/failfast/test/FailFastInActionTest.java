@@ -107,8 +107,8 @@ public class FailFastInActionTest {
         new UserValidator().validate(invalidUser, ctx);
 
         assertTrue(ctx.isFailed());
-        assertEquals(1, ctx.getErrors().size());
-        assertEquals(UserCode.USERNAME_BLANK.getCode(), ctx.getErrors().get(0).getResponseCode().getCode());
+        assertEquals(1, ctx.hasCauses().size());
+        assertEquals(UserCode.USERNAME_BLANK.getCode(), ctx.hasCauses().get(0).getResponseCode().getCode());
         
         // Ensure business check was skipped (though here business check wouldn't add error anyway, 
         // but logic flow stopped at step 2)
@@ -123,8 +123,8 @@ public class FailFastInActionTest {
         new UserValidator().validate(existUser, ctx);
 
         assertTrue(ctx.isFailed());
-        assertEquals(1, ctx.getErrors().size());
-        assertEquals(UserCode.USER_EXISTS.getCode(), ctx.getErrors().get(0).getResponseCode().getCode());
+        assertEquals(1, ctx.hasCauses().size());
+        assertEquals(UserCode.USER_EXISTS.getCode(), ctx.hasCauses().get(0).getResponseCode().getCode());
     }
 
     @Test
@@ -137,9 +137,9 @@ public class FailFastInActionTest {
 
         assertTrue(ctx.isFailed());
         // Expecting 2 errors: username blank AND email invalid
-        assertEquals(2, ctx.getErrors().size());
-        assertEquals(UserCode.USERNAME_BLANK.getCode(), ctx.getErrors().get(0).getResponseCode().getCode());
-        assertEquals(UserCode.EMAIL_INVALID.getCode(), ctx.getErrors().get(1).getResponseCode().getCode());
+        assertEquals(2, ctx.hasCauses().size());
+        assertEquals(UserCode.USERNAME_BLANK.getCode(), ctx.hasCauses().get(0).getResponseCode().getCode());
+        assertEquals(UserCode.EMAIL_INVALID.getCode(), ctx.hasCauses().get(1).getResponseCode().getCode());
         
         // Business check should strictly be skipped if ctx.isFailed() check is present
         // But if user exists check was run, it might add another error.

@@ -17,34 +17,35 @@ Fail-Fast 是一个专为 Spring Boot 3.x 设计的轻量级、高性能参数�
 
 ## 🚀 核心特性
 
-- **流式校验链**: 支持 `Fail-Fast` (快速失败) 与 `Fail-Strict` (全量收集) 双模式。
-- **丰富的断言库**: 内置对象、字符串、数值、集合、日期时间、枚举、Optional 等 50+ 种校验方法。
-- **上下文集成**: 支持 `TypedValidator` 模式，将校验逻辑与业务逻辑解耦。
-- **注解驱动**: 提供 `@Validate` 注解与 `FastValidator` 接口，支持 AOP 切面校验。
-- **函数式结果**: 提供 `Result<T>` 单子类型，支持 `map`, `flatMap`, `recover` 等函数式操作。
-- **智能异常处理**: 自动映射业务错误码到 HTTP 状态码，支持影子追踪 (`shadow-trace`) 快速定位问题。
+- **流式校验链**: 支持 `Fail-Fast` (快速失败) 与 `Fail-Strict` (全量收集) 双模式
+- **丰富的断言库**: 内置对象、字符串、数值、集合、日期时间、枚举、Optional 等 50+ 种校验方法
+- **上下文集成**: 支持 `TypedValidator` 模式，将校验逻辑与业务逻辑解耦
+- **注解驱动**: 提供 `@Validate` 注解与 `FastValidator` 接口，支持 AOP 切面校验
+- **函数式结果**: 提供 `Result<T>` 单子类型，支持 `map`, `flatMap`, `recover` 等函数式操作
+- **智能异常处理**: 自动映射业务错误码到 HTTP 状态码，支持影子追踪 (`shadow-trace`) 快速定位问题
 
-## 📚 API 参考文档
+---
 
-**所有 API 的详细说明、方法签名及使用示例，请查阅完整参考文档：**
+## 📚 文档导航
 
-👉 **[API_REFERENCE.md](./API_REFERENCE.md)** 👈
-
-该文档包含：
-- Fail-Fast / Fail-Strict / Contextual 三种模式详解
-- 完整的校验方法列表（String, Number, Date, Collection 等）
-- 最佳实践与设计模式
+| 文档                            | 内容                                |
+| ------------------------------- | ----------------------------------- |
+| [快速开始](#-快速开始)          | 安装、基础用法、三种模式入门        |
+| [API 参考](./API_REFERENCE.md)  | 完整的 API 列表、方法详解、最佳实践 |
+| [配置说明](#%EF%B8%8F-配置说明) | application.yml 配置项详解          |
 
 ---
 
 ## 🛠️ 快速开始
 
-### 1. 环境要求
+### 环境要求
+
 - JDK 17+
 - Spring Boot 3.2.x+
 
-### 2. 引入依赖
-本项目发布在 JitPack。请在 `pom.xml` 中添加仓库和依赖：
+### 引入依赖
+
+本项目发布在 JitPack，请在 `pom.xml` 中添加：
 
 ```xml
 <repositories>
@@ -57,60 +58,150 @@ Fail-Fast 是一个专为 Spring Boot 3.x 设计的轻量级、高性能参数�
 <dependency>
     <groupId>com.github.KyrieChao</groupId>
     <artifactId>Failure</artifactId>
-    <version>Tag</version> <!-- 请替换为最新 Release 版本，例如 1.2.1 -->
+    <version>1.3.1</version>
 </dependency>
 ```
 
-### 3. 基础用法示例
+---
 
-**场景 1: 快速失败 (Fail-Fast)**
+## 💡 三种校验模式
+
+### 模式一：Fail-Fast（快速失败）
+
+**适用场景**: 参数防御性编程，一旦发现非法参数立即停止后续逻辑。
+
 ```java
-// 一旦 notBlank 失败，立即抛出异常
+// 一旦 notBlank 失败，立即抛出异常，不会执行后续校验
 Failure.begin()
     .notBlank(username, UserCode.USERNAME_REQUIRED)
     .email(email, UserCode.EMAIL_INVALID)
     .fail();
 ```
 
-**场景 2: 全量收集 (Fail-Strict)**
+**终结方法对比**:
+
+| 方法                      | 说明                                                     |
+| ------------------------- | -------------------------------------------------------- |
+| `.fail()`                 | 标准终结方法，有错误时抛出第一个异常                     |
+| `.failNow(code, message)` | **强制立即失败**，不管前面校验是否通过，直接抛出指定异常 |
+
 ```java
-// 收集所有错误后统一抛出
-Failure.strict()
-    .notBlank(username, UserCode.USERNAME_REQUIRED)
-    .email(email, UserCode.EMAIL_INVALID)
-    .failAll();
+// 强制失败示例：权限检查
+Failure.begin()
+    .notNull(user, UserCode.USER_NOT_FOUND)
+    .failNow(UserCode.PERMISSION_DENIED, "当前角色无权访问")  // 直接抛出，后续不执行
+    .state(user.getRole() == Role.ADMIN, UserCode.PERMISSION_DENIED)  // 不会执行
+    .fail();
 ```
 
-更多高级用法（如上下文集成、自定义断言等）请参阅 [API_REFERENCE.md](./API_REFERENCE.md)。
+---
+
+### 模式二：Fail-Strict（全量收集）
+
+**适用场景**: 表单提交、批量导入等需要一次性返回所有错误的场景。
+
+```java
+// 所有校验都会执行，最终收集所有错误统一抛出
+Failure.strict()
+    .notBlank(username, UserCode.USERNAME_REQUIRED, "用户名不能为空")
+    .email(email, UserCode.EMAIL_INVALID, "邮箱格式不正确")
+    .min(age, 18, UserCode.AGE_TOO_YOUNG, "年龄必须 ≥ 18 岁")
+    .failAll();  // 必须配合 failAll() 使用
+```
+
+**手动获取错误（不抛异常）**:
+
+```java
+var chain = Failure.strict()
+    .notBlank(username, UserCode.USERNAME_REQUIRED)
+    .email(email, UserCode.EMAIL_INVALID);
+
+if (!chain.isValid()) {
+    var causes = chain.getCauses();  // 获取所有错误
+    return Result.failure("参数校验失败", causes);
+}
+```
+
+---
+
+### 模式三：Contextual（上下文集成）
+
+**适用场景**: 结合 `@Validate` 注解，将校验逻辑从业务代码中解耦。
+
+```java
+// Controller
+@PostMapping("/register")
+@Validate(value = UserRegisterValidator.class, fast = false)  // fast=false 全量收集
+public Result<?> register(@RequestBody UserRegisterDTO dto) {
+    userService.register(dto);
+    return Result.success("注册成功");
+}
+
+// Validator
+@Component
+public class UserRegisterValidator implements FastValidator<UserRegisterDTO> {
+    @Override
+    public void validate(UserRegisterDTO dto, ValidationContext ctx) {
+        Failure.with(ctx)
+            .notBlank(dto.getUsername(), UserCode.USERNAME_REQUIRED)
+            .email(dto.getEmail(), UserCode.EMAIL_INVALID)
+            .verify();  // Contextual 模式使用 verify() 终结
+    }
+
+    @Override
+    public Class<?> getSupportedType() {
+        return UserRegisterDTO.class;
+    }
+}
+```
+
+**@Validate 的 fast 参数**:
+
+| fast 值       | 行为                 | 适用场景         |
+| ------------- | -------------------- | ---------------- |
+| `true` (默认) | 第一个错误后立即停止 | 性能优先         |
+| `false`       | 执行所有校验规则     | 需要展示所有错误 |
 
 ---
 
 ## ⚙️ 配置说明
 
-在 `application.yml` 中配置框架行为：
+在 `application.yml` 中配置：
 
 ```yaml
 fail-fast:
-  shadow-trace: true   # 是否在异常堆栈中包含校验点的类名与行号（便于调试）
-  verbose: true        # 多错误响应（Fail-Strict）是否包含详细的 errors 列表
+  shadow-trace: true   # 异常中包含校验点的类名与行号（调试推荐开启）
+  verbose: true        # 多错误响应是否包含详细的 errors 列表
   code-mapping:
     http-status:
-      40001: 400       # 精确映射：错误码 40001 -> HTTP 400
+      40001: 400       # 错误码 40001 -> HTTP 400
       40100: 401
     groups:
-      auth: [ "40100..40199" ]        # 范围映射：401xx -> 默认映射规则
-      business: [ "40000..40099" ]
-      # 精确值（数字或字符串）：40001 / "40001"
-      # 自动顺序：5-1 会自动转为 1-5
+      auth: ["40100..40199"]      # 范围映射
+      business: ["40000..40099"]
 ```
+
+---
+
+## 📖 更多文档
+
+- **[API_REFERENCE.md](./API_REFERENCE.md)** - 完整的 API 参考、所有校验方法列表、设计模式详解
+- **[Failure-in-Action](https://github.com/KyrieChao/Failure-in-Action)** - 实战示例项目
+
+---
 
 ## 🤝 贡献指南
 
-欢迎提交 Issue 或 Pull Request！请确保在提交前运行 `mvn test` 并遵循现有的代码风格。
+欢迎提交 Issue 或 Pull Request！请确保：
+
+- 运行 `mvn test` 通过所有测试
+- 代码覆盖率保持在 99%+
+- 遵循现有代码风格
 
 ## 📄 许可证
 
-Apache License 2.0 - 详情见 [LICENSE](LICENSE) 文件。
+Apache License 2.0 - 详见 [LICENSE](LICENSE) 文件。
 
 ---
+
 **Author**: [KyrieChao](https://github.com/KyrieChao)

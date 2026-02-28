@@ -48,7 +48,7 @@ public class MultiBusiness extends Business {
      */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Multi={").append("', errors=[\n");
+        StringBuilder sb = new StringBuilder("Multi={\n");
         for (int i = 0; i < errors.size(); i++) {
             Business ex = errors.get(i);
             sb.append("  ").append(i + 1).append(". ").append(ex.toString());

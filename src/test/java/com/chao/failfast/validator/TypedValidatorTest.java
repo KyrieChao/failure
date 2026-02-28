@@ -16,6 +16,7 @@ class TypedValidatorTest {
         protected void registerValidators() {
             register(String.class, (s, ctx) -> {
                 if (s.isEmpty()) ctx.reportError(ResponseCode.of(400, "Empty string"));
+                ctx.hasCauses()
             });
             register(Integer.class, (i, ctx) -> {
                 if (i < 0) ctx.reportError(ResponseCode.of(400, "Negative integer"));
@@ -36,7 +37,7 @@ class TypedValidatorTest {
 
         validator.validate("", ctx);
         assertThat(ctx.isValid()).isFalse();
-        assertThat(ctx.getErrors()).hasSize(1);
+        assertThat(ctx.hasCauses()).hasSize(1);
         
         // Reset
         ctx = new FastValidator.ValidationContext(false);
@@ -55,7 +56,7 @@ class TypedValidatorTest {
 
         validator.validate(null, ctx);
         assertThat(ctx.isValid()).isFalse();
-        Business error = ctx.getErrors().get(0);
+        Business error = ctx.hasCauses().get(0);
         assertThat(error.getResponseCode().getCode()).isEqualTo(50000);
         assertThat(error.getResponseCode().getMessage()).isEqualTo("校验对象不能为空");
     }
@@ -68,7 +69,7 @@ class TypedValidatorTest {
 
         validator.validate(10.5, ctx); // Double not registered
         assertThat(ctx.isValid()).isFalse();
-        Business error = ctx.getErrors().get(0);
+        Business error = ctx.hasCauses().get(0);
         assertThat(error.getResponseCode().getCode()).isEqualTo(40099);
         assertThat(error.getDetail()).contains("不支持的校验类型");
     }
@@ -102,6 +103,6 @@ class TypedValidatorTest {
 
         validator.validate("test", ctx);
         assertThat(ctx.isValid()).isFalse();
-        assertThat(ctx.getErrors().get(0).getResponseCode().getCode()).isEqualTo(40099);
+        assertThat(ctx.hasCauses().get(0).getResponseCode().getCode()).isEqualTo(40099);
     }
 }

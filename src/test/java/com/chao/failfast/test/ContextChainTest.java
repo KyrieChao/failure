@@ -25,9 +25,9 @@ public class ContextChainTest {
 
         // Verify errors are reported to context
         assertFalse(context.isValid());
-        assertEquals(2, context.getErrors().size());
-        assertEquals(1001, context.getErrors().get(0).getResponseCode().getCode());
-        assertEquals(1003, context.getErrors().get(1).getResponseCode().getCode());
+        assertEquals(2, context.hasCauses().size());
+        assertEquals(1001, context.hasCauses().get(0).getResponseCode().getCode());
+        assertEquals(1003, context.hasCauses().get(1).getResponseCode().getCode());
     }
 
     @Test
@@ -43,8 +43,8 @@ public class ContextChainTest {
 
         // Verify context stopped
         assertTrue(context.isStopped());
-        assertEquals(1, context.getErrors().size());
-        assertEquals(2001, context.getErrors().get(0).getResponseCode().getCode());
+        assertEquals(1, context.hasCauses().size());
+        assertEquals(2001, context.hasCauses().get(0).getResponseCode().getCode());
     }
 
     @Test
@@ -65,9 +65,9 @@ public class ContextChainTest {
 
         // Verify context
         assertFalse(context.isValid());
-        assertEquals(2, context.getErrors().size());
-        assertEquals(3001, context.getErrors().get(0).getResponseCode().getCode());
-        assertEquals(3002, context.getErrors().get(1).getResponseCode().getCode());
+        assertEquals(2, context.hasCauses().size());
+        assertEquals(3001, context.hasCauses().get(0).getResponseCode().getCode());
+        assertEquals(3002, context.hasCauses().get(1).getResponseCode().getCode());
     }
 
     @Test
@@ -84,9 +84,9 @@ public class ContextChainTest {
                 .isPast(past, ResponseCode.of(4004, "LocalDate past pass"))
                 .verify();
 
-        assertEquals(2, context.getErrors().size());
-        assertEquals(4001, context.getErrors().get(0).getResponseCode().getCode());
-        assertEquals(4002, context.getErrors().get(1).getResponseCode().getCode());
+        assertEquals(2, context.hasCauses().size());
+        assertEquals(4001, context.hasCauses().get(0).getResponseCode().getCode());
+        assertEquals(4002, context.hasCauses().get(1).getResponseCode().getCode());
     }
 
     @Test

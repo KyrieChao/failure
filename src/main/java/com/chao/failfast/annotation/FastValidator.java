@@ -68,7 +68,7 @@ public interface FastValidator<T> {
             return errors.isEmpty();
         }
 
-        public List<Business> getErrors() {
+        public List<Business> hasCauses() {
             return Collections.unmodifiableList(errors);
         }
 

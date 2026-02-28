@@ -1,14 +1,11 @@
 package com.chao.failfast.internal.chain;
 
 import com.chao.failfast.annotation.FastValidator;
-import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -126,6 +123,6 @@ class ChainCoreTest {
         chain.publicCheck(false, s -> s.responseCode(ResponseCode.of(400, "Error")));
         
         assertThat(context.isValid()).isFalse();
-        assertThat(context.getErrors()).hasSize(1);
+        assertThat(context.hasCauses()).hasSize(1);
     }
 }
