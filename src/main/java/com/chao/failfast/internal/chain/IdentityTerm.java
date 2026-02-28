@@ -20,8 +20,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S same(Object obj1, Object obj2) {
-        return same(obj1, obj2, s -> {
-        });
+        return same(obj1, obj2, ValidationConst.NO_OP);
     }
 
     default S same(Object obj1, Object obj2, ResponseCode code) {
@@ -39,8 +38,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S notSame(Object obj1, Object obj2) {
-        return notSame(obj1, obj2, s -> {
-        });
+        return notSame(obj1, obj2, ValidationConst.NO_OP);
     }
 
     default S notSame(Object obj1, Object obj2, ResponseCode code) {
@@ -58,8 +56,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S equals(Object obj1, Object obj2) {
-        return equals(obj1, obj2, s -> {
-        });
+        return equals(obj1, obj2, ValidationConst.NO_OP);
     }
 
     default S equals(Object obj1, Object obj2, ResponseCode code) {
@@ -77,8 +74,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S notEquals(Object obj1, Object obj2) {
-        return notEquals(obj1, obj2, s -> {
-        });
+        return notEquals(obj1, obj2, ValidationConst.NO_OP);
     }
 
     default S notEquals(Object obj1, Object obj2, ResponseCode code) {

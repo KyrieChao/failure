@@ -21,8 +21,7 @@ public interface EnumTerm<S extends ChainCore<S>> {
     }
 
     default <E extends Enum<E>> S enumValue(Class<E> enumType, String value) {
-        return enumValue(enumType, value, s -> {
-        });
+        return enumValue(enumType, value, ValidationConst.NO_OP);
     }
 
     default <E extends Enum<E>> S enumValue(Class<E> enumType, String value, ResponseCode code) {
@@ -40,8 +39,7 @@ public interface EnumTerm<S extends ChainCore<S>> {
     }
 
     default <E extends Enum<E>> S enumConstant(E value, Class<E> type) {
-        return enumConstant(value, type, s -> {
-        });
+        return enumConstant(value, type, ValidationConst.NO_OP);
     }
 
     default <E extends Enum<E>> S enumConstant(E value, Class<E> type, ResponseCode code) {

@@ -601,6 +601,75 @@ class FailFastExceptionHandlerTest {
         }
     }
 
+    @Nested
+    @DisplayName("Private Methods Reflection Test")
+    class PrivateMethodsTest {
+
+        @Test
+        @DisplayName("isNumeric: 反射测试私有方法")
+        void testIsNumeric() throws Exception {
+            Method method = FailFastExceptionHandler.class.getDeclaredMethod("isNumeric", String.class);
+            method.setAccessible(true);
+
+            assertThat((boolean) method.invoke(handler, "123")).isTrue();
+            assertThat((boolean) method.invoke(handler, "0")).isTrue();
+            assertThat((boolean) method.invoke(handler, "")).isFalse();
+            assertThat((boolean) method.invoke(handler, (String) null)).isFalse();
+            assertThat((boolean) method.invoke(handler, "12a")).isFalse();
+            assertThat((boolean) method.invoke(handler, "-1")).isFalse();
+            assertThat((boolean) method.invoke(handler, " 1")).isFalse();
+        }
+
+        @Test
+        @DisplayName("parseError: 反射测试私有方法")
+        void testParseError() throws Exception {
+            Method method = FailFastExceptionHandler.class.getDeclaredMethod("parseError", String.class, String.class);
+            method.setAccessible(true);
+
+            // Case 1: Null message
+            Business b1 = (Business) method.invoke(handler, null, "loc");
+            assertThat(b1.getResponseCode().getCode()).isEqualTo(400);
+            assertThat(b1.getDetail()).isEqualTo("Invalid parameter");
+
+            // Case 2: Code:Message
+            Business b2 = (Business) method.invoke(handler, "40001:Error", "loc");
+            assertThat(b2.getResponseCode().getCode()).isEqualTo(40001);
+            assertThat(b2.getDetail()).isEqualTo("Error");
+
+            // Case 3: No Code
+            Business b3 = (Business) method.invoke(handler, "Just Error", "loc");
+            assertThat(b3.getResponseCode().getCode()).isEqualTo(400);
+            assertThat(b3.getDetail()).isEqualTo("Just Error");
+
+            // Case 4: Null location
+            Business b4 = (Business) method.invoke(handler, "Error", null);
+            assertThat(b4.toString()).doesNotContain("location");
+        }
+
+        @Test
+        @DisplayName("formatValidationLocation: 反射测试私有方法")
+        void testFormatValidationLocation() throws Exception {
+            Method method = FailFastExceptionHandler.class.getDeclaredMethod("formatValidationLocation", Class.class, String.class);
+            method.setAccessible(true);
+
+            // Case 1: Normal field
+            String s1 = (String) method.invoke(handler, TestController.class, "field");
+            assertThat(s1).isEqualTo("TestController at field");
+
+            // Case 2: Method path
+            String s2 = (String) method.invoke(handler, TestController.class, "method.arg");
+            assertThat(s2).isEqualTo("TestController.method at arg");
+
+            // Case 3: Null class
+            String s3 = (String) method.invoke(handler, null, "field");
+            assertThat(s3).isEqualTo("field");
+
+            // Case 4: Null path
+            String s4 = (String) method.invoke(handler, TestController.class, null);
+            assertThat(s4).isEqualTo("unknown");
+        }
+    }
+
     // --- 辅助类 ---
 
     static class TestController {

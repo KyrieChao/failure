@@ -21,8 +21,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S positive(Number value) {
-        return positive(value, s -> {
-        });
+        return positive(value, ValidationConst.NO_OP);
     }
 
     default S positive(Number value, ResponseCode code) {
@@ -41,8 +40,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Number & Comparable<T>> S inRange(T value, T min, T max) {
-        return inRange(value, min, max, s -> {
-        });
+        return inRange(value, min, max, ValidationConst.NO_OP);
     }
 
     default <T extends Number & Comparable<T>> S inRange(T value, T min, T max, ResponseCode code) {
@@ -60,8 +58,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S nonNegative(Number value) {
-        return nonNegative(value, s -> {
-        });
+        return nonNegative(value, ValidationConst.NO_OP);
     }
 
     default S nonNegative(Number value, ResponseCode code) {
@@ -79,8 +76,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Number & Comparable<T>> S greaterThan(T value, T threshold) {
-        return greaterThan(value, threshold, s -> {
-        });
+        return greaterThan(value, threshold, ValidationConst.NO_OP);
     }
 
     default <T extends Number & Comparable<T>> S greaterThan(T value, T threshold, ResponseCode code) {
@@ -98,8 +94,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Number & Comparable<T>> S greaterOrEqual(T value, T threshold) {
-        return greaterOrEqual(value, threshold, s -> {
-        });
+        return greaterOrEqual(value, threshold, ValidationConst.NO_OP);
     }
 
     default <T extends Number & Comparable<T>> S greaterOrEqual(T value, T threshold, ResponseCode code) {
@@ -117,8 +112,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Number & Comparable<T>> S lessThan(T value, T threshold) {
-        return lessThan(value, threshold, s -> {
-        });
+        return lessThan(value, threshold, ValidationConst.NO_OP);
     }
 
     default <T extends Number & Comparable<T>> S lessThan(T value, T threshold, ResponseCode code) {
@@ -136,8 +130,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Number & Comparable<T>> S lessOrEqual(T value, T threshold) {
-        return lessOrEqual(value, threshold, s -> {
-        });
+        return lessOrEqual(value, threshold, ValidationConst.NO_OP);
     }
 
     default <T extends Number & Comparable<T>> S lessOrEqual(T value, T threshold, ResponseCode code) {
@@ -155,8 +148,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S notZero(Number value) {
-        return notZero(value, s -> {
-        });
+        return notZero(value, ValidationConst.NO_OP);
     }
 
     default S notZero(Number value, ResponseCode code) {
@@ -174,8 +166,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S isZero(Number value) {
-        return isZero(value, s -> {
-        });
+        return isZero(value, ValidationConst.NO_OP);
     }
 
     default S isZero(Number value, ResponseCode code) {
@@ -193,8 +184,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S negative(Number value) {
-        return negative(value, s -> {
-        });
+        return negative(value, ValidationConst.NO_OP);
     }
 
     default S negative(Number value, ResponseCode code) {
@@ -212,8 +202,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S multipleOf(Number value, Number divisor) {
-        return multipleOf(value, divisor, s -> {
-        });
+        return multipleOf(value, divisor, ValidationConst.NO_OP);
     }
 
     default S multipleOf(Number value, Number divisor, ResponseCode code) {
@@ -231,8 +220,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S decimalScale(BigDecimal value, int scale) {
-        return decimalScale(value, scale, s -> {
-        });
+        return decimalScale(value, scale, ValidationConst.NO_OP);
     }
 
     default S decimalScale(BigDecimal value, int scale, ResponseCode code) {
@@ -270,8 +258,7 @@ public interface NumberTerm<S extends ChainCore<S>> {
     }
 
     default S inRangeNumber(Number v, Number min, Number max) {
-        return inRangeNumber(v, min, max, s -> {
-        });
+        return inRangeNumber(v, min, max, ValidationConst.NO_OP);
     }
 
     default S inRangeNumber(Number v, Number min, Number max, ResponseCode code) {

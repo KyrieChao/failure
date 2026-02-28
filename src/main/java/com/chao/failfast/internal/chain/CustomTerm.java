@@ -21,8 +21,7 @@ public interface CustomTerm<S extends ChainCore<S>> {
     }
 
     default <T> S satisfies(T value, Predicate<T> condition) {
-        return satisfies(value, condition, s -> {
-        });
+        return satisfies(value, condition, ValidationConst.NO_OP);
     }
 
     default <T> S satisfies(T value, Predicate<T> condition, ResponseCode code) {
@@ -40,8 +39,7 @@ public interface CustomTerm<S extends ChainCore<S>> {
     }
 
     default <T> S compare(T field1, T field2, Comparator<T> comparator) {
-        return compare(field1, field2, comparator, s -> {
-        });
+        return compare(field1, field2, comparator, ValidationConst.NO_OP);
     }
 
     default <T> S compare(T field1, T field2, Comparator<T> comparator, ResponseCode code) {

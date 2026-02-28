@@ -26,8 +26,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S after(Date d1, Date d2) {
-        return after(d1, d2, s -> {
-        });
+        return after(d1, d2, ValidationConst.NO_OP);
     }
 
     default S after(Date d1, Date d2, ResponseCode code) {
@@ -43,8 +42,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S before(Date d1, Date d2) {
-        return before(d1, d2, s -> {
-        });
+        return before(d1, d2, ValidationConst.NO_OP);
     }
 
     default S before(Date d1, Date d2, ResponseCode code) {
@@ -62,8 +60,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isPast(Date date) {
-        return isPast(date, s -> {
-        });
+        return isPast(date, ValidationConst.NO_OP);
     }
 
     default S isPast(Date date, ResponseCode code) {
@@ -79,8 +76,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isFuture(Date date) {
-        return isFuture(date, s -> {
-        });
+        return isFuture(date, ValidationConst.NO_OP);
     }
 
     default S isFuture(Date date, ResponseCode code) {
@@ -98,8 +94,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Comparable<T>> S after(T t1, T t2) {
-        return after(t1, t2, s -> {
-        });
+        return after(t1, t2, ValidationConst.NO_OP);
     }
 
     default <T extends Comparable<T>> S after(T t1, T t2, ResponseCode code) {
@@ -115,8 +110,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Comparable<T>> S before(T t1, T t2) {
-        return before(t1, t2, s -> {
-        });
+        return before(t1, t2, ValidationConst.NO_OP);
     }
 
     default <T extends Comparable<T>> S before(T t1, T t2, ResponseCode code) {
@@ -132,8 +126,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Comparable<T>> S afterOrEqual(T t1, T t2) {
-        return afterOrEqual(t1, t2, s -> {
-        });
+        return afterOrEqual(t1, t2, ValidationConst.NO_OP);
     }
 
     default <T extends Comparable<T>> S afterOrEqual(T t1, T t2, ResponseCode code) {
@@ -149,8 +142,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Comparable<T>> S beforeOrEqual(T t1, T t2) {
-        return beforeOrEqual(t1, t2, s -> {
-        });
+        return beforeOrEqual(t1, t2, ValidationConst.NO_OP);
     }
 
     default <T extends Comparable<T>> S beforeOrEqual(T t1, T t2, ResponseCode code) {
@@ -166,8 +158,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default <T extends Comparable<T>> S between(T value, T start, T end) {
-        return between(value, start, end, s -> {
-        });
+        return between(value, start, end, ValidationConst.NO_OP);
     }
 
     default <T extends Comparable<T>> S between(T value, T start, T end, ResponseCode code) {
@@ -185,8 +176,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isPast(ChronoLocalDate date) {
-        return isPast(date, s -> {
-        });
+        return isPast(date, ValidationConst.NO_OP);
     }
 
     default S isPast(ChronoLocalDate date, ResponseCode code) {
@@ -202,8 +192,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isFuture(ChronoLocalDate date) {
-        return isFuture(date, s -> {
-        });
+        return isFuture(date, ValidationConst.NO_OP);
     }
 
     default S isFuture(ChronoLocalDate date, ResponseCode code) {
@@ -219,8 +208,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isToday(LocalDate date) {
-        return isToday(date, s -> {
-        });
+        return isToday(date, ValidationConst.NO_OP);
     }
 
     default S isToday(LocalDate date, ResponseCode code) {
@@ -238,8 +226,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isPast(ChronoLocalDateTime<?> dateTime) {
-        return isPast(dateTime, s -> {
-        });
+        return isPast(dateTime, ValidationConst.NO_OP);
     }
 
     default S isPast(ChronoLocalDateTime<?> dateTime, ResponseCode code) {
@@ -255,8 +242,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isFuture(ChronoLocalDateTime<?> dateTime) {
-        return isFuture(dateTime, s -> {
-        });
+        return isFuture(dateTime, ValidationConst.NO_OP);
     }
 
     default S isFuture(ChronoLocalDateTime<?> dateTime, ResponseCode code) {
@@ -275,8 +261,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isPast(Instant instant) {
-        return isPast(instant, s -> {
-        });
+        return isPast(instant, ValidationConst.NO_OP);
     }
 
     default S isPast(Instant instant, ResponseCode code) {
@@ -292,8 +277,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isFuture(Instant instant) {
-        return isFuture(instant, s -> {
-        });
+        return isFuture(instant, ValidationConst.NO_OP);
     }
 
     default S isFuture(Instant instant, ResponseCode code) {
@@ -311,8 +295,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isPast(ChronoZonedDateTime<?> zonedDateTime) {
-        return isPast(zonedDateTime, s -> {
-        });
+        return isPast(zonedDateTime, ValidationConst.NO_OP);
     }
 
     default S isPast(ChronoZonedDateTime<?> zonedDateTime, ResponseCode code) {
@@ -328,8 +311,7 @@ public interface DateTerm<S extends ChainCore<S>> {
     }
 
     default S isFuture(ChronoZonedDateTime<?> zonedDateTime) {
-        return isFuture(zonedDateTime, s -> {
-        });
+        return isFuture(zonedDateTime, ValidationConst.NO_OP);
     }
 
     default S isFuture(ChronoZonedDateTime<?> zonedDateTime, ResponseCode code) {

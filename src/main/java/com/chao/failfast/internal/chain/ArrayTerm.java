@@ -21,8 +21,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S notEmpty(T[] array) {
-        return notEmpty(array, s -> {
-        });
+        return notEmpty(array, ValidationConst.NO_OP);
     }
 
     default <T> S notEmpty(T[] array, ResponseCode code) {
@@ -40,8 +39,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S isEmpty(T[] array) {
-        return isEmpty(array, s -> {
-        });
+        return isEmpty(array, ValidationConst.NO_OP);
     }
 
     default <T> S isEmpty(T[] array, ResponseCode code) {
@@ -60,8 +58,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S sizeBetween(T[] array, int min, int max) {
-        return sizeBetween(array, min, max, s -> {
-        });
+        return sizeBetween(array, min, max, ValidationConst.NO_OP);
     }
 
     default <T> S sizeBetween(T[] array, int min, int max, ResponseCode code) {
@@ -79,8 +76,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S sizeEquals(T[] array, int expectedSize) {
-        return sizeEquals(array, expectedSize, s -> {
-        });
+        return sizeEquals(array, expectedSize, ValidationConst.NO_OP);
     }
 
     default <T> S sizeEquals(T[] array, int expectedSize, ResponseCode code) {
@@ -99,8 +95,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S contains(T[] array, T element) {
-        return contains(array, element, s -> {
-        });
+        return contains(array, element, ValidationConst.NO_OP);
     }
 
     default <T> S contains(T[] array, T element, ResponseCode code) {
@@ -119,8 +114,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S notContains(T[] array, T element) {
-        return notContains(array, element, s -> {
-        });
+        return notContains(array, element, ValidationConst.NO_OP);
     }
 
     default <T> S notContains(T[] array, T element, ResponseCode code) {
@@ -138,8 +132,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S hasNoNullElements(T[] array) {
-        return hasNoNullElements(array, s -> {
-        });
+        return hasNoNullElements(array, ValidationConst.NO_OP);
     }
 
     default <T> S hasNoNullElements(T[] array, ResponseCode code) {
@@ -157,8 +150,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S allMatch(T[] array, Predicate<T> predicate) {
-        return allMatch(array, predicate, s -> {
-        });
+        return allMatch(array, predicate, ValidationConst.NO_OP);
     }
 
     default <T> S allMatch(T[] array, Predicate<T> predicate, ResponseCode code) {
@@ -176,8 +168,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S anyMatch(T[] array, Predicate<T> predicate) {
-        return anyMatch(array, predicate, s -> {
-        });
+        return anyMatch(array, predicate, ValidationConst.NO_OP);
     }
 
     default <T> S anyMatch(T[] array, Predicate<T> predicate, ResponseCode code) {

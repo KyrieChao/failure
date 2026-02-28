@@ -20,8 +20,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S notNull(Object obj) {
-        return notNull(obj, s -> {
-        });
+        return notNull(obj, ValidationConst.NO_OP);
     }
 
     default S notNull(Object obj, ResponseCode code) {
@@ -55,8 +54,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S isNull(Object obj) {
-        return isNull(obj, s -> {
-        });
+        return isNull(obj, ValidationConst.NO_OP);
     }
 
     default S isNull(Object obj, ResponseCode code) {
@@ -74,8 +72,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S instanceOf(Object obj, Class<?> type) {
-        return instanceOf(obj, type, s -> {
-        });
+        return instanceOf(obj, type, ValidationConst.NO_OP);
     }
 
     default S instanceOf(Object obj, Class<?> type, ResponseCode code) {
@@ -93,8 +90,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S notInstanceOf(Object obj, Class<?> type) {
-        return notInstanceOf(obj, type, s -> {
-        });
+        return notInstanceOf(obj, type, ValidationConst.NO_OP);
     }
 
     default S notInstanceOf(Object obj, Class<?> type, ResponseCode code) {
@@ -114,8 +110,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
 
     // 无参版本
     default S allNotNull(Object... objs) {
-        return allNotNull(s -> {
-        }, objs);
+        return allNotNull(ValidationConst.NO_OP, objs);
     }
 
     default S allNotNull(ResponseCode code, Object... objs) {

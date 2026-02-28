@@ -73,6 +73,28 @@ class TypedValidatorTest {
         assertThat(error.getDetail()).contains("不支持的校验类型");
     }
     @Test
+    @DisplayName("getSupportedType: 单一类型返回该类型，多类型返回 Object")
+    void shouldReturnCorrectSupportedType() {
+        // 单一类型
+        TestValidator single = new TestValidator();
+        // TestValidator 构造函数里注册了 String 和 Integer，所以是多类型
+        assertThat(single.getSupportedType()).isEqualTo(Object.class);
+
+        // 创建一个只注册了 String 的校验器
+        TypedValidator stringValidator = new TypedValidator() {
+            @Override
+            protected void registerValidators() {
+                register(String.class, (s, ctx) -> {});
+            }
+        };
+        assertThat(stringValidator.getSupportedType()).isEqualTo(String.class);
+
+        // 创建一个空校验器
+        TypedValidator emptyValidator = new TypedValidator() {};
+        assertThat(emptyValidator.getSupportedType()).isEqualTo(Object.class);
+    }
+
+    @Test
     @DisplayName("当未注册类型时，应当不进行校验")
     void shouldNotValidateWhenTypeNotRegistered() {
         EmptyValidator validator = new EmptyValidator();

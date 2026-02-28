@@ -54,8 +54,7 @@ public abstract class ChainCore<S extends ChainCore<S>> {
      * 无配置校验 - 使用默认错误
      */
     protected S check(boolean condition) {
-        return check(condition, spec -> {
-        });
+        return check(condition, ValidationConst.NO_OP);
     }
 
     private void addError(ViolationSpec spec) {

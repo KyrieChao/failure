@@ -61,6 +61,25 @@ class ResultsTest {
             assertThat(result.isFailure()).isTrue();
             assertThat(result.getError().getDetail()).isEqualTo("custom detail");
         }
+        @Test
+        @DisplayName("tryOf 带详情 当Supplier成功时应返回成功")
+        void shouldReturnSuccessWithDetail() {
+            Result<String> result = Results.tryOf(() -> "success", TestResponseCode.SYSTEM_ERROR, "detail");
+            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.get()).isEqualTo("success");
+        }
+
+        @Test
+        @DisplayName("tryOf 带详情 当Supplier抛出Business异常时应忽略详情返回原异常")
+        void shouldReturnBusinessErrorWithDetail() {
+            Result<String> result = Results.tryOf(() -> {
+                throw Business.of(TestResponseCode.PARAM_ERROR);
+            }, TestResponseCode.SYSTEM_ERROR, "ignored detail");
+
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
+            assertThat(result.getError().getDetail()).isNotEqualTo("ignored detail");
+        }
     }
 
     @Nested
@@ -150,6 +169,24 @@ class ResultsTest {
 
             assertThat(result.isFailure()).isTrue();
             assertThat(result.getError().getDetail()).isEqualTo("custom detail");
+        }
+        @Test
+        @DisplayName("tryRun 带详情 当执行成功时应返回OK")
+        void shouldReturnOkWithDetailWhenSuccess() {
+            Result<Void> result = Results.tryRun(() -> {}, TestResponseCode.SYSTEM_ERROR, "detail");
+            assertThat(result.isSuccess()).isTrue();
+        }
+
+        @Test
+        @DisplayName("tryRun 带详情 当抛出Business异常时应忽略详情返回原异常")
+        void shouldReturnBusinessErrorWithDetailWhenException() {
+            Result<Void> result = Results.tryRun(() -> {
+                throw Business.of(TestResponseCode.PARAM_ERROR);
+            }, TestResponseCode.SYSTEM_ERROR, "ignored detail");
+
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
+            assertThat(result.getError().getDetail()).isNotEqualTo("ignored detail");
         }
     }
 

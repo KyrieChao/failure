@@ -21,8 +21,7 @@ public interface OptionalTerm<S extends ChainCore<S>> {
     }
 
     default S isPresent(Optional<?> opt) {
-        return isPresent(opt, s -> {
-        });
+        return isPresent(opt, ValidationConst.NO_OP);
     }
 
     default S isPresent(Optional<?> opt, ResponseCode code) {
@@ -40,8 +39,7 @@ public interface OptionalTerm<S extends ChainCore<S>> {
     }
 
     default S isEmpty(Optional<?> opt) {
-        return isEmpty(opt, s -> {
-        });
+        return isEmpty(opt, ValidationConst.NO_OP);
     }
 
     default S isEmpty(Optional<?> opt, ResponseCode code) {

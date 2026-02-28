@@ -22,8 +22,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S notEmpty(Collection<?> col) {
-        return notEmpty(col, s -> {
-        });
+        return notEmpty(col, ValidationConst.NO_OP);
     }
 
     default S notEmpty(Collection<?> col, ResponseCode code) {
@@ -41,8 +40,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S isEmpty(Collection<?> col) {
-        return isEmpty(col, s -> {
-        });
+        return isEmpty(col, ValidationConst.NO_OP);
     }
 
     default S isEmpty(Collection<?> col, ResponseCode code) {
@@ -61,8 +59,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S sizeBetween(Collection<?> col, int min, int max) {
-        return sizeBetween(col, min, max, s -> {
-        });
+        return sizeBetween(col, min, max, ValidationConst.NO_OP);
     }
 
     default S sizeBetween(Collection<?> col, int min, int max, ResponseCode code) {
@@ -80,8 +77,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S sizeEquals(Collection<?> col, int expectedSize) {
-        return sizeEquals(col, expectedSize, s -> {
-        });
+        return sizeEquals(col, expectedSize, ValidationConst.NO_OP);
     }
 
     default S sizeEquals(Collection<?> col, int expectedSize, ResponseCode code) {
@@ -99,8 +95,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S contains(Collection<?> col, Object element) {
-        return contains(col, element, s -> {
-        });
+        return contains(col, element, ValidationConst.NO_OP);
     }
 
     default S contains(Collection<?> col, Object element, ResponseCode code) {
@@ -118,8 +113,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S notContains(Collection<?> col, Object element) {
-        return notContains(col, element, s -> {
-        });
+        return notContains(col, element, ValidationConst.NO_OP);
     }
 
     default S notContains(Collection<?> col, Object element, ResponseCode code) {
@@ -137,8 +131,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default S hasNoNullElements(Collection<?> col) {
-        return hasNoNullElements(col, s -> {
-        });
+        return hasNoNullElements(col, ValidationConst.NO_OP);
     }
 
     default S hasNoNullElements(Collection<?> col, ResponseCode code) {
@@ -156,8 +149,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default <T> S allMatch(Collection<T> col, Predicate<T> predicate) {
-        return allMatch(col, predicate, s -> {
-        });
+        return allMatch(col, predicate, ValidationConst.NO_OP);
     }
 
     default <T> S allMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code) {
@@ -175,8 +167,7 @@ public interface CollectionTerm<S extends ChainCore<S>> {
     }
 
     default <T> S anyMatch(Collection<T> col, Predicate<T> predicate) {
-        return anyMatch(col, predicate, s -> {
-        });
+        return anyMatch(col, predicate, ValidationConst.NO_OP);
     }
 
     default <T> S anyMatch(Collection<T> col, Predicate<T> predicate, ResponseCode code) {

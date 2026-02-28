@@ -21,8 +21,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S notEmpty(Map<?, ?> map) {
-        return notEmpty(map, s -> {
-        });
+        return notEmpty(map, ValidationConst.NO_OP);
     }
 
     default S notEmpty(Map<?, ?> map, ResponseCode code) {
@@ -40,8 +39,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S isEmpty(Map<?, ?> map) {
-        return isEmpty(map, s -> {
-        });
+        return isEmpty(map, ValidationConst.NO_OP);
     }
 
     default S isEmpty(Map<?, ?> map, ResponseCode code) {
@@ -59,8 +57,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S containsKey(Map<?, ?> map, Object key) {
-        return containsKey(map, key, s -> {
-        });
+        return containsKey(map, key, ValidationConst.NO_OP);
     }
 
     default S containsKey(Map<?, ?> map, Object key, ResponseCode code) {
@@ -78,8 +75,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S notContainsKey(Map<?, ?> map, Object key) {
-        return notContainsKey(map, key, s -> {
-        });
+        return notContainsKey(map, key, ValidationConst.NO_OP);
     }
 
     default S notContainsKey(Map<?, ?> map, Object key, ResponseCode code) {
@@ -97,8 +93,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S containsValue(Map<?, ?> map, Object value) {
-        return containsValue(map, value, s -> {
-        });
+        return containsValue(map, value, ValidationConst.NO_OP);
     }
 
     default S containsValue(Map<?, ?> map, Object value, ResponseCode code) {
@@ -116,8 +111,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S sizeBetween(Map<?, ?> map, int min, int max) {
-        return sizeBetween(map, min, max, s -> {
-        });
+        return sizeBetween(map, min, max, ValidationConst.NO_OP);
     }
 
     default S sizeBetween(Map<?, ?> map, int min, int max, ResponseCode code) {
@@ -135,8 +129,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S sizeEquals(Map<?, ?> map, int size) {
-        return sizeEquals(map, size, s -> {
-        });
+        return sizeEquals(map, size, ValidationConst.NO_OP);
     }
 
     default S sizeEquals(Map<?, ?> map, int size, ResponseCode code) {

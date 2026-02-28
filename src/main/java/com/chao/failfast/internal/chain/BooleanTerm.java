@@ -20,8 +20,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S state(boolean condition) {
-        return state(condition, s -> {
-        });
+        return state(condition, ValidationConst.NO_OP);
     }
 
     default S state(boolean condition, ResponseCode code) {
@@ -39,8 +38,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S isTrue(boolean condition) {
-        return isTrue(condition, s -> {
-        });
+        return isTrue(condition, ValidationConst.NO_OP);
     }
 
     default S isTrue(boolean condition, ResponseCode code) {
@@ -58,8 +56,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S isFalse(boolean condition) {
-        return isFalse(condition, s -> {
-        });
+        return isFalse(condition, ValidationConst.NO_OP);
     }
 
     default S isFalse(boolean condition, ResponseCode code) {
