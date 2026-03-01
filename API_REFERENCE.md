@@ -83,7 +83,7 @@ Failure.with(ctx)
 
 所有校验方法均支持以下四种重载形式（以 `notNull` 为例）：
 
-1. `notNull(obj)` - 使用默认错误信息
+1. `notNull(obj)` - 由 `failNow` 决定错误处理方式
 2. `notNull(obj, code)` - 指定 `ResponseCode`
 3. `notNull(obj, code, detail)` - 指定 `ResponseCode` 和详细描述
 4. `notNull(obj, Consumer<Business.Fabricator>)` - 使用 Lambda 构建复杂错误
@@ -282,6 +282,11 @@ Failure.begin()
     .notBlank(username, UserCode.REQUIRED)
     .fail();                    // 有错误时抛出第一个异常
 
+Failure.begin()
+    .notNull(user)
+    .failNow(UserCode.FORBIDDEN, "无权访问");
+
+
 // Fail-Strict 模式  
 Failure.strict()
     .notBlank(username, UserCode.REQUIRED)
@@ -293,10 +298,6 @@ Failure.with(ctx)
     .notBlank(username, UserCode.REQUIRED)
     .verify();                  // 不抛异常，错误写入 ctx
 
-// 强制失败
-Failure.begin()
-    .notNull(user, UserCode.NOT_FOUND)
-    .failNow(UserCode.FORBIDDEN, "无权访问");  // 直接抛出，无视前面结果
 ```
 
 ---

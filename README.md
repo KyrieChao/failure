@@ -77,13 +77,23 @@ Failure.begin()
     .email(email, UserCode.EMAIL_INVALID)
     .fail();
 ```
+```java
+Failure.begin()
+    .notBlank(username)
+    .notNull(email)
+    .failNow(UserCode.REQUIRED)
+    .phone(phone)
+    .email(email)
+    .failNow(UserCode.INVALID);
+```
+
 
 **终结方法对比**:
 
-| 方法                      | 说明                                                     |
-| ------------------------- | -------------------------------------------------------- |
-| `.fail()`                 | 标准终结方法，有错误时抛出第一个异常                     |
-| `.failNow(code, message)` | **强制立即失败**，不管前面校验是否通过，直接抛出指定异常 |
+| 方法                      | 说明                 |
+| ------------------------- |--------------------|
+| `.fail()`                 | 标准终结方法，有错误时抛出第一个异常 |
+| `.failNow(code, message)` | 多数时候用于**分组校验**不用重写错误码 |
 
 ```java
 // 强制失败示例：权限检查
