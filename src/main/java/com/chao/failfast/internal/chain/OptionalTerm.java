@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.OptionalChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -21,7 +22,7 @@ public interface OptionalTerm<S extends ChainCore<S>> {
     }
 
     default S isPresent(Optional<?> opt) {
-        return isPresent(opt, ValidationConst.NO_OP);
+        return isPresent(opt, FailureConst.NO_OP);
     }
 
     default S isPresent(Optional<?> opt, ResponseCode code) {
@@ -39,7 +40,7 @@ public interface OptionalTerm<S extends ChainCore<S>> {
     }
 
     default S isEmpty(Optional<?> opt) {
-        return isEmpty(opt, ValidationConst.NO_OP);
+        return isEmpty(opt, FailureConst.NO_OP);
     }
 
     default S isEmpty(Optional<?> opt, ResponseCode code) {

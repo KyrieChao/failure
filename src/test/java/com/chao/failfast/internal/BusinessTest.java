@@ -128,7 +128,7 @@ class BusinessTest {
             ResponseCode code = ResponseCode.of(500, null, null);
             Business business = Business.of(code);
 
-            assertThat(business.getDetail()).isEqualTo("系统错误 message or description不能为null");
+            assertThat(business.getDetail()).isEqualTo("message 或 description 至少一个不能为 null");
         }
 
         @Test

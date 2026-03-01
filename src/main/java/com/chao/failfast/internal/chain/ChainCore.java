@@ -1,6 +1,7 @@
 package com.chao.failfast.internal.chain;
 
 import com.chao.failfast.annotation.FastValidator.ValidationContext;
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -54,7 +55,7 @@ public abstract class ChainCore<S extends ChainCore<S>> {
      * 无配置校验 - 使用默认错误
      */
     protected S check(boolean condition) {
-        return check(condition, ValidationConst.NO_OP);
+        return check(condition, FailureConst.NO_OP);
     }
 
     private void addError(ViolationSpec spec) {

@@ -1,6 +1,7 @@
 package com.chao.failfast.internal;
 
 import com.chao.failfast.config.CodeMappingConfig;
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.core.ResponseCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -54,7 +55,7 @@ public class Business extends RuntimeException implements Serializable {
      * @param location     发生异常的位置信息
      */
     Business(ResponseCode responseCode, String detail, String method, String location, HttpStatus httpStatus) {
-        super(responseCode != null ? responseCode.getMessage() : "Unknown error", null, true, shouldFillStackTrace(responseCode));
+        super(responseCode != null ? responseCode.getMessage() : FailureConst.UNKNOWN_ERROR, null, true, shouldFillStackTrace(responseCode));
         this.responseCode = responseCode;
         this.detail = detail;
         this.method = method;
@@ -224,12 +225,12 @@ public class Business extends RuntimeException implements Serializable {
          */
         public Business materialize() {
             // 校验必要参数
-            if (responseCode == null) throw new IllegalArgumentException("code 不能为空");
+            if (responseCode == null) throw new IllegalArgumentException(FailureConst.CODE_REQUIRED);
             // 设置默认详细描述
             if (detail == null) {
                 detail = responseCode.getDescription();
                 if (detail == null) detail = responseCode.getMessage();
-                if (detail == null) detail = "系统错误 message or description不能为null";
+                if (detail == null) detail = FailureConst.MESSAGE_OR_DESCRIPTION_REQUIRED;
             }
             // 根据上下文自动填充方法和位置信息
             FailureContext ctx = Ex.getContext();

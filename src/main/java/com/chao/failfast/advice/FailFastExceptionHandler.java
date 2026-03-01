@@ -2,9 +2,10 @@ package com.chao.failfast.advice;
 
 import com.chao.failfast.annotation.ToImprove;
 import com.chao.failfast.annotation.Validate;
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.Business;
-import com.chao.failfast.internal.core.FailureProperties;
 import com.chao.failfast.internal.MultiBusiness;
+import com.chao.failfast.internal.core.FailureProperties;
 import com.chao.failfast.internal.core.ResponseCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -18,9 +19,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +131,7 @@ public abstract class FailFastExceptionHandler {
         // 遍历所有约束违反并转换为Business异常
         for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
             String location = formatValidationLocation(violation.getRootBeanClass(), violation.getPropertyPath().toString());
-            
+
             // 尝试获取方法名
             String methodName = "Validation";
             if (violation.getRootBeanClass() != null) {
@@ -142,7 +141,7 @@ public abstract class FailFastExceptionHandler {
                 String methodPart = path.split("\\.")[0];
                 methodName = className + "#" + methodPart;
             }
-            
+
             errors.add(parseError(violation.getMessage(), location, methodName));
         }
         return handleMultiErrors(errors);
@@ -171,19 +170,19 @@ public abstract class FailFastExceptionHandler {
         Map<String, Object> body = buildMap(e);
         // 只有开启verbose模式才返回errors详情
         if (properties != null && properties.isVerbose()) {
-            body.put("errors", e.getErrors().stream()
+            body.put(FailureConst.FIELD_ERRORS, e.getErrors().stream()
                     .map(err -> {
                         Map<String, String> item = new HashMap<>(2);
-                        item.put("message", err.getMessage());
-                        item.put("description", err.getResponseCode().getDescription());
-                        item.put("detail", err.getDetail());
+                        item.put(FailureConst.FIELD_MESSAGE, err.getMessage());
+                        item.put(FailureConst.FIELD_DESCRIPTION, err.getResponseCode().getDescription());
+                        item.put(FailureConst.FIELD_DETAIL, err.getDetail());
                         return item;
                     })
                     .toList()
             );
         }
         // 将所有错误简要拼接到 description 中，以便前端展示
-        body.put("description", "共 " + e.getErrors().size() + " 项错误");
+        body.put(FailureConst.FIELD_DESCRIPTION, "共 " + e.getErrors().size() + " 项错误");
         return ResponseEntity.status(e.getHttpStatus()).body(body);
     }
 
@@ -197,11 +196,7 @@ public abstract class FailFastExceptionHandler {
     private ResponseEntity<?> handleMultiErrors(List<Business> errors) {
         // 处理空错误列表的情况
         if (errors.isEmpty()) {
-            return buildResponse(
-                    Business.of(
-                            ResponseCode.of(500, "Validation Error"), "Unknown validation error"
-                    )
-            );
+            return buildResponse(Business.of(ResponseCode.VALIDATION_ERROR, FailureConst.VALIDATION_ERROR));
         }
 
         // 单个错误：使用单错误处理逻辑
@@ -248,7 +243,7 @@ public abstract class FailFastExceptionHandler {
      * @return 格式化后的位置字符串
      */
     private String formatValidationLocation(Class<?> clazz, String fieldOrPath) {
-        if (fieldOrPath == null) return "unknown";
+        if (fieldOrPath == null) return FailureConst.UNKNOWN_ERROR;
 
         String className = "";
         if (clazz != null) {
@@ -259,7 +254,7 @@ public abstract class FailFastExceptionHandler {
         // 如果是方法参数校验 (e.g. annoSimple.name)，将最后一个点替换为 " at "
         if (fieldOrPath.contains(".")) {
             int lastDot = fieldOrPath.lastIndexOf('.');
-            String methodAndArg = fieldOrPath.substring(0, lastDot) + " at " + fieldOrPath.substring(lastDot + 1);
+            String methodAndArg = fieldOrPath.substring(0, lastDot) + FailureConst.AT + fieldOrPath.substring(lastDot + 1);
             if (!className.isEmpty()) {
                 return className + "." + methodAndArg;
             }
@@ -268,7 +263,7 @@ public abstract class FailFastExceptionHandler {
 
         // 如果是 Bean 校验 (e.g. UserDTO 的 age 字段)
         if (!className.isEmpty()) {
-            return className + " at " + fieldOrPath;
+            return className + FailureConst.AT + fieldOrPath;
         }
 
         return fieldOrPath;
@@ -278,8 +273,8 @@ public abstract class FailFastExceptionHandler {
      * 解析验证错误消息并构建成Business异常
      * 支持 "code:message" 格式的自定义错误码
      *
-     * @param message  错误消息字符串
-     * @param location 错误发生位置
+     * @param message    错误消息字符串
+     * @param location   错误发生位置
      * @param methodName 方法名称
      * @return 构建好的Business异常对象
      */
@@ -289,7 +284,7 @@ public abstract class FailFastExceptionHandler {
 
         // 处理空消息情况
         if (message == null) {
-            business = Business.of(ResponseCode.of(400, "Validation Error"), "Invalid parameter");
+            business = Business.of(ResponseCode.VALIDATION_ERROR_400, FailureConst.INVALID_PARAMETER);
         } else {
             // 解析 "code:message" 格式，支持自定义错误码
             String[] parts = message.split(":", 2);
@@ -299,7 +294,7 @@ public abstract class FailFastExceptionHandler {
                 business = Business.of(ResponseCode.of(code, msg), msg);
             } else {
                 // 默认使用400错误码 (参数校验错误通常是客户端问题)
-                business = Business.of(ResponseCode.of(400, "Validation Error"), message);
+                business = Business.of(ResponseCode.VALIDATION_ERROR_400, message);
             }
         }
 
@@ -334,11 +329,11 @@ public abstract class FailFastExceptionHandler {
      */
     private Map<String, Object> buildMap(Business e) {
         Map<String, Object> body = new HashMap<>();
-        body.put("code", e.getResponseCode().getCode());
-        body.put("message", e.getResponseCode().getMessage());
-        body.put("description", e.getDetail());
-        String format = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        body.put("timestamp", format);
+        body.put(FailureConst.FIELD_CODE, e.getResponseCode().getCode());
+        body.put(FailureConst.FIELD_MESSAGE, e.getResponseCode().getMessage());
+        body.put(FailureConst.FIELD_DESCRIPTION, e.getDetail());
+        String format = ZonedDateTime.now(FailureConst.CST).format(FailureConst.DEFAULT_DATETIME_FORMATTER);
+        body.put(FailureConst.FIELD_TIMESTAMP, format);
         return body;
     }
 }

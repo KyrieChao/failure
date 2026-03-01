@@ -1,5 +1,7 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.constant.FailureConst;
+
 import java.util.Set;
 
 /**
@@ -119,7 +121,7 @@ public final class Ex {
                 // 将栈帧格式化为位置字符串
                 .map(Ex::formatLocation)
                 // 如果找不到有效帧，返回默认值
-                .orElse("unknown"));
+                .orElse(FailureConst.UNKNOWN));
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.chao.failfast.validator;
 
 import com.chao.failfast.annotation.FastValidator;
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.core.ResponseCode;
 
 import java.util.Map;
@@ -68,7 +69,7 @@ public abstract class TypedValidator implements FastValidator<Object> {
     @Override
     public final void validate(Object object, ValidationContext context) {
         if (object == null) {
-            context.reportError(ResponseCode.of(50000, "校验对象不能为空"));
+            context.reportError(ResponseCode.VALIDATION_ERROR_NULL);
             return;
         }
         // 查找并执行对应类型的校验处理器
@@ -77,7 +78,8 @@ public abstract class TypedValidator implements FastValidator<Object> {
             handler.accept(object, context);
         } else {
             // 处理未注册的类型情况
-            context.reportError(ResponseCode.of(40099, "不支持的校验类型: " + object.getClass().getSimpleName()));
+            String s = FailureConst.UNSUPPORTED_VALIDATION_TYPE + object.getClass().getSimpleName();
+            context.reportError(ResponseCode.of(400, s));
         }
     }
 }

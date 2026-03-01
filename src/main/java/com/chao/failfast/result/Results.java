@@ -1,5 +1,6 @@
 package com.chao.failfast.result;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.internal.core.ResponseCode;
@@ -213,7 +214,7 @@ public final class Results {
      */
     public static <T> Result<T> reduce(List<Result<T>> results, BiFunction<T, T, T> combiner) {
         if (results.isEmpty()) {
-            return Result.fail(ResponseCode.ILLEGAL_ARGUMENT, "Cannot reduce empty list");
+            return Result.fail(ResponseCode.ILLEGAL_ARGUMENT, FailureConst.CANNOT_REDUCE_EMPTY_LIST);
         }
         return sequence(results).map(list -> {
             T acc = list.get(0);

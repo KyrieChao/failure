@@ -56,8 +56,8 @@ class TypedValidatorTest {
         validator.validate(null, ctx);
         assertThat(ctx.isValid()).isFalse();
         Business error = ctx.hasCauses().get(0);
-        assertThat(error.getResponseCode().getCode()).isEqualTo(50000);
-        assertThat(error.getResponseCode().getMessage()).isEqualTo("校验对象不能为空");
+        assertThat(error.getResponseCode().getCode()).isEqualTo(500);
+        assertThat(error.getResponseCode().getMessage()).isEqualTo("Validation Error");
     }
 
     @Test
@@ -69,7 +69,7 @@ class TypedValidatorTest {
         validator.validate(10.5, ctx); // Double not registered
         assertThat(ctx.isValid()).isFalse();
         Business error = ctx.hasCauses().get(0);
-        assertThat(error.getResponseCode().getCode()).isEqualTo(40099);
+        assertThat(error.getResponseCode().getCode()).isEqualTo(400);
         assertThat(error.getDetail()).contains("不支持的校验类型");
     }
     @Test
@@ -102,6 +102,6 @@ class TypedValidatorTest {
 
         validator.validate("test", ctx);
         assertThat(ctx.isValid()).isFalse();
-        assertThat(ctx.hasCauses().get(0).getResponseCode().getCode()).isEqualTo(40099);
+        assertThat(ctx.hasCauses().get(0).getResponseCode().getCode()).isEqualTo(400);
     }
 }

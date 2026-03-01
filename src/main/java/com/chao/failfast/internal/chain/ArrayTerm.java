@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.ArrayChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -21,7 +22,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S notEmpty(T[] array) {
-        return notEmpty(array, ValidationConst.NO_OP);
+        return notEmpty(array, FailureConst.NO_OP);
     }
 
     default <T> S notEmpty(T[] array, ResponseCode code) {
@@ -39,7 +40,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S isEmpty(T[] array) {
-        return isEmpty(array, ValidationConst.NO_OP);
+        return isEmpty(array, FailureConst.NO_OP);
     }
 
     default <T> S isEmpty(T[] array, ResponseCode code) {
@@ -58,7 +59,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S sizeBetween(T[] array, int min, int max) {
-        return sizeBetween(array, min, max, ValidationConst.NO_OP);
+        return sizeBetween(array, min, max, FailureConst.NO_OP);
     }
 
     default <T> S sizeBetween(T[] array, int min, int max, ResponseCode code) {
@@ -76,7 +77,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S sizeEquals(T[] array, int expectedSize) {
-        return sizeEquals(array, expectedSize, ValidationConst.NO_OP);
+        return sizeEquals(array, expectedSize, FailureConst.NO_OP);
     }
 
     default <T> S sizeEquals(T[] array, int expectedSize, ResponseCode code) {
@@ -95,7 +96,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S contains(T[] array, T element) {
-        return contains(array, element, ValidationConst.NO_OP);
+        return contains(array, element, FailureConst.NO_OP);
     }
 
     default <T> S contains(T[] array, T element, ResponseCode code) {
@@ -114,7 +115,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S notContains(T[] array, T element) {
-        return notContains(array, element, ValidationConst.NO_OP);
+        return notContains(array, element, FailureConst.NO_OP);
     }
 
     default <T> S notContains(T[] array, T element, ResponseCode code) {
@@ -132,7 +133,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S hasNoNullElements(T[] array) {
-        return hasNoNullElements(array, ValidationConst.NO_OP);
+        return hasNoNullElements(array, FailureConst.NO_OP);
     }
 
     default <T> S hasNoNullElements(T[] array, ResponseCode code) {
@@ -150,7 +151,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S allMatch(T[] array, Predicate<T> predicate) {
-        return allMatch(array, predicate, ValidationConst.NO_OP);
+        return allMatch(array, predicate, FailureConst.NO_OP);
     }
 
     default <T> S allMatch(T[] array, Predicate<T> predicate, ResponseCode code) {
@@ -168,7 +169,7 @@ public interface ArrayTerm<S extends ChainCore<S>> {
     }
 
     default <T> S anyMatch(T[] array, Predicate<T> predicate) {
-        return anyMatch(array, predicate, ValidationConst.NO_OP);
+        return anyMatch(array, predicate, FailureConst.NO_OP);
     }
 
     default <T> S anyMatch(T[] array, Predicate<T> predicate, ResponseCode code) {

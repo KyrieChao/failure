@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.IdentityChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -20,7 +21,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S same(Object obj1, Object obj2) {
-        return same(obj1, obj2, ValidationConst.NO_OP);
+        return same(obj1, obj2, FailureConst.NO_OP);
     }
 
     default S same(Object obj1, Object obj2, ResponseCode code) {
@@ -38,7 +39,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S notSame(Object obj1, Object obj2) {
-        return notSame(obj1, obj2, ValidationConst.NO_OP);
+        return notSame(obj1, obj2, FailureConst.NO_OP);
     }
 
     default S notSame(Object obj1, Object obj2, ResponseCode code) {
@@ -56,7 +57,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S equals(Object obj1, Object obj2) {
-        return equals(obj1, obj2, ValidationConst.NO_OP);
+        return equals(obj1, obj2, FailureConst.NO_OP);
     }
 
     default S equals(Object obj1, Object obj2, ResponseCode code) {
@@ -74,7 +75,7 @@ public interface IdentityTerm<S extends ChainCore<S>> {
     }
 
     default S notEquals(Object obj1, Object obj2) {
-        return notEquals(obj1, obj2, ValidationConst.NO_OP);
+        return notEquals(obj1, obj2, FailureConst.NO_OP);
     }
 
     default S notEquals(Object obj1, Object obj2, ResponseCode code) {

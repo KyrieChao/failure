@@ -6,8 +6,36 @@ package com.chao.failfast.internal.core;
  */
 public interface ResponseCode {
 
-    ResponseCode INTERRUPTED_ERROR = of(500, "Interrupted", "Retry Interrupted");
-    ResponseCode ILLEGAL_ARGUMENT = of(500, "Illegal Argument", "Cannot reduce empty list");
+    // ==================== 框架内置错误码 ====================
+
+    /**
+     * 通用校验错误（500）
+     */
+    ResponseCode VALIDATION_ERROR = of(500, "Validation Error");
+
+    /**
+     * 参数校验失败（400）
+     */
+    ResponseCode VALIDATION_ERROR_400 = of(400, "Validation Error", "参数校验失败");
+
+    /**
+     * 校验对象不能为空（500）
+     */
+    ResponseCode VALIDATION_ERROR_NULL = of(500, "Validation Error", "校验对象不能为空");
+
+
+    /**
+     * 重试被中断（500）
+     */
+    ResponseCode INTERRUPTED_ERROR = of(500, "Retry Interrupted", "重试被中断");
+
+    /**
+     * 非法参数（500）
+     */
+    ResponseCode ILLEGAL_ARGUMENT = of(500, "Illegal Argument", "非法参数");
+
+    /** 默认校验失败（500） */
+    ResponseCode VALIDATION_ERROR_500 = of(500, "Validation failed", "验证失败，缺少具体错误配置");
     /**
      * 获取错误码数值
      *

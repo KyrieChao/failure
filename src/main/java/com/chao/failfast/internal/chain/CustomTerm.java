@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
 
@@ -21,7 +22,7 @@ public interface CustomTerm<S extends ChainCore<S>> {
     }
 
     default <T> S satisfies(T value, Predicate<T> condition) {
-        return satisfies(value, condition, ValidationConst.NO_OP);
+        return satisfies(value, condition, FailureConst.NO_OP);
     }
 
     default <T> S satisfies(T value, Predicate<T> condition, ResponseCode code) {
@@ -39,7 +40,7 @@ public interface CustomTerm<S extends ChainCore<S>> {
     }
 
     default <T> S compare(T field1, T field2, Comparator<T> comparator) {
-        return compare(field1, field2, comparator, ValidationConst.NO_OP);
+        return compare(field1, field2, comparator, FailureConst.NO_OP);
     }
 
     default <T> S compare(T field1, T field2, Comparator<T> comparator, ResponseCode code) {

@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.ObjectChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -20,7 +21,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S notNull(Object obj) {
-        return notNull(obj, ValidationConst.NO_OP);
+        return notNull(obj, FailureConst.NO_OP);
     }
 
     default S notNull(Object obj, ResponseCode code) {
@@ -54,7 +55,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S isNull(Object obj) {
-        return isNull(obj, ValidationConst.NO_OP);
+        return isNull(obj, FailureConst.NO_OP);
     }
 
     default S isNull(Object obj, ResponseCode code) {
@@ -72,7 +73,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S instanceOf(Object obj, Class<?> type) {
-        return instanceOf(obj, type, ValidationConst.NO_OP);
+        return instanceOf(obj, type, FailureConst.NO_OP);
     }
 
     default S instanceOf(Object obj, Class<?> type, ResponseCode code) {
@@ -90,7 +91,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
     }
 
     default S notInstanceOf(Object obj, Class<?> type) {
-        return notInstanceOf(obj, type, ValidationConst.NO_OP);
+        return notInstanceOf(obj, type, FailureConst.NO_OP);
     }
 
     default S notInstanceOf(Object obj, Class<?> type, ResponseCode code) {
@@ -110,7 +111,7 @@ public interface ObjectTerm<S extends ChainCore<S>> {
 
     // 无参版本
     default S allNotNull(Object... objs) {
-        return allNotNull(ValidationConst.NO_OP, objs);
+        return allNotNull(FailureConst.NO_OP, objs);
     }
 
     default S allNotNull(ResponseCode code, Object... objs) {

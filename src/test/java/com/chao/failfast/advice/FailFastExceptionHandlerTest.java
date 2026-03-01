@@ -425,7 +425,7 @@ class FailFastExceptionHandlerTest {
         handler.handleMethodArgumentNotValidException(ex);
         
         Business logged = handler.loggedExceptions.get(0);
-        assertEquals("unknown", logged.getLocation());
+        assertEquals("Unknown error", logged.getLocation());
     }
     
     @Test

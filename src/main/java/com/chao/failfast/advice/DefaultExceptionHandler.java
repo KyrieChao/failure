@@ -1,5 +1,6 @@
 package com.chao.failfast.advice;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
 import jakarta.validation.ConstraintViolationException;
@@ -13,9 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,14 +91,12 @@ public class DefaultExceptionHandler extends FailFastExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<?> handleBindException(BindException e) {
         Map<String, Object> body = new HashMap<>();
-        // 固定的错误码和消息
-        body.put("code", 500);
-        body.put("message", "参数绑定失败");
-        // 提取第一个错误的详细描述
-        body.put("description", e.getAllErrors().isEmpty() ? "Unknown error" : e.getAllErrors().get(0).getDefaultMessage());
-        // 添加时间戳
-        String format = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        body.put("timestamp", format);
+        body.put(FailureConst.FIELD_CODE, FailureConst.SYSTEM_CODE);
+        body.put(FailureConst.FIELD_MESSAGE, FailureConst.DEFAULT_MESSAGE);
+        String description = e.getAllErrors().isEmpty() ? FailureConst.UNKNOWN_ERROR : e.getAllErrors().get(0).getDefaultMessage();
+        body.put(FailureConst.FIELD_DESCRIPTION, description);
+        String format = ZonedDateTime.now(FailureConst.CST).format(FailureConst.DEFAULT_DATETIME_FORMATTER);
+        body.put(FailureConst.FIELD_TIMESTAMP, format);
         return ResponseEntity.badRequest().body(body);
     }
 }

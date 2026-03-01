@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.MapChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -21,7 +22,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S notEmpty(Map<?, ?> map) {
-        return notEmpty(map, ValidationConst.NO_OP);
+        return notEmpty(map, FailureConst.NO_OP);
     }
 
     default S notEmpty(Map<?, ?> map, ResponseCode code) {
@@ -39,7 +40,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S isEmpty(Map<?, ?> map) {
-        return isEmpty(map, ValidationConst.NO_OP);
+        return isEmpty(map, FailureConst.NO_OP);
     }
 
     default S isEmpty(Map<?, ?> map, ResponseCode code) {
@@ -57,7 +58,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S containsKey(Map<?, ?> map, Object key) {
-        return containsKey(map, key, ValidationConst.NO_OP);
+        return containsKey(map, key, FailureConst.NO_OP);
     }
 
     default S containsKey(Map<?, ?> map, Object key, ResponseCode code) {
@@ -75,7 +76,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S notContainsKey(Map<?, ?> map, Object key) {
-        return notContainsKey(map, key, ValidationConst.NO_OP);
+        return notContainsKey(map, key, FailureConst.NO_OP);
     }
 
     default S notContainsKey(Map<?, ?> map, Object key, ResponseCode code) {
@@ -93,7 +94,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S containsValue(Map<?, ?> map, Object value) {
-        return containsValue(map, value, ValidationConst.NO_OP);
+        return containsValue(map, value, FailureConst.NO_OP);
     }
 
     default S containsValue(Map<?, ?> map, Object value, ResponseCode code) {
@@ -111,7 +112,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S sizeBetween(Map<?, ?> map, int min, int max) {
-        return sizeBetween(map, min, max, ValidationConst.NO_OP);
+        return sizeBetween(map, min, max, FailureConst.NO_OP);
     }
 
     default S sizeBetween(Map<?, ?> map, int min, int max, ResponseCode code) {
@@ -129,7 +130,7 @@ public interface MapTerm<S extends ChainCore<S>> {
     }
 
     default S sizeEquals(Map<?, ?> map, int size) {
-        return sizeEquals(map, size, ValidationConst.NO_OP);
+        return sizeEquals(map, size, FailureConst.NO_OP);
     }
 
     default S sizeEquals(Map<?, ?> map, int size, ResponseCode code) {

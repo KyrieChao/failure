@@ -1,5 +1,6 @@
 package com.chao.failfast.internal;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.core.ResponseCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -30,8 +31,11 @@ public class MultiBusiness extends Business {
      */
     public MultiBusiness(List<Business> errors) {
         super(ResponseCode.of(
-                500, "Multiple validation errors", errors.size() > MAX_ERRORS ? "校验失败，错误过多" : "校验失败,共" + errors.size() + " 项问题"
-        ), "校验失败,共" + errors.size() + " 项问题", null, null, HttpStatus.INTERNAL_SERVER_ERROR);
+                        FailureConst.SYSTEM_CODE, FailureConst.MULTIPLE_VALIDATION_ERRORS, errors.size() > MAX_ERRORS ?
+                                FailureConst.TOO_MANY_ERRORS : FailureConst.VALIDATION_ERROR_PREFIX + errors.size() + FailureConst.ERROR_ITEM_SUFFIX
+                ), FailureConst.VALIDATION_ERROR_PREFIX + errors.size() + FailureConst.ERROR_ITEM_SUFFIX,
+                null, null, HttpStatus.INTERNAL_SERVER_ERROR
+        );
 
         // 限制错误数量，防止内存问题
         if (errors.size() > MAX_ERRORS) {

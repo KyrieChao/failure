@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.EnumChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -21,7 +22,7 @@ public interface EnumTerm<S extends ChainCore<S>> {
     }
 
     default <E extends Enum<E>> S enumValue(Class<E> enumType, String value) {
-        return enumValue(enumType, value, ValidationConst.NO_OP);
+        return enumValue(enumType, value, FailureConst.NO_OP);
     }
 
     default <E extends Enum<E>> S enumValue(Class<E> enumType, String value, ResponseCode code) {
@@ -39,7 +40,7 @@ public interface EnumTerm<S extends ChainCore<S>> {
     }
 
     default <E extends Enum<E>> S enumConstant(E value, Class<E> type) {
-        return enumConstant(value, type, ValidationConst.NO_OP);
+        return enumConstant(value, type, FailureConst.NO_OP);
     }
 
     default <E extends Enum<E>> S enumConstant(E value, Class<E> type, ResponseCode code) {

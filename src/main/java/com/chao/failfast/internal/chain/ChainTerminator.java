@@ -31,7 +31,7 @@ public interface ChainTerminator<S extends ChainCore<S>> {
     default void fail() {
         if (!core().isValid()) {
             if (core().getCauses().isEmpty()) {
-                throw Business.of(ValidationConst.DEFAULT_VALIDATION_CODE);
+                throw Business.of(ResponseCode.VALIDATION_ERROR_500);
             }
             throw core().getCauses().get(0);
         }
@@ -44,7 +44,7 @@ public interface ChainTerminator<S extends ChainCore<S>> {
     default void failAll() {
         if (!core().isValid()) {
             if (core().getCauses().isEmpty()) {
-                throw Business.of(ValidationConst.DEFAULT_VALIDATION_CODE);
+                throw Business.of(ResponseCode.VALIDATION_ERROR_500);
             }
             if (core().getCauses().size() == 1) throw core().getCauses().get(0);
             throw new MultiBusiness(core().getCauses());

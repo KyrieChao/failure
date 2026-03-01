@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.BooleanChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -20,7 +21,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S state(boolean condition) {
-        return state(condition, ValidationConst.NO_OP);
+        return state(condition, FailureConst.NO_OP);
     }
 
     default S state(boolean condition, ResponseCode code) {
@@ -38,7 +39,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S isTrue(boolean condition) {
-        return isTrue(condition, ValidationConst.NO_OP);
+        return isTrue(condition, FailureConst.NO_OP);
     }
 
     default S isTrue(boolean condition, ResponseCode code) {
@@ -56,7 +57,7 @@ public interface BooleanTerm<S extends ChainCore<S>> {
     }
 
     default S isFalse(boolean condition) {
-        return isFalse(condition, ValidationConst.NO_OP);
+        return isFalse(condition, FailureConst.NO_OP);
     }
 
     default S isFalse(boolean condition, ResponseCode code) {

@@ -1,5 +1,6 @@
 package com.chao.failfast.internal.chain;
 
+import com.chao.failfast.constant.FailureConst;
 import com.chao.failfast.internal.check.StringChecks;
 import com.chao.failfast.internal.core.ResponseCode;
 import com.chao.failfast.internal.core.ViolationSpec;
@@ -18,7 +19,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S notBlank(String str) {
-        return notBlank(str, ValidationConst.NO_OP);
+        return notBlank(str, FailureConst.NO_OP);
     }
 
     default S notBlank(String str, ResponseCode code) {
@@ -54,7 +55,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S blank(String str) {
-        return blank(str, ValidationConst.NO_OP);
+        return blank(str, FailureConst.NO_OP);
     }
 
     default S blank(String str, ResponseCode code) {
@@ -73,7 +74,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S lengthBetween(String str, int min, int max) {
-        return lengthBetween(str, min, max, ValidationConst.NO_OP);
+        return lengthBetween(str, min, max, FailureConst.NO_OP);
     }
 
     default S lengthBetween(String str, int min, int max, ResponseCode code) {
@@ -91,7 +92,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S lengthMin(String str, int min) {
-        return lengthMin(str, min, ValidationConst.NO_OP);
+        return lengthMin(str, min, FailureConst.NO_OP);
     }
 
     default S lengthMin(String str, int min, ResponseCode code) {
@@ -109,7 +110,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S lengthMax(String str, int max) {
-        return lengthMax(str, max, ValidationConst.NO_OP);
+        return lengthMax(str, max, FailureConst.NO_OP);
     }
 
     default S lengthMax(String str, int max, ResponseCode code) {
@@ -128,7 +129,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S match(String str, String regex) {
-        return match(str, regex, ValidationConst.NO_OP);
+        return match(str, regex, FailureConst.NO_OP);
     }
 
     default S match(String str, String regex, ResponseCode code) {
@@ -146,7 +147,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S email(String email) {
-        return email(email, ValidationConst.NO_OP);
+        return email(email, FailureConst.NO_OP);
     }
 
     default S email(String email, ResponseCode code) {
@@ -164,7 +165,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S mobile(String str) {
-        return mobile(str, ValidationConst.NO_OP);
+        return mobile(str, FailureConst.NO_OP);
     }
 
     default S mobile(String str, ResponseCode code) {
@@ -182,7 +183,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S url(String str) {
-        return url(str, ValidationConst.NO_OP);
+        return url(str, FailureConst.NO_OP);
     }
 
     default S url(String str, ResponseCode code) {
@@ -200,7 +201,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S ipAddress(String str) {
-        return ipAddress(str, ValidationConst.NO_OP);
+        return ipAddress(str, FailureConst.NO_OP);
     }
 
     default S ipAddress(String str, ResponseCode code) {
@@ -218,7 +219,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S uuid(String str) {
-        return uuid(str, ValidationConst.NO_OP);
+        return uuid(str, FailureConst.NO_OP);
     }
 
     default S uuid(String str, ResponseCode code) {
@@ -236,7 +237,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S isNumeric(String str) {
-        return isNumeric(str, ValidationConst.NO_OP);
+        return isNumeric(str, FailureConst.NO_OP);
     }
 
     default S isNumeric(String str, ResponseCode code) {
@@ -254,7 +255,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S isAlpha(String str) {
-        return isAlpha(str, ValidationConst.NO_OP);
+        return isAlpha(str, FailureConst.NO_OP);
     }
 
     default S isAlpha(String str, ResponseCode code) {
@@ -272,7 +273,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S isAlphanumeric(String str) {
-        return isAlphanumeric(str, ValidationConst.NO_OP);
+        return isAlphanumeric(str, FailureConst.NO_OP);
     }
 
     default S isAlphanumeric(String str, ResponseCode code) {
@@ -290,7 +291,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S startsWith(String str, String prefix) {
-        return startsWith(str, prefix, ValidationConst.NO_OP);
+        return startsWith(str, prefix, FailureConst.NO_OP);
     }
 
     default S startsWith(String str, String prefix, ResponseCode code) {
@@ -308,7 +309,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S endsWith(String str, String suffix) {
-        return endsWith(str, suffix, ValidationConst.NO_OP);
+        return endsWith(str, suffix, FailureConst.NO_OP);
     }
 
     default S endsWith(String str, String suffix, ResponseCode code) {
@@ -326,7 +327,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S contains(String str, String substring) {
-        return contains(str, substring, ValidationConst.NO_OP);
+        return contains(str, substring, FailureConst.NO_OP);
     }
 
     default S contains(String str, String substring, ResponseCode code) {
@@ -344,7 +345,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S notContains(String str, String substring) {
-        return notContains(str, substring, ValidationConst.NO_OP);
+        return notContains(str, substring, FailureConst.NO_OP);
     }
 
     default S notContains(String str, String substring, ResponseCode code) {
@@ -363,7 +364,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S isLowerCase(String str) {
-        return isLowerCase(str, ValidationConst.NO_OP);
+        return isLowerCase(str, FailureConst.NO_OP);
     }
 
     default S isLowerCase(String str, ResponseCode code) {
@@ -381,7 +382,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S isUpperCase(String str) {
-        return isUpperCase(str, ValidationConst.NO_OP);
+        return isUpperCase(str, FailureConst.NO_OP);
     }
 
     default S isUpperCase(String str, ResponseCode code) {
@@ -399,7 +400,7 @@ public interface StringTerm<S extends ChainCore<S>> {
     }
 
     default S equalsIgnoreCase(String str1, String str2) {
-        return equalsIgnoreCase(str1, str2, ValidationConst.NO_OP);
+        return equalsIgnoreCase(str1, str2, FailureConst.NO_OP);
     }
 
     default S equalsIgnoreCase(String str1, String str2, ResponseCode code) {
