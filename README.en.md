@@ -17,7 +17,7 @@ Fail-Fast is a lightweight, high-performance validation and business-exception f
 
 ## 🚀 Core Features
 
-- **Fluent Validation Chain**: Supports `Fail-Fast` (immediate failure) and `Fail-Strict` (collect all errors) modes.
+- **Fluent Validation Chain**: Supports `Fail-Fast` (immediate fail) and `Fail-Strict` (collect all errors) modes.
 - **Rich Assertions**: Built-in 50+ validation methods for Objects, Strings, Numbers, Collections, Date/Time, Enums, Optionals, etc.
 - **Context Integration**: Supports `TypedValidator` pattern to decouple validation logic from business logic.
 - **Annotation-Driven**: Provides `@Validate` annotation and `FastValidator` interface for AOP-based validation.
@@ -86,7 +86,7 @@ Failure.begin()
 | `.failNow(code, message)` | **Force Immediate Failure**, throws specified exception regardless of previous checks |
 
 ```java
-// Force failure example: Permission check
+// Force fail example: Permission check
 Failure.begin()
     .notNull(user, UserCode.USER_NOT_FOUND)
     .failNow(UserCode.PERMISSION_DENIED, "Access Denied")  // Throws immediately
@@ -118,7 +118,7 @@ var chain = Failure.strict()
 
 if (!chain.isValid()) {
     var causes = chain.getCauses();  // Get all errors
-    return Result.failure("Validation failed", causes);
+    return Result.fail("Validation failed", causes);
 }
 ```
 

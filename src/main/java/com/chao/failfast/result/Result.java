@@ -9,6 +9,7 @@ import lombok.Getter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
  */
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public sealed class Result<T> permits Result.Success, Result.Failure {
+public sealed class Result<T> permits Result.Success, Result.Fail {
 
     protected int code;
     protected String message;
@@ -59,7 +60,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return Failure结果
      */
     public static <T> Result<T> fail(ResponseCode code) {
-        return new Failure<>(Business.of(code));
+        return new Fail<>(Business.of(code));
     }
 
     /**
@@ -71,7 +72,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return Failure结果
      */
     public static <T> Result<T> fail(ResponseCode code, String detail) {
-        return new Failure<>(Business.of(code, detail));
+        return new Fail<>(Business.of(code, detail));
     }
 
     /**
@@ -82,7 +83,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return Failure结果
      */
     public static <T> Result<T> fail(Business business) {
-        return new Failure<>(business);
+        return new Fail<>(business);
     }
 
     /**
@@ -126,8 +127,8 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return true表示失败，false表示成功
      */
     @JsonIgnore
-    public boolean isFailure() {
-        return this instanceof Failure;
+    public boolean isFail() {
+        return this instanceof Result.Fail;
     }
 
     /**
@@ -139,7 +140,19 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
     @JsonIgnore
     public T get() {
         if (this instanceof Success<T> s) return s.data;
-        throw new IllegalStateException("Result is failure");
+        throw new IllegalStateException("Result is fail");
+    }
+
+
+    /**
+     * 获取成功响应中的数据
+     *
+     * @return 返回Success实例中的data数据，如果是Fail实例则返回null
+     */
+    @JsonIgnore
+    public T getOrNull() {
+        if (this instanceof Success<T> s) return s.data;
+        return null;
     }
 
     /**
@@ -150,7 +163,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      */
     @JsonIgnore
     public Business getError() {
-        if (this instanceof Failure<T> f) return f.error;
+        if (this instanceof Result.Fail<T> f) return f.error;
         throw new IllegalStateException("Result is success");
     }
 
@@ -175,8 +188,8 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
             }
         }
         @SuppressWarnings("unchecked")
-        Result<R> failureResult = (Result<R>) this;
-        return failureResult;
+        Result<R> failResult = (Result<R>) this;
+        return failResult;
     }
 
     /**
@@ -191,8 +204,8 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
             return mapper.apply(s.data);
         }
         @SuppressWarnings("unchecked")
-        Result<R> failureResult = (Result<R>) this;
-        return failureResult;
+        Result<R> failResult = (Result<R>) this;
+        return failResult;
     }
 
     /**
@@ -215,7 +228,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return 原始Result
      */
     public Result<T> peekError(Consumer<Business> action) {
-        if (this instanceof Failure<T> f) {
+        if (this instanceof Result.Fail<T> f) {
             action.accept(f.error);
         }
         return this;
@@ -255,7 +268,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return 恢复后的Result
      */
     public Result<T> recover(Function<Business, T> recovery) {
-        if (this instanceof Failure<T> f) {
+        if (this instanceof Result.Fail<T> f) {
             return Result.ok(recovery.apply(f.error));
         }
         return this;
@@ -268,7 +281,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return 恢复后的Result
      */
     public Result<T> recoverWith(Function<Business, Result<T>> recovery) {
-        if (this instanceof Failure<T> f) {
+        if (this instanceof Result.Fail<T> f) {
             return recovery.apply(f.error);
         }
         return this;
@@ -293,7 +306,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @throws Business 当Result为失败状态时抛出
      */
     public T failNow() {
-        if (this instanceof Failure<T> f) throw f.error;
+        if (this instanceof Result.Fail<T> f) throw f.error;
         return get();
     }
 
@@ -316,11 +329,12 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @throws X 当Result为失败状态时抛出
      */
     public <X extends Throwable> T failNow(Function<Business, X> exceptionProvider) throws X {
-        if (this instanceof Failure<T> f) {
+        if (this instanceof Result.Fail<T> f) {
             throw exceptionProvider.apply(f.error);
         }
         return get();
     }
+
 
     /**
      * 组合两个Result
@@ -332,17 +346,79 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @return 组合后的Result
      */
     public <U, R> Result<R> combine(Result<U> other, BiFunction<T, U, R> combiner) {
-        if (this.isFailure()) {
+        if (this.isFail()) {
             @SuppressWarnings("unchecked")
-            Result<R> failureResult = (Result<R>) this;
-            return failureResult;
+            Result<R> failResult = (Result<R>) this;
+            return failResult;
         }
-        if (other.isFailure()) {
+        if (other.isFail()) {
             @SuppressWarnings("unchecked")
-            Result<R> failureResult = (Result<R>) other;
-            return failureResult;
+            Result<R> failResult = (Result<R>) other;
+            return failResult;
         }
         return Result.ok(combiner.apply(this.get(), other.get()));
+    }
+
+// ============ 转换操作 ============
+
+    /**
+     * 转换为 Optional（成功时有值，失败时 empty）
+     */
+    public Optional<T> toOptional() {
+        return isSuccess() ? Optional.ofNullable(get()) : Optional.empty();
+    }
+
+    /**
+     * 转换为 Stream（成功时单元素流，失败时空流）
+     */
+    public java.util.stream.Stream<T> stream() {
+        return isSuccess() ? java.util.stream.Stream.ofNullable(get()) : java.util.stream.Stream.empty();
+    }
+
+    /**
+     * 获取值或默认值（无论成功失败，失败时返回默认值）
+     */
+    public T getOrElse(T defaultValue) {
+        return isSuccess() ? get() : defaultValue;
+    }
+
+    /**
+     * 获取值或从错误计算（函数式获取默认值）
+     */
+    public T getOrElseGet(Function<Business, T> errorHandler) {
+        return isSuccess() ? get() : errorHandler.apply(getError());
+    }
+
+    /**
+     * 转换为另一种类型，无论成功失败（类似 bimap）
+     */
+    public <R> Result<R> fold(Function<T, R> successFn, Function<Business, R> failureFn) {
+        return isSuccess()
+                ? Result.ok(successFn.apply(get()))
+                : Result.ok(failureFn.apply(getError()));
+    }
+
+    /**
+     * 交换成功失败（成功变失败，失败变成功）
+     */
+    public Result<T> swap(ResponseCode successAsError) {
+        return isSuccess()
+                ? Result.fail(successAsError, "Success result swapped to failure")
+                : Result.ok(null);
+    }
+
+    /**
+     * 检查是否包含特定值（成功且值等于）
+     */
+    public boolean contains(T value) {
+        return isSuccess() && java.util.Objects.equals(get(), value);
+    }
+
+    /**
+     * 存在性检查（成功且有值）
+     */
+    public boolean exists() {
+        return isSuccess() && get() != null;
     }
 
     // ============ 内部类 ============
@@ -376,7 +452,7 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
      * @param <T> 数据类型
      */
     @Getter
-    public static final class Failure<T> extends Result<T> {
+    public static final class Fail<T> extends Result<T> {
         /**
          * 错误信息
          */
@@ -388,8 +464,11 @@ public sealed class Result<T> permits Result.Success, Result.Failure {
          *
          * @param error 错误信息
          */
-        public Failure(Business error) {
-            super(error.getResponseCode().getCode(), error.getResponseCode().getMessage(), error.getDetail());
+        public Fail(Business error) {
+            super(
+                    error.getResponseCode().getCode(), error.getResponseCode().getMessage(),
+                    error.getDetail() != null ? error.getDetail() : error.getResponseCode().getDescription()
+            );
             this.error = error;
         }
     }

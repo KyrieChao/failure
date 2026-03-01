@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DisplayName("Failure 核心功能测试")
-class FailureTest {
+class FailTest {
 
     @Nested
     @DisplayName("Fail-Fast 模式测试")

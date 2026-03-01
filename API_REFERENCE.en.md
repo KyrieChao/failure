@@ -435,38 +435,152 @@ public class CustomExceptionHandler extends FailFastExceptionHandler {
 
 ### 4.5 Functional Result Processing
 
-Use `Result<T>` for functional chain processing:
+Use `Result<T>` :
 
 ```java
-public Result<UserDTO> getUser(Long id) {
-    return Result.ofNullable(id, UserCode.ID_REQUIRED)
-        .map(userService::findById)
-        .filter(Objects::nonNull, UserCode.USER_NOT_FOUND)
-        .map(userConverter::toDTO)
-        .peek(dto -> log.info("Get user: {}", dto.getUsername()))
-        .recover(error -> {
-            log.error("Get user failed: {}", error.getMessage());
-            return UserDTO.guest();
-        });
+// Creation
+Result<String> ok = Result.ok("success");
+Result<String> fail = Result.fail(UserCode.NOT_FOUND, "User not found");
+
+// Chaining operations
+Result<Integer> result = Result.ok("42")
+        .map(Integer::parseInt)
+        .filter(n -> n > 0, UserCode.INVALID)
+        .recover(e -> 0);
+
+// Get value
+Integer value = result.orElse(-1);
+```
+---
+```java
+// Exception capture
+Result<Integer> r1 = Results.tryOf(() -> Integer.parseInt(str), UserCode.INVALID);
+
+// Optional conversion
+Result<User> r2 = Results.fromOptional(userRepo.findById(id), UserCode.NOT_FOUND);
+
+// Conditional execution
+Result<String> r3 = Results.whenOrFail(age >= 18, "adult", UserCode.TOO_YOUNG);
+
+// Batch collection
+Result<List<User>> r4 = Results.sequence(List.of(r1, r2, r3));
+
+// Partition processing
+Results.Partition<User> partition = Results.partition(results);
+List<User> successes = partition.getSuccesses();
+
+// Combination
+Result<DTO> dto = Results.zip(userResult, orderResult, (u, o) -> new DTO(u, o));
+
+// Traversal
+Result<List<Integer>> nums = Results.traverse(strList, s -> 
+    Results.tryOf(() -> Integer.parseInt(s), UserCode.INVALID)
+);
+
+// Retry
+Result<String> api = Results.retry(3, Duration.ofMillis(100), () -> callApi());
+
+// Pipeline
+Result<Integer> piped = Results.pipe(
+    Result.ok(10),
+    n -> Result.ok(n * 2),
+    n -> Result.ok(n + 5)
+);
+```
+---
+```java
+public Result<OrderDTO> getOrder(Long userId, Long orderId) {
+    // Parallel queries
+    Result<User> user = Results.tryOf(
+            () -> userRepo.findById(userId), UserCode.NOT_FOUND
+    );
+    Result<Order> order = Results.fromOptional(
+            orderRepo.findById(orderId), UserCode.ORDER_NOT_FOUND
+    );
+    
+    // Combination and validation
+    return Results.zip(user, order, (u, o) -> {
+        Results.ensure(Result.ok(o), 
+                x -> x.getUserId().equals(u.getId()), UserCode.ORDER_NOT_BELONG
+        );
+        return new OrderDTO(u, o);
+    });
 }
 ```
-
+---
 **Result API**:
 
-| Method | Description |
-| :--- | :--- |
-| `ok(value)` | Create success result |
-| `fail(code)` / `fail(code, detail)` | Create failure result |
-| `ofNullable(value, code)` | Create result from nullable value |
-| `map(fn)` | Map success value |
-| `flatMap(fn)` | Flat map |
-| `filter(predicate, code)` | Filter success value |
-| `peek(consumer)` | Consume success value |
-| `peekError(consumer)` | Consume error |
-| `recover(fn)` | Recover from error |
-| `recoverWith(fn)` | Recover from error to new Result |
-| `failNow()` / `failNow(default)` | Get value or throw/return default |
-| `combine(other, combiner)` | Combine two Results |
+| Category         | Method                                                 | Description                         |
+| :--------------- | :----------------------------------------------------- | :---------------------------------- |
+| **Creation**     | `ok(value)`                                            | Create success result               |
+|                  | `fail(code)` / `fail(code, detail)` / `fail(Business)` | Create fail result                  |
+|                  | `ofNullable(value, code)`                              | null to fail                        |
+|                  | `fromOptional(opt, code)`                              | Optional to Result                  |
+|                  | `supply(supplier, code)`                               | Capture Supplier exception          |
+|                  | `run(runnable, code)`                                  | Capture Runnable exception          |
+|                  | `when(condition, value, code)`                         | Conditional creation                |
+| **Check**        | `isSuccess()` / `isFail()`                             | Status check                        |
+|                  | `exists()` / `contains(value)`                         | Existence check                     |
+| **Get**          | `get()`                                                | Get value or throw exception        |
+|                  | `orNull()` / `getOrNull()`                             | Get value or null                   |
+|                  | `orElse(default)` / `orElseGet(supplier)`              | Get value or default                |
+|                  | `orElseThrow()` / `orElseThrow(fn)`                    | Get value or throw custom exception |
+|                  | `toOptional()`                                         | Convert to Optional                 |
+| **Transform**    | `map(fn)`                                              | Map success value                   |
+|                  | `flatMap(fn)`                                          | Flat map                            |
+|                  | `mapError(fn)` / `flatMapError(fn)`                    | Map error                           |
+|                  | `filter(predicate, code)`                              | Filter                              |
+|                  | `recover(fn)` / `recoverWith(fn)`                      | Error recovery                      |
+|                  | `fold(successFn, failFn)`                              | Dual-path mapping                   |
+|                  | `swap(code)`                                           | Swap success and fail               |
+| **Side Effects** | `peek(consumer)` / `peekError(consumer)`               | Side effect consumption             |
+|                  | `peekBoth(onSuccess, onError)`                         | Dual-path side effects              |
+|                  | `match(onSuccess, onError)`                            | Pattern matching consumption        |
+|                  | `ifSuccess(action)` / `ifFailure(action)`              | Conditional consumption             |
+| **Combination**  | `combine(other, combiner)`                             | Combine two Results                 |
+|                  | `allOf(results...)`                                    | Collect all successes               |
+| **Others**       | `stream()`                                             | Convert to Stream                   |
+|                  | `toFuture()`                                           | Convert to CompletableFuture        |
+
+---
+**Result API**:
+
+| Category                  | Method                                                                                    | Description                                              |
+| :------------------------ | :---------------------------------------------------------------------------------------- | :------------------------------------------------------- |
+| **Exception Capture**     | `tryOf(supplier, code)` / `tryOf(supplier, code, detail)`                                 | Capture Supplier exception, convert to Result            |
+|                           | `tryRun(runnable, code)` / `tryRun(runnable, code, detail)`                               | Capture Runnable exception, convert to Result            |
+| **Optional Conversion**   | `fromOptional(opt, code)` / `fromOptional(opt, code, detail)`                             | Optional to Result, fail when empty                      |
+|                           | `fromOptionalOrElse(opt, default)`                                                        | Optional to Result, use default when empty               |
+| **Conditional Execution** | `when(condition, supplier)`                                                               | Execute when true, return ok(null) when false            |
+|                           | `whenOrFail(condition, value, code)` / `whenOrFail(condition, value, code, detail)`       | Return value when true, fail when false                  |
+|                           | `whenOrFail(condition, supplier, code)` / `whenOrFail(condition, supplier, code, detail)` | Execute supplier when true, fail when false              |
+| **Batch Collection**      | `sequence(results...)` / `sequence(list)`                                                 | Fast-fail collection, return on first error              |
+|                           | `sequenceAll(results...)` / `sequenceAll(list)`                                           | Full collection, return all errors or all successes      |
+|                           | `partition(list)`                                                                         | Partition collection, return both successes and failures |
+|                           | `successes(list)`                                                                         | Extract all success values                               |
+|                           | `failures(list)`                                                                          | Extract all failures                                     |
+| **Fold/Reduce**           | `fold(list, identity, combiner)`                                                          | Fold all Results, stop on failure                        |
+|                           | `reduce(list, combiner)`                                                                  | Reduce all success values, stop on failure               |
+| **Traversal**             | `traverse(list, mapper)`                                                                  | Traverse and map, fast-fail                              |
+|                           | `traverseAll(list, mapper)`                                                               | Traverse and map, full collection                        |
+|                           | `traverseIndexed(list, mapper)`                                                           | Traverse with index, fast-fail                           |
+|                           | `traverseAllIndexed(list, mapper)`                                                        | Traverse with index, full collection                     |
+| **Combination**           | `zip(r1, r2, combiner)`                                                                   | Combine two Results                                      |
+|                           | `zip(r1, r2, r3, combiner)`                                                               | Combine three Results                                    |
+|                           | `zip(r1, r2, r3, r4, combiner)`                                                           | Combine four Results                                     |
+| **Side Effects**          | `tap(result, action)`                                                                     | Execute side effect on Result                            |
+|                           | `tapSuccess(result, action)`                                                              | Execute side effect on success                           |
+|                           | `tapFailure(result, action)`                                                              | Execute side effect on failure                           |
+|                           | `tapAsync(result, action)`                                                                | Execute side effect asynchronously                       |
+| **Validation**            | `ensure(result, predicate, code)` / `ensure(result, predicate, code, detail)`             | Validate value, convert to fail if not satisfied         |
+| **Get Value**             | `getOrNull(result)`                                                                       | Safe get, return null on failure                         |
+| **Race**                  | `race(suppliers...)`                                                                      | Race execution, return first success or last failure     |
+| **Retry**                 | `retry(times, supplier)`                                                                  | Retry specified times                                    |
+|                           | `retry(times, delay, supplier)`                                                           | Retry with delay                                         |
+| **Pipeline**              | `pipe(initial, functions...)`                                                             | Pipeline operation, execute sequentially                 |
+| **Lazy Evaluation**       | `defer(supplier)`                                                                         | Lazy evaluation (thread-safe, lazy loading)              |
+|                           | `lazy(supplier)`                                                                          | Same as defer                                            |
+|                           | `memoize(supplier)`                                                                       | Memoization (non-thread-safe)                            |
 
 ---
 

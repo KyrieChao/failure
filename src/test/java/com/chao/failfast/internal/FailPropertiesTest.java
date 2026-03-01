@@ -12,7 +12,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("FailFastProperties 配置属性测试")
-class FailurePropertiesTest {
+class FailPropertiesTest {
 
     @Test
     @DisplayName("应当正确设置和获取属性")

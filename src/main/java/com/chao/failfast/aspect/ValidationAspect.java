@@ -6,6 +6,9 @@ import com.chao.failfast.annotation.Validate;
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
 import com.chao.failfast.validator.TypedValidator;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -16,7 +19,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,17 +43,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(100)
 public class ValidationAspect {
 
+    /**
+     * 使用ConcurrentHashMap作为缓存，存储验证器实例
+     */
     private static final ConcurrentHashMap<Class<? extends FastValidator<Object>>, FastValidator<Object>> VALIDATOR_CACHE = new ConcurrentHashMap<>();
 
+    /**
+     * 定义一个不可变的Set集合，包含需要跳过验证的类型
+     */
     private static final Set<Class<?>> SKIP_TYPES = Set.of(
-            jakarta.servlet.ServletRequest.class,
-            jakarta.servlet.ServletResponse.class,
-            jakarta.servlet.http.HttpSession.class,
-            org.springframework.web.multipart.MultipartFile.class,
-            java.io.InputStream.class,
-            java.io.OutputStream.class,
-            java.io.Reader.class,
-            java.io.Writer.class
+            ServletRequest.class,  // 服务请求对象
+            ServletResponse.class, // 服务响应对象
+            HttpSession.class,     // HTTP会话对象
+            MultipartFile.class,   // 多部分文件对象
+            InputStream.class,     // 输入流
+            OutputStream.class,    // 输出流
+            Reader.class,          // 字符读取流
+            Writer.class          // 字符写入流
     );
 
     @Autowired
@@ -115,7 +129,6 @@ public class ValidationAspect {
         } else {
             executePlainValidator(validator, args, ctx);
         }
-
         return ctx.isValid() ? List.of() : ctx.hasCauses();
     }
 
@@ -151,13 +164,19 @@ public class ValidationAspect {
         }
     }
 
+    /**
+     * 获取或创建一个验证器实例
+     *
+     * @param clazz 验证器的类对象
+     * @return 返回验证器实例，如果已存在则从应用上下文中获取，否则创建新实例
+     */
     @SuppressWarnings("unchecked")
     private FastValidator<Object> getOrCreateValidator(Class<? extends FastValidator> clazz) {
         if (applicationContext.getBeanNamesForType(clazz).length > 0) {
             return applicationContext.getBean(clazz);
         }
         return VALIDATOR_CACHE.computeIfAbsent(
-                (Class<? extends FastValidator<Object>>) clazz,
+                (Class<? extends FastValidator<Object>>) clazz,  // 类型转换，确保类型安全
                 key -> {
                     try {
                         return key.getDeclaredConstructor().newInstance();

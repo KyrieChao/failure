@@ -21,8 +21,9 @@ class ResultTest {
         void okShouldCreateSuccessResult() {
             Result<String> result = Result.ok("test");
             assertThat(result.isSuccess()).isTrue();
-            assertThat(result.isFailure()).isFalse();
+            assertThat(result.isFail()).isFalse();
             assertThat(result.get()).isEqualTo("test");
+            assertThat(result.getOrNull()).isEqualTo("test");
             assertThat(catchThrowable(result::getError)).isInstanceOf(IllegalStateException.class);
         }
 
@@ -31,16 +32,17 @@ class ResultTest {
         void failShouldCreateFailureResult() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
             assertThat(result.isSuccess()).isFalse();
-            assertThat(result.isFailure()).isTrue();
+            assertThat(result.isFail()).isTrue();
             assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
             assertThat(catchThrowable(result::get)).isInstanceOf(IllegalStateException.class);
+            assertThat(catchThrowable(result::getOrNull)).isEqualTo(null);
         }
 
         @Test
         @DisplayName("fail 方法应创建带详情的失败结果")
         void failWithDetailShouldCreateFailureResult() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR, "detail");
-            assertThat(result.isFailure()).isTrue();
+            assertThat(result.isFail()).isTrue();
             assertThat(result.getError().getDetail()).isEqualTo("detail");
         }
 
@@ -64,7 +66,7 @@ class ResultTest {
         @DisplayName("ofNullable 当值为null时应创建失败结果")
         void ofNullableShouldCreateFailureResultWhenValueIsNull() {
             Result<String> result = Result.ofNullable(null, TestResponseCode.PARAM_ERROR);
-            assertThat(result.isFailure()).isTrue();
+            assertThat(result.isFail()).isTrue();
             assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
 
@@ -72,7 +74,7 @@ class ResultTest {
         @DisplayName("ofNullable 带详情 当值为null时应创建失败结果")
         void ofNullableWithDetailShouldCreateFailureResultWhenValueIsNull() {
             Result<String> result = Result.ofNullable(null, TestResponseCode.PARAM_ERROR, "detail");
-            assertThat(result.isFailure()).isTrue();
+            assertThat(result.isFail()).isTrue();
             assertThat(result.getError().getDetail()).isEqualTo("detail");
         }
     }
@@ -94,7 +96,7 @@ class ResultTest {
         void mapShouldNotTransformFailureResult() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
             Result<Integer> mapped = result.map(Integer::parseInt);
-            assertThat(mapped.isFailure()).isTrue();
+            assertThat(mapped.isFail()).isTrue();
             assertThat(mapped.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
 
@@ -104,15 +106,14 @@ class ResultTest {
             Result<String> result = Result.ok("abc");
             assertThat(catchThrowable(() -> result.map(s -> {
                 throw new RuntimeException("error");
-            })))
-                    .isInstanceOf(RuntimeException.class);
+            }))).isInstanceOf(RuntimeException.class);
 
             // If Business exception is thrown in map?
             Result<String> result2 = Result.ok("abc");
             Result<String> mapped2 = result2.map(s -> {
                 throw Business.of(TestResponseCode.PARAM_ERROR);
             });
-            assertThat(mapped2.isFailure()).isTrue();
+            assertThat(mapped2.isFail()).isTrue();
         }
 
         @Test
@@ -129,7 +130,7 @@ class ResultTest {
         void flatMapShouldNotTransformFailureResult() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
             Result<Integer> flatMapped = result.flatMap(s -> Result.ok(Integer.parseInt(s)));
-            assertThat(flatMapped.isFailure()).isTrue();
+            assertThat(flatMapped.isFail()).isTrue();
         }
 
         @Test
@@ -153,7 +154,7 @@ class ResultTest {
         void filterShouldFailWhenPredicateIsFalse() {
             Result<Integer> result = Result.ok(1);
             Result<Integer> filtered = result.filter(i -> i > 5, TestResponseCode.PARAM_ERROR);
-            assertThat(filtered.isFailure()).isTrue();
+            assertThat(filtered.isFail()).isTrue();
             assertThat(filtered.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
 
@@ -162,7 +163,7 @@ class ResultTest {
         void filterWithDetailShouldFailWhenPredicateIsFalse() {
             Result<Integer> result = Result.ok(1);
             Result<Integer> filtered = result.filter(i -> i > 5, TestResponseCode.PARAM_ERROR, "detail");
-            assertThat(filtered.isFailure()).isTrue();
+            assertThat(filtered.isFail()).isTrue();
             assertThat(filtered.getError().getDetail()).isEqualTo("detail");
         }
 
@@ -171,7 +172,7 @@ class ResultTest {
         void filterShouldNotAffectFailure() {
             Result<Integer> result = Result.fail(TestResponseCode.PARAM_ERROR);
             Result<Integer> filtered = result.filter(i -> i > 5, TestResponseCode.SYSTEM_ERROR);
-            assertThat(filtered.isFailure()).isTrue();
+            assertThat(filtered.isFail()).isTrue();
             assertThat(filtered.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
 
@@ -191,10 +192,10 @@ class ResultTest {
             Result<String> r1 = Result.ok("Hello");
             Result<String> r2 = Result.fail(TestResponseCode.PARAM_ERROR);
             Result<String> combined = r1.combine(r2, (s1, s2) -> s1 + " " + s2);
-            assertThat(combined.isFailure()).isTrue();
+            assertThat(combined.isFail()).isTrue();
 
             Result<String> combined2 = r2.combine(r1, (s1, s2) -> s1 + " " + s2);
-            assertThat(combined2.isFailure()).isTrue();
+            assertThat(combined2.isFail()).isTrue();
         }
     }
 
@@ -225,7 +226,7 @@ class ResultTest {
             final boolean[] executed = {false};
             Result<String> peeked = result.peekError(e -> executed[0] = true);
 
-            assertThat(peeked.isFailure()).isTrue();
+            assertThat(peeked.isFail()).isTrue();
             assertThat(executed[0]).isTrue();
 
             // Success case
@@ -263,7 +264,7 @@ class ResultTest {
         @DisplayName("failNow 当失败时应抛出异常")
         void failNowShouldThrowExceptionWhenFailure() {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
-            assertThat(catchThrowable(() -> result.failNow())).isInstanceOf(Business.class);
+            assertThat(catchThrowable(result::failNow)).isInstanceOf(Business.class);
             assertThat(result.failNow("default")).isEqualTo("default");
             assertThat(catchThrowable(() -> result.failNow(e -> new IllegalArgumentException())))
                     .isInstanceOf(IllegalArgumentException.class);
@@ -310,7 +311,7 @@ class ResultTest {
                 throw Business.of(TestResponseCode.PARAM_ERROR, "business error");
             });
 
-            assertThat(mapped.isFailure()).isTrue();
+            assertThat(mapped.isFail()).isTrue();
             assertThat(mapped.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
             assertThat(mapped.getError().getDetail()).isEqualTo("business error");
         }
@@ -366,7 +367,7 @@ class ResultTest {
             Result<String> result = Result.ok("test");
             Result<String> mapped = result.flatMap(s -> Result.fail(TestResponseCode.PARAM_ERROR));
 
-            assertThat(mapped.isFailure()).isTrue();
+            assertThat(mapped.isFail()).isTrue();
             assertThat(mapped.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
     }
@@ -499,7 +500,7 @@ class ResultTest {
             Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
             Result<String> recovered = result.recoverWith(e -> Result.fail(TestResponseCode.SYSTEM_ERROR));
 
-            assertThat(recovered.isFailure()).isTrue();
+            assertThat(recovered.isFail()).isTrue();
             assertThat(recovered.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getCode());
         }
     }
@@ -537,7 +538,7 @@ class ResultTest {
             Result<String> r2 = Result.fail(TestResponseCode.SYSTEM_ERROR);
             Result<String> combined = r1.combine(r2, (s1, s2) -> s1 + s2);
 
-            assertThat(combined.isFailure()).isTrue();
+            assertThat(combined.isFail()).isTrue();
             assertThat(combined.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
         }
     }
@@ -610,13 +611,13 @@ class ResultTest {
         @DisplayName("Failure 的 getter 应返回正确值")
         void failureGetterShouldReturnCorrectValues() {
             Business error = Business.of(TestResponseCode.PARAM_ERROR, "detail");
-            Result.Failure<String> failure = new Result.Failure<>(error);
+            Result.Fail<String> fail = new Result.Fail<>(error);
 
-            assertThat(failure.getError()).isEqualTo(error);
-            assertThat(failure.getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-            assertThat(failure.getMessage()).isEqualTo(TestResponseCode.PARAM_ERROR.getMessage());
-            assertThat(failure.getDescription()).isEqualTo("detail");
-            assertThat(failure.getTimestamp()).isNotNull();
+            assertThat(fail.getError()).isEqualTo(error);
+            assertThat(fail.getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
+            assertThat(fail.getMessage()).isEqualTo(TestResponseCode.PARAM_ERROR.getMessage());
+            assertThat(fail.getDescription()).isEqualTo("detail");
+            assertThat(fail.getTimestamp()).isNotNull();
         }
     }
 }

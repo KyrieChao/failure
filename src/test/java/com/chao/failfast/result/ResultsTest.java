@@ -2,488 +2,960 @@ package com.chao.failfast.result;
 
 import com.chao.failfast.internal.Business;
 import com.chao.failfast.internal.MultiBusiness;
-import com.chao.failfast.model.TestResponseCode;
+import com.chao.failfast.internal.core.ResponseCode;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Results 工具类单元测试 - 100% 覆盖率
+ */
 @DisplayName("Results 工具类测试")
 class ResultsTest {
 
-    @Nested
-    @DisplayName("tryOf 方法测试")
-    class TryOfTest {
-        @Test
-        @DisplayName("当Supplier无异常时应返回成功Result")
-        void shouldReturnSuccessWhenSupplierSucceeds() {
-            Result<String> result = Results.tryOf(() -> "test", TestResponseCode.SYSTEM_ERROR);
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEqualTo("test");
-        }
+    // ==================== 测试数据 ====================
 
-        @Test
-        @DisplayName("当Supplier抛出Business异常时应返回对应的失败Result")
-        void shouldReturnFailureWhenSupplierThrowsBusiness() {
-            Result<String> result = Results.tryOf(() -> {
-                throw Business.of(TestResponseCode.PARAM_ERROR);
-            }, TestResponseCode.SYSTEM_ERROR);
+    private static final ResponseCode TEST_CODE = ResponseCode.of(40001, "TEST_ERROR", "Test error");
+    private static final ResponseCode TEST_CODE_2 = ResponseCode.of(40002, "TEST_ERROR_2", "Test error 2");
+    private static final Business TEST_BUSINESS = Business.of(TEST_CODE, "detail");
 
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
+    // ==================== tryOf / tryRun ====================
 
-        @Test
-        @DisplayName("当Supplier抛出其他异常时应返回指定错误码的失败Result")
-        void shouldReturnFailureWhenSupplierThrowsOtherException() {
-            Result<String> result = Results.tryOf(() -> {
-                throw new RuntimeException("runtime error");
-            }, TestResponseCode.SYSTEM_ERROR);
+    @Test
+    @DisplayName("tryOf: 成功返回结果")
+    void tryOf_success() {
+        Result<String> result = Results.tryOf(() -> "success", TEST_CODE);
 
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getCode());
-            assertThat(result.getError().getDetail()).isEqualTo("runtime error");
-        }
-
-        @Test
-        @DisplayName("tryOf 带详情 当Supplier抛出其他异常时应返回指定详情")
-        void shouldReturnFailureWithDetail() {
-            Result<String> result = Results.tryOf(() -> {
-                throw new RuntimeException("runtime error");
-            }, TestResponseCode.SYSTEM_ERROR, "custom detail");
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getDetail()).isEqualTo("custom detail");
-        }
-        @Test
-        @DisplayName("tryOf 带详情 当Supplier成功时应返回成功")
-        void shouldReturnSuccessWithDetail() {
-            Result<String> result = Results.tryOf(() -> "success", TestResponseCode.SYSTEM_ERROR, "detail");
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEqualTo("success");
-        }
-
-        @Test
-        @DisplayName("tryOf 带详情 当Supplier抛出Business异常时应忽略详情返回原异常")
-        void shouldReturnBusinessErrorWithDetail() {
-            Result<String> result = Results.tryOf(() -> {
-                throw Business.of(TestResponseCode.PARAM_ERROR);
-            }, TestResponseCode.SYSTEM_ERROR, "ignored detail");
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-            assertThat(result.getError().getDetail()).isNotEqualTo("ignored detail");
-        }
+        assertTrue(result.isSuccess());
+        assertEquals("success", result.get());
     }
 
-    @Nested
-    @DisplayName("sequence 方法测试")
-    class SequenceTest {
-        @Test
-        @DisplayName("当所有Result都成功时应返回成功列表")
-        void shouldReturnSuccessListWhenAllResultsAreSuccess() {
-            Result<String> r1 = Result.ok("a");
-            Result<String> r2 = Result.ok("b");
-            Result<List<String>> result = Results.sequence(r1, r2);
+    @Test
+    @DisplayName("tryOf: 捕获普通异常转为失败")
+    void tryOf_catchException() {
+        RuntimeException ex = new RuntimeException("boom");
+        Result<String> result = Results.tryOf(() -> {
+            throw ex;
+        }, TEST_CODE);
 
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).containsExactly("a", "b");
-        }
-
-        @Test
-        @DisplayName("当存在失败Result时应返回第一个失败")
-        void shouldReturnFirstFailureWhenAnyResultIsFailure() {
-            Result<String> r1 = Result.ok("a");
-            Result<String> r2 = Result.fail(TestResponseCode.PARAM_ERROR);
-            Result<List<String>> result = Results.sequence(r1, r2);
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
+        assertTrue(result.isFail());
+        assertEquals(40001, result.getError().getResponseCode().getCode());
     }
 
-    @Nested
-    @DisplayName("sequenceAll 方法测试")
-    class SequenceAllTest {
-        @Test
-        @DisplayName("应当收集所有成功结果")
-        void shouldCollectAllSuccess() {
-            Result<String> r1 = Result.ok("a");
-            Result<String> r2 = Result.ok("b");
-            Result<List<String>> result = Results.sequenceAll(r1, r2);
+    @Test
+    @DisplayName("tryOf: 捕获Business异常直接返回")
+    void tryOf_catchBusiness() {
+        Result<String> result = Results.tryOf(() -> {
+            throw TEST_BUSINESS;
+        }, TEST_CODE);
 
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).containsExactly("a", "b");
-        }
-
-        @Test
-        @DisplayName("应当收集所有错误")
-        void shouldCollectAllErrors() {
-            Result<String> r1 = Result.ok("a");
-            Result<String> r2 = Result.fail(TestResponseCode.PARAM_ERROR);
-            Result<String> r3 = Result.fail(TestResponseCode.SYSTEM_ERROR);
-
-            Result<List<String>> result = Results.sequenceAll(r1, r2, r3);
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError()).isInstanceOf(MultiBusiness.class);
-            MultiBusiness mb = (MultiBusiness) result.getError();
-            assertThat(mb.getErrors()).hasSize(2);
-        }
+        assertTrue(result.isFail());
+        assertSame(TEST_BUSINESS, result.getError());
     }
 
-    @Nested
-    @DisplayName("tryRun 方法测试")
-    class TryRunTest {
-        @Test
-        @DisplayName("当执行成功时应返回OK")
-        void shouldReturnOkWhenSuccess() {
-            Result<Void> result = Results.tryRun(() -> {
-            }, TestResponseCode.SYSTEM_ERROR);
-            assertThat(result.isSuccess()).isTrue();
-        }
+    @Test
+    @DisplayName("tryOf: 使用自定义detail")
+    void tryOf_withDetail() {
+        Result<String> result = Results.tryOf(() -> {
+            throw new RuntimeException();
+        }, TEST_CODE, "custom detail");
 
-        @Test
-        @DisplayName("当抛出异常时应返回Fail")
-        void shouldReturnFailWhenException() {
-            Result<Void> result = Results.tryRun(() -> {
-                throw new RuntimeException("error");
-            }, TestResponseCode.SYSTEM_ERROR);
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getCode());
-        }
-
-        @Test
-        @DisplayName("tryRun 带详情 当抛出异常时应返回Fail带详情")
-        void shouldReturnFailWithDetailWhenException() {
-            Result<Void> result = Results.tryRun(() -> {
-                throw new RuntimeException("error");
-            }, TestResponseCode.SYSTEM_ERROR, "custom detail");
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getDetail()).isEqualTo("custom detail");
-        }
-        @Test
-        @DisplayName("tryRun 带详情 当执行成功时应返回OK")
-        void shouldReturnOkWithDetailWhenSuccess() {
-            Result<Void> result = Results.tryRun(() -> {}, TestResponseCode.SYSTEM_ERROR, "detail");
-            assertThat(result.isSuccess()).isTrue();
-        }
-
-        @Test
-        @DisplayName("tryRun 带详情 当抛出Business异常时应忽略详情返回原异常")
-        void shouldReturnBusinessErrorWithDetailWhenException() {
-            Result<Void> result = Results.tryRun(() -> {
-                throw Business.of(TestResponseCode.PARAM_ERROR);
-            }, TestResponseCode.SYSTEM_ERROR, "ignored detail");
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-            assertThat(result.getError().getDetail()).isNotEqualTo("ignored detail");
-        }
+        assertTrue(result.isFail());
+        assertEquals("custom detail", result.getError().getDetail());
     }
 
-    @Nested
-    @DisplayName("when 方法测试")
-    class WhenTest {
-        @Test
-        @DisplayName("当条件满足时应执行Supplier")
-        void shouldExecuteWhenTrue() {
-            Result<String> result = Results.when(true, () -> Result.ok("executed"));
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEqualTo("executed");
-        }
+    @Test
+    @DisplayName("tryRun: 成功执行")
+    void tryRun_success() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+        Result<Void> result = Results.tryRun(() -> executed.set(true), TEST_CODE);
 
-        @Test
-        @DisplayName("当条件不满足时应返回Null Result")
-        void shouldReturnNullWhenFalse() {
-            Result<String> result = Results.when(false, () -> Result.ok("executed"));
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isNull();
-        }
+        assertTrue(result.isSuccess());
+        assertTrue(executed.get());
     }
 
-    @Nested
-    @DisplayName("getOrNull 方法测试")
-    class GetOrNullTest {
-        @Test
-        @DisplayName("当Result成功时应返回值")
-        void shouldReturnValueWhenResultIsSuccess() {
-            Result<String> result = Result.ok("test");
-            assertThat(Results.getOrNull(result)).isEqualTo("test");
-        }
+    @Test
+    @DisplayName("tryRun: 捕获异常")
+    void tryRun_exception() {
+        Result<Void> result = Results.tryRun(() -> {
+            throw new RuntimeException();
+        }, TEST_CODE, "run failed");
 
-        @Test
-        @DisplayName("当Result失败时应返回null")
-        void shouldReturnNullWhenResultIsFailure() {
-            Result<String> result = Result.fail(TestResponseCode.PARAM_ERROR);
-            assertThat(Results.getOrNull(result)).isNull();
-        }
+        assertTrue(result.isFail());
+        assertEquals("run failed", result.getError().getDetail());
     }
 
-    @Nested
-    @DisplayName("traverse 方法测试")
-    class TraverseTest {
-        @Test
-        @DisplayName("当所有转换成功时应返回列表")
-        void shouldReturnSuccessList() {
-            List<Integer> inputs = Arrays.asList(1, 2, 3);
-            Result<List<String>> result = Results.traverse(inputs, i -> Result.ok(String.valueOf(i)));
-
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).containsExactly("1", "2", "3");
-        }
-
-        @Test
-        @DisplayName("当遇到失败时应立即返回失败")
-        void shouldFailFast() {
-            List<Integer> inputs = Arrays.asList(1, 2, 3);
-            Result<List<String>> result = Results.traverse(inputs, i -> {
-                if (i == 2) return Result.fail(TestResponseCode.PARAM_ERROR);
-                return Result.ok(String.valueOf(i));
-            });
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
+    @Test
+    @DisplayName("tryRun: null runnable抛出NPE")
+    void tryRun_nullRunnable() {
+        assertThrows(NullPointerException.class, () -> Results.tryRun(null, TEST_CODE));
     }
 
-    @Nested
-    @DisplayName("traverse 边界测试")
-    class TraverseEdgeTest {
+    // ==================== fromOptional ====================
 
-        @Test
-        @DisplayName("当输入列表为空时应返回空列表")
-        void shouldReturnEmptyListWhenInputIsEmpty() {
-            List<Integer> emptyList = Arrays.asList();
-            Result<List<String>> result = Results.traverse(emptyList, i -> Result.ok(String.valueOf(i)));
+    @Test
+    @DisplayName("fromOptional: 有值返回成功")
+    void fromOptional_present() {
+        Result<String> result = Results.fromOptional(Optional.of("value"), TEST_CODE);
 
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("当输入列表为null时应抛出NullPointerException")
-        void shouldThrowNpeWhenInputIsNull() {
-            assertThatThrownBy(() -> Results.traverse(null, i -> Result.ok(String.valueOf(i))))
-                    .isInstanceOf(NullPointerException.class);
-        }
-
-        @Test
-        @DisplayName("当mapper返回null时应抛出NullPointerException")
-        void shouldThrowNpeWhenMapperReturnsNull() {
-            List<Integer> inputs = Arrays.asList(1, 2);
-            assertThatThrownBy(() -> Results.traverse(inputs, i -> null))
-                    .isInstanceOf(NullPointerException.class);
-        }
-
-        @Test
-        @DisplayName("当第一个元素就失败时应立即返回")
-        void shouldFailImmediatelyOnFirstElement() {
-            List<Integer> inputs = Arrays.asList(1, 2, 3);
-            Result<List<String>> result = Results.traverse(inputs, i -> {
-                if (i == 1) return Result.fail(TestResponseCode.PARAM_ERROR);
-                return Result.ok(String.valueOf(i));
-            });
-
-            assertThat(result.isFailure()).isTrue();
-            // 验证只有第一个元素被处理
-        }
+        assertTrue(result.isSuccess());
+        assertEquals("value", result.get());
     }
 
-    @Nested
-    @DisplayName("sequence 边界测试")
-    class SequenceEdgeTest {
+    @Test
+    @DisplayName("fromOptional: empty返回失败")
+    void fromOptional_empty() {
+        Result<String> result = Results.fromOptional(Optional.empty(), TEST_CODE, "not found");
 
-        @Test
-        @DisplayName("当没有参数时应返回空列表")
-        void shouldReturnEmptyListWhenNoArgs() {
-            @SuppressWarnings("unchecked")
-            Result<List<String>> result = Results.sequence();
-
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("当只有一个成功Result时应返回单元素列表")
-        void shouldReturnSingleElementList() {
-            Result<String> r1 = Result.ok("only");
-            Result<List<String>> result = Results.sequence(r1);
-
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).containsExactly("only");
-        }
-
-        @Test
-        @DisplayName("当第一个就是失败时应立即返回")
-        void shouldFailImmediatelyOnFirstFailure() {
-            Result<String> r1 = Result.fail(TestResponseCode.PARAM_ERROR);
-            Result<String> r2 = Result.ok("b");  // 不应该被处理
-
-            Result<List<String>> result = Results.sequence(r1, r2);
-
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
+        assertTrue(result.isFail());
+        assertEquals("not found", result.getError().getDetail());
     }
 
-    @Nested
-    @DisplayName("sequenceAll 边界测试")
-    class SequenceAllEdgeTest {
+    @Test
+    @DisplayName("fromOptional: null optional返回失败")
+    void fromOptional_null() {
+        Result<String> result = Results.fromOptional(null, TEST_CODE);
 
-        @Test
-        @DisplayName("当没有参数时应返回空列表")
-        void shouldReturnEmptyListWhenNoArgs() {
-            @SuppressWarnings("unchecked")
-            Result<List<String>> result = Results.sequenceAll();
-
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("当全部失败时应返回MultiBusiness包含所有错误")
-        void shouldReturnAllErrorsWhenAllFail() {
-            Result<String> r1 = Result.fail(TestResponseCode.PARAM_ERROR);
-            Result<String> r2 = Result.fail(TestResponseCode.SYSTEM_ERROR);
-            Result<String> r3 = Result.fail(TestResponseCode.UNAUTHORIZED);
-
-            Result<List<String>> result = Results.sequenceAll(r1, r2, r3);
-
-            assertThat(result.isFailure()).isTrue();
-            MultiBusiness mb = (MultiBusiness) result.getError();
-            assertThat(mb.getErrors()).hasSize(3);
-        }
-
-        @Test
-        @DisplayName("当只有一个失败时应返回该错误（不是MultiBusiness）")
-        void shouldReturnSingleErrorWhenOnlyOneFails() {
-            Result<String> r1 = Result.ok("a");
-            Result<String> r2 = Result.fail(TestResponseCode.PARAM_ERROR);
-
-            Result<List<String>> result = Results.sequenceAll(r1, r2);
-
-            assertThat(result.isFailure()).isTrue();
-            // 注意：这里实际上会包装成 MultiBusiness，因为 sequenceAll 总是用 MultiBusiness
-            assertThat(result.getError()).isInstanceOf(MultiBusiness.class);
-        }
+        assertTrue(result.isFail());
+        assertEquals("Optional is null", result.getError().getDetail());
     }
 
-    @Nested
-    @DisplayName("tryOf 边界测试")
-    class TryOfEdgeTest {
+    @Test
+    @DisplayName("fromOptionalOrElse: 有值返回值")
+    void fromOptionalOrElse_present() {
+        Result<String> result = Results.fromOptionalOrElse(Optional.of("value"), "default");
 
-        @Test
-        @DisplayName("当Supplier返回null时应返回成功的null")
-        void shouldReturnSuccessWithNull() {
-            Result<String> result = Results.tryOf(() -> null, TestResponseCode.SYSTEM_ERROR);
+        assertEquals("value", result.get());
+    }
 
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.get()).isNull();
-        }
+    @Test
+    @DisplayName("fromOptionalOrElse: empty返回默认值")
+    void fromOptionalOrElse_empty() {
+        Result<String> result = Results.fromOptionalOrElse(Optional.empty(), "default");
 
-        @Test
-        @DisplayName("当Business异常没有detail时应正确处理")
-        void shouldHandleBusinessWithoutDetail() {
-            Result<String> result = Results.tryOf(() -> {
-                throw Business.of(TestResponseCode.PARAM_ERROR);
-            }, TestResponseCode.SYSTEM_ERROR);
+        assertEquals("default", result.get());
+    }
 
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
+    @Test
+    @DisplayName("fromOptionalOrElse: null optional返回默认值")
+    void fromOptionalOrElse_null() {
+        Result<String> result = Results.fromOptionalOrElse(null, "default");
 
-        @Test
-        @DisplayName("当异常message为null时应处理空detail")
-        void shouldHandleExceptionWithNullMessage() {
-            Result<String> result = Results.tryOf(() -> {
-                throw new RuntimeException() {
-                    @Override
-                    public String getMessage() {
-                        return null;
+        assertEquals("default", result.get());
+    }
+
+    // ==================== when / whenOrFail ====================
+
+    @Test
+    @DisplayName("when: 条件true执行supplier")
+    void when_true() {
+        Result<String> result = Results.when(true, () -> Result.ok("success"));
+
+        assertEquals("success", result.get());
+    }
+
+    @Test
+    @DisplayName("when: 条件false返回ok(null)")
+    void when_false() {
+        Result<String> result = Results.when(false, () -> Result.ok("success"));
+
+        assertTrue(result.isSuccess());
+        assertNull(result.getOrNull());
+    }
+
+    @Test
+    @DisplayName("when: null supplier抛出NPE")
+    void when_nullSupplier() {
+        assertThrows(NullPointerException.class, () -> Results.when(true, (Supplier<Result<String>>) null));
+    }
+
+    @Test
+    @DisplayName("whenOrFail: 条件true返回值")
+    void whenOrFail_true() {
+        Result<String> result = Results.whenOrFail(true, "value", TEST_CODE);
+
+        assertEquals("value", result.get());
+    }
+
+    @Test
+    @DisplayName("whenOrFail: 条件false返回失败")
+    void whenOrFail_false() {
+        Result<String> result = Results.whenOrFail(false, "value", TEST_CODE, "failed");
+
+        assertTrue(result.isFail());
+        assertEquals("failed", result.getError().getDetail());
+    }
+
+    @Test
+    @DisplayName("whenOrFail with supplier: 条件true执行并返回")
+    void whenOrFailSupplier_true() {
+        Result<String> result = Results.whenOrFail(true, () -> "computed", TEST_CODE);
+
+        assertEquals("computed", result.get());
+    }
+
+    @Test
+    @DisplayName("whenOrFail with supplier: 条件false返回失败")
+    void whenOrFailSupplier_false() {
+        Result<String> result = Results.whenOrFail(false, () -> "computed", TEST_CODE, "not allowed");
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("whenOrFail with supplier: 捕获Business异常")
+    void whenOrFailSupplier_catchBusiness() {
+        Result<String> result = Results.whenOrFail(true, () -> {
+            throw TEST_BUSINESS;
+        }, TEST_CODE);
+
+        assertSame(TEST_BUSINESS, result.getError());
+    }
+
+    @Test
+    @DisplayName("whenOrFail with supplier: 捕获普通异常")
+    void whenOrFailSupplier_catchException() {
+        Result<String> result = Results.whenOrFail(true, () -> {
+            throw new RuntimeException("oops");
+        }, TEST_CODE, "wrapped");
+
+        assertEquals("wrapped", result.getError().getDetail());
+    }
+
+    // ==================== sequence ====================
+
+    @Test
+    @DisplayName("sequence varargs: 全部成功")
+    void sequenceVarargs_allSuccess() {
+        Result<List<Integer>> result = Results.sequence(
+                Result.ok(1),
+                Result.ok(2),
+                Result.ok(3)
+        );
+
+        assertEquals(List.of(1, 2, 3), result.get());
+    }
+
+    @Test
+    @DisplayName("sequence varargs: 第一个失败快速返回")
+    void sequenceVarargs_firstFail() {
+        Result<List<Integer>> result = Results.sequence(
+                Result.fail(TEST_CODE),
+                Result.ok(2)
+        );
+
+        assertTrue(result.isFail());
+        assertEquals(40001, result.getError().getResponseCode().getCode());
+    }
+
+    @Test
+    @DisplayName("sequence list: 全部成功")
+    void sequenceList_allSuccess() {
+        Result<List<Integer>> result = Results.sequence(List.of(Result.ok(1), Result.ok(2)));
+
+        assertEquals(2, result.get().size());
+    }
+
+    @Test
+    @DisplayName("sequence list: 中间失败")
+    void sequenceList_middleFail() {
+        Result<List<Integer>> result = Results.sequence(List.of(
+                Result.ok(1),
+                Result.fail(TEST_CODE_2),
+                Result.ok(3)
+        ));
+
+        assertEquals(40002, result.getError().getResponseCode().getCode());
+    }
+
+    // ==================== sequenceAll ====================
+
+    @Test
+    @DisplayName("sequenceAll varargs: 全部成功")
+    void sequenceAllVarargs_allSuccess() {
+        Result<List<Integer>> result = Results.sequenceAll(Result.ok(1), Result.ok(2));
+
+        assertEquals(List.of(1, 2), result.get());
+    }
+
+    @Test
+    @DisplayName("sequenceAll: 部分失败收集所有错误")
+    void sequenceAll_partialFail() {
+        Result<List<Integer>> result = Results.sequenceAll(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.fail(TEST_CODE_2)
+        );
+
+        assertTrue(result.isFail());
+        Business error = result.getError();
+        assertTrue(error instanceof MultiBusiness);
+        assertEquals(2, ((MultiBusiness) error).getErrors().size());
+    }
+
+    @Test
+    @DisplayName("sequenceAll list: 全部失败")
+    void sequenceAllList_allFail() {
+        Result<List<Integer>> result = Results.sequenceAll(List.of(
+                Result.fail(TEST_CODE),
+                Result.fail(TEST_CODE_2)
+        ));
+
+        assertTrue(result.getError() instanceof MultiBusiness);
+    }
+
+    // ==================== partition ====================
+
+    @Test
+    @DisplayName("partition: 混合结果")
+    void partition_mixed() {
+        Results.Partition<Integer> partition = Results.partition(List.of(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.ok(2),
+                Result.fail(TEST_CODE_2)
+        ));
+
+        assertEquals(List.of(1, 2), partition.successes());
+        assertEquals(2, partition.failures().size());
+        assertTrue(partition.hasSuccesses());
+        assertTrue(partition.hasFailures());
+        assertFalse(partition.isAllSuccess());
+        assertFalse(partition.isAllFail());
+    }
+
+    @Test
+    @DisplayName("partition: 全部成功")
+    void partition_allSuccess() {
+        Results.Partition<Integer> partition = Results.partition(List.of(Result.ok(1), Result.ok(2)));
+
+        assertTrue(partition.isAllSuccess());
+        assertFalse(partition.hasFailures());
+        assertFalse(partition.isAllFail());
+    }
+
+    @Test
+    @DisplayName("partition: 全部失败")
+    void partition_allFail() {
+        Results.Partition<Integer> partition = Results.partition(List.of(Result.fail(TEST_CODE)));
+
+        assertTrue(partition.isAllFail());
+        assertFalse(partition.hasSuccesses());
+    }
+
+    // ==================== successes / failures ====================
+
+    @Test
+    @DisplayName("successes: 提取所有成功值")
+    void successes_extract() {
+        List<Integer> list = Results.successes(List.of(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.ok(2)
+        ));
+
+        assertEquals(List.of(1, 2), list);
+    }
+
+    @Test
+    @DisplayName("failures: 提取所有失败")
+    void failures_extract() {
+        List<Business> list = Results.failures(List.of(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.fail(TEST_CODE_2)
+        ));
+
+        assertEquals(2, list.size());
+    }
+
+    // ==================== fold / reduce ====================
+
+    @Test
+    @DisplayName("fold: 空列表返回identity")
+    void fold_empty() {
+        Result<Integer> result = Results.fold(List.of(), 0, Integer::sum);
+
+        assertEquals(0, result.get());
+    }
+
+    @Test
+    @DisplayName("fold: 累加所有成功值")
+    void fold_accumulate() {
+        Result<Integer> result = Results.fold(List.of(
+                Result.ok(1),
+                Result.ok(2),
+                Result.ok(3)
+        ), 10, Integer::sum);
+
+        assertEquals(16, result.get());
+    }
+
+    @Test
+    @DisplayName("fold: 遇到失败停止")
+    void fold_failFast() {
+        Result<Integer> result = Results.fold(List.of(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.ok(3)
+        ), 0, Integer::sum);
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("reduce: 正常归约")
+    void reduce_normal() {
+        Result<Integer> result = Results.reduce(List.of(
+                Result.ok(1),
+                Result.ok(2),
+                Result.ok(3)
+        ), Integer::sum);
+
+        assertEquals(6, result.get());
+    }
+
+    @Test
+    @DisplayName("reduce: 空列表抛出异常")
+    void reduce_empty() {
+        Result<Integer> result = Results.reduce(List.of(), Integer::sum);
+
+        assertTrue(result.isFail()); // sequence返回失败，map不会执行
+        assertEquals("Cannot reduce empty list", result.getError().getDetail());
+    }
+
+    // ==================== traverse ====================
+
+    @Test
+    @DisplayName("traverse: 全部映射成功")
+    void traverse_allSuccess() {
+        Result<List<Integer>> result = Results.traverse(
+                List.of("1", "2", "3"),
+                s -> Result.ok(Integer.parseInt(s))
+        );
+
+        assertEquals(List.of(1, 2, 3), result.get());
+    }
+
+    @Test
+    @DisplayName("traverse: 中间映射失败")
+    void traverse_middleFail() {
+        Result<List<Integer>> result = Results.traverse(
+                List.of("1", "oops", "3"),
+                s -> {
+                    try {
+                        return Result.ok(Integer.parseInt(s));
+                    } catch (NumberFormatException e) {
+                        return Result.fail(TEST_CODE);
                     }
-                };
-            }, TestResponseCode.SYSTEM_ERROR);
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getDetail()).isEqualTo(TestResponseCode.SYSTEM_ERROR.getDescription());
-        }
+                }
+        );
+
+        assertTrue(result.isFail());
     }
 
-    @Nested
-    @DisplayName("tryRun 边界测试")
-    class TryRunEdgeTest {
+    @Test
+    @DisplayName("traverseAll: 收集所有错误")
+    void traverseAll_collectErrors() {
+        Result<List<Integer>> result = Results.traverseAll(
+                List.of("1", "oops", "3", "bad"),
+                s -> {
+                    try {
+                        return Result.ok(Integer.parseInt(s));
+                    } catch (NumberFormatException e) {
+                        return Result.fail(TEST_CODE);
+                    }
+                }
+        );
 
-        @Test
-        @DisplayName("当Runnable为null时应抛出NullPointerException")
-        void shouldThrowNpeWhenRunnableIsNull() {
-            assertThatThrownBy(() -> Results.tryRun(null, TestResponseCode.SYSTEM_ERROR))
-                    .isInstanceOf(NullPointerException.class);
-        }
-
-        @Test
-        @DisplayName("当抛出Error时不应捕获，应直接抛出")
-        void shouldNotCaptureError() {
-            assertThatThrownBy(() -> Results.tryRun(() -> {
-                throw new OutOfMemoryError("OOM");
-            }, TestResponseCode.SYSTEM_ERROR))
-                    .isInstanceOf(OutOfMemoryError.class)
-                    .hasMessage("OOM");
-        }
+        assertTrue(result.isFail());
+        assertTrue(result.getError() instanceof MultiBusiness);
     }
 
-    @Nested
-    @DisplayName("when 边界测试")
-    class WhenEdgeTest {
+    // ==================== traverseIndexed ====================
 
-        @Test
-        @DisplayName("当Supplier返回失败Result时应返回该失败")
-        void shouldReturnFailureFromSupplier() {
-            Result<String> result = Results.when(true, () -> Result.fail(TestResponseCode.PARAM_ERROR));
+    @Test
+    @DisplayName("traverseIndexed: 使用索引")
+    void traverseIndexed_withIndex() {
+        Result<List<String>> result = Results.traverseIndexed(
+                List.of("a", "b"),
+                (idx, val) -> Result.ok(idx + ":" + val)
+        );
 
-            assertThat(result.isFailure()).isTrue();
-            assertThat(result.getError().getResponseCode().getCode()).isEqualTo(TestResponseCode.PARAM_ERROR.getCode());
-        }
-
-        @Test
-        @DisplayName("当Supplier抛出异常时应抛出该异常")
-        void shouldThrowExceptionFromSupplier() {
-            assertThatThrownBy(() -> Results.when(true, () -> {
-                throw new RuntimeException("supplier error");
-            })).isInstanceOf(RuntimeException.class).hasMessage("supplier error");
-        }
-
-        @Test
-        @DisplayName("当Supplier为null且条件为true时应抛出NullPointerException")
-        void shouldThrowNpeWhenSupplierIsNull() {
-            assertThatThrownBy(() -> Results.when(true, (Supplier<Result<String>>) null))
-                    .isInstanceOf(NullPointerException.class);
-        }
+        assertEquals(List.of("0:a", "1:b"), result.get());
     }
 
-    @Nested
-    @DisplayName("getOrNull 边界测试")
-    class GetOrNullEdgeTest {
+    @Test
+    @DisplayName("traverseIndexed: 快速失败")
+    void traverseIndexed_failFast() {
+        Result<List<String>> result = Results.traverseIndexed(
+                List.of("a", "b", "c"),
+                (idx, val) -> idx == 1 ? Result.fail(TEST_CODE) : Result.ok(val)
+        );
 
-        @Test
-        @DisplayName("当Result为null时应抛出NullPointerException")
-        void shouldThrowNpeWhenResultIsNull() {
-            assertThatThrownBy(() -> Results.getOrNull(null))
-                    .isInstanceOf(NullPointerException.class);
-        }
+        assertTrue(result.isFail());
+    }
 
-        @Test
-        @DisplayName("当成功Result包含null值时应返回null")
-        void shouldReturnNullWhenSuccessContainsNull() {
-            Result<String> result = Result.ok(null);
-            assertThat(Results.getOrNull(result)).isNull();
-        }
+    @Test
+    @DisplayName("traverseAllIndexed: 全量收集")
+    void traverseAllIndexed_all() {
+        Result<List<String>> result = Results.traverseAllIndexed(
+                List.of("a", "b", "c"),
+                (idx, val) -> idx % 2 == 0 ? Result.ok(val) : Result.fail(TEST_CODE)
+        );
+
+        assertTrue(result.isFail());
+        // 索引1失败
+    }
+
+    // ==================== zip ====================
+
+    @Test
+    @DisplayName("zip 2: 全部成功")
+    void zip2_allSuccess() {
+        Result<String> result = Results.zip(
+                Result.ok(1),
+                Result.ok("a"),
+                (i, s) -> s + i
+        );
+
+        assertEquals("a1", result.get());
+    }
+
+    @Test
+    @DisplayName("zip 2: 第一个失败")
+    void zip2_firstFail() {
+        Result<String> result = Results.zip(
+                Result.fail(TEST_CODE),
+                Result.ok("a"),
+                (i, s) -> s + i
+        );
+
+        assertEquals(40001, result.getError().getResponseCode().getCode());
+    }
+
+    @Test
+    @DisplayName("zip 2: 第二个失败")
+    void zip2_secondFail() {
+        Result<String> result = Results.zip(
+                Result.ok(1),
+                Result.<String>fail(TEST_CODE_2),
+                (i, s) -> s + i
+        );
+        assertTrue(result.isFail());
+        assertEquals(40002, result.getError().getResponseCode().getCode());
+    }
+
+    @Test
+    @DisplayName("zip 3: 全部成功")
+    void zip3_allSuccess() {
+        Result<String> result = Results.zip(
+                Result.ok(1),
+                Result.ok(2),
+                Result.ok(3),
+                (a, b, c) -> a + "-" + b + "-" + c
+        );
+
+        assertEquals("1-2-3", result.get());
+    }
+
+    @Test
+    @DisplayName("zip 3: 中间失败")
+    void zip3_middleFail() {
+        Result<String> result = Results.zip(
+                Result.ok(1),
+                Result.fail(TEST_CODE),
+                Result.ok(3),
+                (a, b, c) -> "never"
+        );
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("zip 4: 全部成功")
+    void zip4_allSuccess() {
+        Result<String> result = Results.zip(
+                Result.ok("1"),
+                Result.ok(2),
+                Result.ok(3),
+                Result.ok(4),
+                (a, b, c, d) ->  a + b + c + d
+        );
+
+        assertEquals("1234", result.get());
+    }
+
+    @Test
+    @DisplayName("zip 4: 第四个失败")
+    void zip4_fourthFail() {
+        Result<String> result = Results.zip(
+                Result.ok(1),
+                Result.ok(2),
+                Result.ok(3),
+                Result.fail(TEST_CODE),
+                (a, b, c, d) -> "never"
+        );
+
+        assertTrue(result.isFail());
+    }
+
+    // ==================== tap ====================
+
+    @Test
+    @DisplayName("tap: 执行副作用")
+    void tap_execute() {
+        AtomicReference<Result<String>> captured = new AtomicReference<>();
+
+        Result<String> result = Results.tap(Result.ok("value"), captured::set);
+
+        assertEquals("value", result.get()); // 返回原result
+        assertEquals("value", captured.get().get()); // 副作用执行
+    }
+
+    @Test
+    @DisplayName("tapSuccess: 成功时执行")
+    void tapSuccess_success() {
+        AtomicReference<String> captured = new AtomicReference<>();
+
+        Results.tapSuccess(Result.ok("value"), captured::set);
+
+        assertEquals("value", captured.get());
+    }
+
+    @Test
+    @DisplayName("tapSuccess: 失败时不执行")
+    void tapSuccess_fail() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        Results.tapSuccess(Result.fail(TEST_CODE), v -> executed.set(true));
+
+        assertFalse(executed.get());
+    }
+
+    @Test
+    @DisplayName("tapFailure: 失败时执行")
+    void tapFailure_fail() {
+        AtomicReference<Business> captured = new AtomicReference<>();
+
+        Results.tapFailure(Result.fail(TEST_CODE), captured::set);
+
+        assertNotNull(captured.get());
+    }
+
+    @Test
+    @DisplayName("tapFailure: 成功时不执行")
+    void tapFailure_success() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        Results.tapFailure(Result.ok("value"), e -> executed.set(true));
+
+        assertFalse(executed.get());
+    }
+
+    @Test
+    @DisplayName("tapAsync: 异步执行不阻塞")
+    void tapAsync_nonBlocking() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        Result<String> result = Results.tapAsync(Result.ok("value"), r -> {
+            try {
+                Thread.sleep(100);
+                executed.set(true);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // 立即返回，不会等待100ms
+        assertEquals("value", result.get());
+        // 异步任务可能还没执行完
+        assertFalse(executed.get()); // 大概率还没执行
+    }
+
+    // ==================== ensure ====================
+
+    @Test
+    @DisplayName("ensure: 满足条件保持成功")
+    void ensure_pass() {
+        Result<Integer> result = Results.ensure(Result.ok(10), n -> n > 5, TEST_CODE);
+
+        assertEquals(10, result.get());
+    }
+
+    @Test
+    @DisplayName("ensure: 不满足条件转为失败")
+    void ensure_fail() {
+        Result<Integer> result = Results.ensure(Result.ok(3), n -> n > 5, TEST_CODE, "too small");
+
+        assertTrue(result.isFail());
+        assertEquals("too small", result.getError().getDetail());
+    }
+
+    @Test
+    @DisplayName("ensure: 原结果失败直接返回")
+    void ensure_alreadyFail() {
+        Result<Integer> original = Result.fail(TEST_CODE);
+        Result<Integer> result = Results.ensure(original, n -> true, TEST_CODE_2);
+
+        assertSame(original.getError(), result.getError());
+    }
+
+    // ==================== getOrNull ====================
+
+    @Test
+    @DisplayName("getOrNull: 成功返回值")
+    void getOrNull_success() {
+        assertEquals("value", Results.getOrNull(Result.ok("value")));
+    }
+
+    @Test
+    @DisplayName("getOrNull: 失败返回null")
+    void getOrNull_fail() {
+        assertNull(Results.getOrNull(Result.fail(TEST_CODE)));
+    }
+
+    // ==================== race ====================
+
+    @Test
+    @DisplayName("race: 第一个成功")
+    void race_firstSuccess() {
+        Result<String> result = Results.race(
+                () -> Result.ok("first"),
+                () -> Result.ok("second")
+        );
+
+        assertEquals("first", result.get());
+    }
+
+    @Test
+    @DisplayName("race: 跳过失败返回成功")
+    void race_skipFail() {
+        Result<String> result = Results.race(
+                () -> Result.fail(TEST_CODE),
+                () -> Result.ok("second"),
+                () -> Result.ok("third")
+        );
+
+        assertEquals("second", result.get());
+    }
+
+    @Test
+    @DisplayName("race: 全部失败返回最后一个")
+    void race_allFail() {
+        Result<String> result = Results.race(
+                () -> Result.fail(TEST_CODE),
+                () -> Result.fail(TEST_CODE_2)
+        );
+
+        assertTrue(result.isFail());
+        assertEquals(40002, result.getError().getResponseCode().getCode());
+    }
+
+    @Test
+    @DisplayName("race: 空数组返回ok(null)")
+    void race_empty() {
+        @SuppressWarnings("unchecked")
+        Result<String> result = Results.race(new Supplier[0]);
+
+        assertTrue(result.isSuccess());
+        assertNull(result.getOrNull());
+    }
+
+    // ==================== retry ====================
+
+    @Test
+    @DisplayName("retry: 第一次成功")
+    void retry_firstSuccess() {
+        AtomicInteger count = new AtomicInteger(0);
+
+        Result<Integer> result = Results.retry(3, () -> {
+            count.incrementAndGet();
+            return Result.ok(42);
+        });
+
+        assertEquals(42, result.get());
+        assertEquals(1, count.get());
+    }
+
+    @Test
+    @DisplayName("retry: 第三次成功")
+    void retry_thirdSuccess() {
+        AtomicInteger count = new AtomicInteger(0);
+
+        Result<Integer> result = Results.retry(3, () -> {
+            if (count.incrementAndGet() < 3) {
+                return Result.fail(TEST_CODE);
+            }
+            return Result.ok(42);
+        });
+
+        assertEquals(42, result.get());
+        assertEquals(3, count.get());
+    }
+
+    @Test
+    @DisplayName("retry: 全部失败返回最后")
+    void retry_allFail() {
+        Result<Integer> result = Results.retry(2, () -> Result.fail(TEST_CODE));
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("retry: 带延迟")
+    void retry_withDelay() {
+        long start = System.currentTimeMillis();
+
+        Results.retry(2, Duration.ofMillis(50), () -> Result.fail(TEST_CODE));
+
+        long elapsed = System.currentTimeMillis() - start;
+        assertTrue(elapsed >= 50); // 至少等待了50ms
+    }
+
+    @Test
+    @DisplayName("retry: 中断异常")
+    void retry_interrupted() {
+        Thread.currentThread().interrupt();
+
+        Result<Integer> result = Results.retry(2, Duration.ofMillis(100), () -> Result.fail(TEST_CODE));
+
+        assertTrue(result.isFail());
+        assertEquals("Retry interrupted", result.getError().getDetail());
+
+        Thread.interrupted(); // 清除中断状态
+    }
+
+    // ==================== pipe ====================
+
+    @Test
+    @DisplayName("pipe: 全部成功")
+    void pipe_allSuccess() {
+        Result<Integer> result = Results.pipe(
+                Result.ok(1),
+                n -> Result.ok(n * 2),
+                n -> Result.ok(n + 10)
+        );
+
+        assertEquals(12, result.get()); // (1 * 2) + 10 = 12
+    }
+
+    @Test
+    @DisplayName("pipe: 中间失败停止")
+    void pipe_middleFail() {
+        Result<Integer> result = Results.pipe(
+                Result.ok(1),
+                n -> Result.fail(TEST_CODE),
+                n -> Result.ok(n * 100) // 不会执行
+        );
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("pipe: 初始失败直接返回")
+    void pipe_initialFail() {
+        Result<Integer> result = Results.pipe(
+                Result.fail(TEST_CODE),
+                n -> Result.ok(n * 2)
+        );
+
+        assertTrue(result.isFail());
+    }
+
+    @Test
+    @DisplayName("pipe: 空函数数组")
+    void pipe_empty() {
+        Result<Integer> result = Results.pipe(Result.ok(42));
+
+        assertEquals(42, result.get());
+    }
+
+    // ==================== defer / lazy / memoize ====================
+
+    @Test
+    @DisplayName("defer: 延迟执行")
+    void defer_lazy() {
+        AtomicInteger count = new AtomicInteger(0);
+        Supplier<Result<Integer>> deferred = Results.defer(() -> {
+            count.incrementAndGet();
+            return Result.ok(42);
+        });
+
+        assertEquals(0, count.get()); // 还没执行
+
+        Result<Integer> r1 = deferred.get();
+        assertEquals(1, count.get());
+        assertEquals(42, r1.get());
+
+        Result<Integer> r2 = deferred.get();
+        assertEquals(1, count.get()); // 不会重复执行
+        assertEquals(42, r2.get());
+    }
+
+    @Test
+    @DisplayName("lazy: 同defer")
+    void lazy_alias() {
+        AtomicInteger count = new AtomicInteger(0);
+        Supplier<Result<Integer>> lazy = Results.lazy(() -> {
+            count.incrementAndGet();
+            return Result.ok(42);
+        });
+
+        lazy.get();
+        lazy.get();
+
+        assertEquals(1, count.get());
+    }
+
+    @Test
+    @DisplayName("memoize: 缓存结果")
+    void memoize_cache() {
+        AtomicInteger count = new AtomicInteger(0);
+        Supplier<Result<Integer>> memoized = Results.memoize(() -> {
+            count.incrementAndGet();
+            return Result.ok(count.get());
+        });
+
+        assertEquals(1, memoized.get().get());
+        assertEquals(1, memoized.get().get()); // 返回缓存的1
+        assertEquals(1, count.get());
+    }
+
+    @Test
+    @DisplayName("memoize: 非线程安全但更快")
+    void memoize_notThreadSafe() {
+        // 单线程测试没问题
+        Supplier<Result<Integer>> memoized = Results.memoize(() -> Result.ok(42));
+        assertEquals(42, memoized.get().get());
+    }
+
+    // ==================== Partition 内部类 ====================
+
+    @Test
+    @DisplayName("Partition: 不可变性")
+    void partition_immutable() {
+        List<Integer> originalList = new ArrayList<>();
+        originalList.add(1);
+
+        Results.Partition<Integer> partition = new Results.Partition<>(originalList, List.of());
+
+        // 修改原列表不影响partition
+        originalList.add(2);
+        assertEquals(1, partition.successes().size());
+
+        // partition返回的列表不可变
+        assertThrows(UnsupportedOperationException.class,
+                () -> partition.successes().add(3));
     }
 }

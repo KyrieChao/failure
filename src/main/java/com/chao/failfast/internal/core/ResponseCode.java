@@ -6,6 +6,8 @@ package com.chao.failfast.internal.core;
  */
 public interface ResponseCode {
 
+    ResponseCode INTERRUPTED_ERROR = of(500, "Interrupted", "Retry Interrupted");
+    ResponseCode ILLEGAL_ARGUMENT = of(500, "Illegal Argument", "Cannot reduce empty list");
     /**
      * 获取错误码数值
      *

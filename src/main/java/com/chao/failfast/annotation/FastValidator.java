@@ -68,10 +68,22 @@ public interface FastValidator<T> {
             return errors.isEmpty();
         }
 
+        /**
+         * 获取包含原因的业务对象列表
+         * 返回一个不可修改的列表，以确保数据的不可变性
+         *
+         * @return 包含原因的业务对象列表，类型为List<Business>
+         */
         public List<Business> hasCauses() {
             return Collections.unmodifiableList(errors);
         }
 
+        /**
+         * 获取第一个错误信息
+         * 如果错误列表为空，则返回null，否则返回列表中的第一个错误
+         *
+         * @return Business类型的错误对象，如果没有错误则返回null
+         */
         public Business getFirstError() {
             return errors.isEmpty() ? null : errors.get(0);
         }

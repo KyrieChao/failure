@@ -143,12 +143,12 @@ class AdvancedChainTest {
 
         // Case 2: Value is null
         Result<String> r2 = Result.ofNullable(null, ERR_MISSING);
-        assertTrue(r2.isFailure());
+        assertTrue(r2.isFail());
         assertEquals(9003, r2.getError().getResponseCode().getCode());
 
         // Case 3: Value is null with detail
         Result<String> r3 = Result.ofNullable(null, ERR_MISSING, "详细描述");
-        assertTrue(r3.isFailure());
+        assertTrue(r3.isFail());
         assertEquals("详细描述", r3.getError().getDetail());
     }
 }

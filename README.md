@@ -118,7 +118,7 @@ var chain = Failure.strict()
 
 if (!chain.isValid()) {
     var causes = chain.getCauses();  // 获取所有错误
-    return Result.failure("参数校验失败", causes);
+    return Result.fail("参数校验失败", causes);
 }
 ```
 

@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @DisplayName("FailureContext 上下文测试")
-class FailureContextTest {
+class FailContextTest {
 
     private FailureProperties properties;
     private FailureContext context;
