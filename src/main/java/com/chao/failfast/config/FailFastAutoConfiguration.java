@@ -3,7 +3,6 @@ package com.chao.failfast.config;
 import com.chao.failfast.advice.DefaultExceptionHandler;
 import com.chao.failfast.advice.FailFastExceptionHandler;
 import com.chao.failfast.aspect.ValidationAspect;
-import com.chao.failfast.integration.ValidationAdapter;
 import com.chao.failfast.internal.Ex;
 import com.chao.failfast.internal.FailureContext;
 import com.chao.failfast.internal.core.FailureProperties;
@@ -73,20 +72,6 @@ public class FailFastAutoConfiguration {
         return new CodeMappingConfig(properties);
     }
 
-    /**
-     * 创建Bean验证适配器Bean
-     * 桥接Jakarta Validation API与FailFast框架
-     *
-     * @param validator Jakarta Validator实例
-     * @return BeanValidationAdapter实例
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    public ValidationAdapter validationAdapter(Validator validator) {
-        return new ValidationAdapter(validator);
-    }
-
-    // ============ 异常处理器 ============
 
     /**
      * 创建默认异常处理器Bean
@@ -100,7 +85,6 @@ public class FailFastAutoConfiguration {
         return new DefaultExceptionHandler();
     }
 
-    // ============ AOP 切面 ============
 
     /**
      * 创建验证切面Bean

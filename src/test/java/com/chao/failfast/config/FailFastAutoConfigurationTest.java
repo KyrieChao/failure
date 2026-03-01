@@ -3,7 +3,6 @@ package com.chao.failfast.config;
 import com.chao.failfast.advice.DefaultExceptionHandler;
 import com.chao.failfast.advice.FailFastExceptionHandler;
 import com.chao.failfast.aspect.ValidationAspect;
-import com.chao.failfast.integration.ValidationAdapter;
 import com.chao.failfast.internal.FailureContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ class FailFastAutoConfigurationTest {
             assertThat(context).hasSingleBean(FailFastAutoConfiguration.class);
             assertThat(context).hasSingleBean(FailureContext.class);
             assertThat(context).hasSingleBean(CodeMappingConfig.class);
-            assertThat(context).hasSingleBean(ValidationAdapter.class);
             assertThat(context).hasSingleBean(DefaultExceptionHandler.class);
             assertThat(context).hasSingleBean(ValidationAspect.class);
             assertThat(context).hasSingleBean(FailFastAutoConfiguration.ExInitializer.class);
@@ -57,7 +55,7 @@ class FailFastAutoConfigurationTest {
                 .withConfiguration(AutoConfigurations.of(FailFastAutoConfiguration.class, ValidationAutoConfiguration.class))
                 .run(context -> assertThat(context).hasBean("failFastCleanupFilter"));
     }
-    
+
     @Test
     @DisplayName("当用户自定义异常处理器时应当不创建 DefaultExceptionHandler")
     void shouldNotCreateDefaultExceptionHandlerWhenUserDefined() {
